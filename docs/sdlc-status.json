@@ -1,0 +1,242 @@
+{
+  "project": {
+    "name": "PlanVisualizer",
+    "description": "Agentic AI SDLC",
+    "repoUrl": "https://github.com/ksyed0/PlanVisualizer",
+    "startDate": "2026-03-10"
+  },
+  "currentPhase": 1,
+  "phases": [
+    {
+      "id": 1,
+      "name": "Blueprint",
+      "agents": [
+        "Compass"
+      ],
+      "deliverables": [
+        "refined ACs",
+        "priority list"
+      ],
+      "status": "in-progress",
+      "startedAt": "2026-06-08T22:00:58.247Z",
+      "completedAt": null
+    },
+    {
+      "id": 2,
+      "name": "Architect",
+      "agents": [
+        "Keystone"
+      ],
+      "deliverables": [
+        "scaffold",
+        "types",
+        "service stubs"
+      ],
+      "status": "pending",
+      "startedAt": null,
+      "completedAt": null
+    },
+    {
+      "id": 3,
+      "name": "Build",
+      "agents": [
+        "Pixel",
+        "Forge",
+        "Palette"
+      ],
+      "deliverables": [
+        "implementation",
+        "unit tests"
+      ],
+      "status": "pending",
+      "startedAt": null,
+      "completedAt": null
+    },
+    {
+      "id": 4,
+      "name": "Integration",
+      "agents": [
+        "Pixel"
+      ],
+      "deliverables": [
+        "wired services",
+        "e2e flows"
+      ],
+      "status": "pending",
+      "startedAt": null,
+      "completedAt": null
+    },
+    {
+      "id": 5,
+      "name": "Test",
+      "agents": [
+        "Sentinel",
+        "Circuit"
+      ],
+      "deliverables": [
+        "test report",
+        "coverage"
+      ],
+      "status": "pending",
+      "startedAt": null,
+      "completedAt": null
+    },
+    {
+      "id": 6,
+      "name": "Polish",
+      "agents": [
+        "Pixel",
+        "Forge"
+      ],
+      "deliverables": [
+        "bug fixes",
+        "demo prep"
+      ],
+      "status": "pending",
+      "startedAt": null,
+      "completedAt": null
+    }
+  ],
+  "agents": {
+    "Conductor": {
+      "status": "idle",
+      "currentTask": null,
+      "tasksCompleted": 0
+    },
+    "Compass": {
+      "status": "active",
+      "currentTask": "Write acceptance criteria and scope for US-0001 Next.js scaffold",
+      "tasksCompleted": 0,
+      "model": "sonnet"
+    },
+    "Keystone": {
+      "status": "idle",
+      "currentTask": null,
+      "tasksCompleted": 0
+    },
+    "Lens": {
+      "status": "idle",
+      "currentTask": null,
+      "tasksCompleted": 0,
+      "reviewsCompleted": 0,
+      "blockers": 0
+    },
+    "Palette": {
+      "status": "idle",
+      "currentTask": null,
+      "tasksCompleted": 0
+    },
+    "Forge": {
+      "status": "idle",
+      "currentTask": null,
+      "tasksCompleted": 0
+    },
+    "Pixel": {
+      "status": "idle",
+      "currentTask": null,
+      "tasksCompleted": 0
+    },
+    "Sentinel": {
+      "status": "idle",
+      "currentTask": null,
+      "tasksCompleted": 0,
+      "testsPassed": 0,
+      "testsFailed": 0
+    },
+    "Circuit": {
+      "status": "idle",
+      "currentTask": null,
+      "tasksCompleted": 0,
+      "coveragePercent": 0
+    }
+  },
+  "epics": {
+    "EPIC-0001": {
+      "name": "Foundation & Infrastructure",
+      "status": "in-progress",
+      "startedAt": "2026-06-08T22:00:54.870Z",
+      "completedAt": null,
+      "storiesCompleted": 0,
+      "storiesTotal": 8
+    }
+  },
+  "stories": {
+    "US-0001": {
+      "status": "InProgress",
+      "epic": "EPIC-0001",
+      "assignedAgent": "Compass",
+      "startedAt": "2026-06-08T22:01:04.617Z",
+      "completedAt": null,
+      "specPhase": {
+        "state": "in_progress",
+        "specPath": null,
+        "mockupPath": null,
+        "uiSurface": false,
+        "reviewIterations": 0,
+        "reviewIterationCap": 3,
+        "lastReviewVerdict": null,
+        "acApprovedAt": null,
+        "specApprovedAt": null
+      },
+      "planPhase": {
+        "state": "pending",
+        "planPath": null,
+        "author": null,
+        "reviewIterations": 0,
+        "reviewIterationCap": 3,
+        "lastReviewVerdict": null,
+        "planApprovedAt": null
+      },
+      "phaseHistory": [
+        {
+          "phase": "spec",
+          "enteredAt": "2026-06-08T22:01:07.276Z",
+          "exitedAt": null
+        }
+      ]
+    }
+  },
+  "cycles": [],
+  "metrics": {
+    "storiesCompleted": 0,
+    "storiesTotal": 89,
+    "tasksCompleted": 0,
+    "tasksTotal": 0,
+    "testsPassed": 0,
+    "testsFailed": 0,
+    "testsTotal": 0,
+    "bugsOpen": 0,
+    "bugsFixed": 0,
+    "coveragePercent": 0,
+    "reviewsApproved": 0,
+    "reviewsBlocked": 0
+  },
+  "log": [
+    {
+      "time": "2026-06-08T22:00:51.077Z",
+      "agent": "Conductor",
+      "message": "Session started — 89 stories planned"
+    },
+    {
+      "time": "2026-06-08T22:00:54.871Z",
+      "agent": "Conductor",
+      "message": "Epic EPIC-0001 (Foundation & Infrastructure) started"
+    },
+    {
+      "time": "2026-06-08T22:00:58.248Z",
+      "agent": "Conductor",
+      "message": "Phase 1 (Blueprint) → in-progress"
+    },
+    {
+      "time": "2026-06-08T22:01:04.618Z",
+      "agent": "Conductor",
+      "message": "started US-0001 (EPIC-0001)"
+    },
+    {
+      "time": "2026-06-08T22:01:13.555Z",
+      "agent": "Compass",
+      "message": "started US-0001: Write acceptance criteria and scope for US-0001 Next.js scaffold",
+      "model": "sonnet"
+    }
+  ]
+}

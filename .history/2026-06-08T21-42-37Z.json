@@ -1,0 +1,3484 @@
+{
+  "generatedAt": "2026-06-08T21:42:37.232Z",
+  "commit": "34eefa3",
+  "data": {
+    "epics": [
+      {
+        "id": "EPIC-0001",
+        "title": "Foundation & Infrastructure",
+        "description": "Next.js scaffold, Supabase project, schema migrations, RLS policies, Mapbox integration, master club seed. Dependency for every other epic.",
+        "releaseTarget": "MVP",
+        "status": "Planned",
+        "startDate": null,
+        "doneDate": null,
+        "dependencies": []
+      },
+      {
+        "id": "EPIC-0002",
+        "title": "Tournament Setup (Admin)",
+        "description": "Four-step wizard to create tournament, configure course holes, drop pin coordinates on satellite map, and activate. Makes every other admin and player feature workable.",
+        "releaseTarget": "MVP",
+        "status": "Planned",
+        "startDate": null,
+        "doneDate": null,
+        "dependencies": [
+          "EPIC-0001"
+        ]
+      },
+      {
+        "id": "EPIC-0003",
+        "title": "Registration & Profile",
+        "description": "Invite-driven player self-registration (4-step), team search, captain/concierge mode for bulk team registration, profile page. Enables players to enter the system.",
+        "releaseTarget": "MVP",
+        "status": "Planned",
+        "startDate": null,
+        "doneDate": null,
+        "dependencies": [
+          "EPIC-0001"
+        ]
+      },
+      {
+        "id": "EPIC-0004",
+        "title": "Pre-Round Setup",
+        "description": "Post-login tournament home with countdown to tee, team confirmation, bag review, and Start Round CTA. Bridges registration to active play.",
+        "releaseTarget": "MVP",
+        "status": "Planned",
+        "startDate": null,
+        "doneDate": null,
+        "dependencies": [
+          "EPIC-0002",
+          "EPIC-0003"
+        ]
+      },
+      {
+        "id": "EPIC-0005",
+        "title": "Round Tracking",
+        "description": "The core experience. GPS shot capture, Mapbox map view, club selection, outcome handling (In Play / OOB / Mulligan / Sunk), OOB rehit linkage, edit prior shot, foursome turn picker, hole summary. The riskiest epic by far.",
+        "releaseTarget": "MVP",
+        "status": "Planned",
+        "startDate": null,
+        "doneDate": null,
+        "dependencies": [
+          "EPIC-0001",
+          "EPIC-0004"
+        ]
+      },
+      {
+        "id": "EPIC-0006",
+        "title": "Scoring Engine",
+        "description": "PostgreSQL RPC functions for Best Ball calculation, provisional vs final hole status, team standings view. Variable team_size support. Phase 1 ships Best Ball only.",
+        "releaseTarget": "MVP",
+        "status": "Planned",
+        "startDate": null,
+        "doneDate": null,
+        "dependencies": [
+          "EPIC-0001",
+          "EPIC-0005"
+        ]
+      },
+      {
+        "id": "EPIC-0007",
+        "title": "Leaderboard",
+        "description": "Public shareable leaderboard at /t/[slug]/leaderboard (no auth, SSR, sponsor branded) and post-login team leaderboard with sticky current-team card. Realtime via Supabase Realtime channel with client coalescing and 30s polling fallback.",
+        "releaseTarget": "MVP",
+        "status": "Planned",
+        "startDate": null,
+        "doneDate": null,
+        "dependencies": [
+          "EPIC-0006"
+        ]
+      },
+      {
+        "id": "EPIC-0008",
+        "title": "Admin Operations",
+        "description": "Admin panel for live ops dashboard, player management, score editing with audit trail, team assignment, master club list management. Tournament organizer role scopes admin actions per tournament.",
+        "releaseTarget": "MVP",
+        "status": "Planned",
+        "startDate": null,
+        "doneDate": null,
+        "dependencies": [
+          "EPIC-0001",
+          "EPIC-0002"
+        ]
+      },
+      {
+        "id": "EPIC-0009",
+        "title": "Offline & Sync",
+        "description": "IndexedDB shot queue with write-through pattern, sync-on-reconnect with newer-wins conflict resolution, offline UI indicator. Phase 1 ships IndexedDB only; Service Worker proper deferred to Phase 2.",
+        "releaseTarget": "MVP",
+        "status": "Planned",
+        "startDate": null,
+        "doneDate": null,
+        "dependencies": [
+          "EPIC-0005"
+        ]
+      },
+      {
+        "id": "EPIC-0010",
+        "title": "Security & 2FA",
+        "description": "SMS 2FA enrollment and challenge, password reset, admin force-2FA, audit log for admin actions, score dispute flow. Deferred to Phase 2 — Phase 1 ships with email + password only.",
+        "releaseTarget": "v1.1",
+        "status": "Planned",
+        "startDate": null,
+        "doneDate": null,
+        "dependencies": [
+          "EPIC-0003"
+        ]
+      }
+    ],
+    "stories": [
+      {
+        "id": "US-0001",
+        "epicId": "EPIC-0001",
+        "title": "As a developer, I want a Next.js 14 App Router project scaffolded with TypeScript, Tailwind, shadcn/ui, and Supabase client, so that all subsequent epics can build on a consistent foundation.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0001-nextjs-scaffold",
+        "acs": [
+          {
+            "id": "AC-0001",
+            "text": "Next.js 14 App Router project boots locally with `npm run dev` and renders a placeholder page",
+            "done": false
+          },
+          {
+            "id": "AC-0002",
+            "text": "TypeScript strict mode enabled; `tsconfig.json` extends Next.js defaults",
+            "done": false
+          },
+          {
+            "id": "AC-0003",
+            "text": "Tailwind CSS configured with PostCSS pipeline; sample utility class renders",
+            "done": false
+          },
+          {
+            "id": "AC-0004",
+            "text": "shadcn/ui CLI initialized; `components/ui` directory exists with at least Button installed",
+            "done": false
+          },
+          {
+            "id": "AC-0005",
+            "text": "`@supabase/ssr` and `@supabase/supabase-js` installed; browser + server client factories in `lib/supabase/`",
+            "done": false
+          },
+          {
+            "id": "AC-0006",
+            "text": "`.env.local.example` documents `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_MAPBOX_TOKEN`",
+            "done": false
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "id": "US-0002",
+        "epicId": "EPIC-0001",
+        "title": "As a developer, I want a Supabase project provisioned with PostgreSQL and email auth enabled, so that we have a backend ready for schema migrations and authentication.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0002-supabase-project",
+        "acs": [
+          {
+            "id": "AC-0007",
+            "text": "Supabase project created (cloud or local via `supabase start`)",
+            "done": false
+          },
+          {
+            "id": "AC-0008",
+            "text": "Email + password auth provider enabled in Supabase Auth settings",
+            "done": false
+          },
+          {
+            "id": "AC-0009",
+            "text": "Project URL and anon key documented in `.env.local`",
+            "done": false
+          },
+          {
+            "id": "AC-0010",
+            "text": "`supabase/config.toml` checked into repo for reproducible local dev",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0001"
+        ]
+      },
+      {
+        "id": "US-0003",
+        "epicId": "EPIC-0001",
+        "title": "As a player, I want the FDgolf — built with AI/RUN app chrome on every authenticated page, so that the brand identity is consistent across the entire app.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0003-app-chrome",
+        "acs": [
+          {
+            "id": "AC-0011",
+            "text": "`AppChrome` component renders dark forest-green (#0e2818) header bar",
+            "done": false
+          },
+          {
+            "id": "AC-0012",
+            "text": "Header displays \"FDgolf\" with green \"FD\" mark (#6ee7a0) and white \"golf\"",
+            "done": false
+          },
+          {
+            "id": "AC-0013",
+            "text": "Header displays \"built with AI/RUN\" tagline with AI/RUN logo on the right",
+            "done": false
+          },
+          {
+            "id": "AC-0014",
+            "text": "AppChrome is responsive (mobile, tablet, desktop)",
+            "done": false
+          },
+          {
+            "id": "AC-0015",
+            "text": "Used in the root `app/layout.tsx` so all routes inherit it",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0001"
+        ]
+      },
+      {
+        "id": "US-0004",
+        "epicId": "EPIC-0001",
+        "title": "As a player, I want to log in with email and password and stay logged in across page navigation, so that I don't have to re-authenticate constantly during my round.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0004-auth-login",
+        "acs": [
+          {
+            "id": "AC-0016",
+            "text": "`/login` page renders email + password form with FDgolf branding",
+            "done": false
+          },
+          {
+            "id": "AC-0017",
+            "text": "Successful login redirects to intended route (default `/`)",
+            "done": false
+          },
+          {
+            "id": "AC-0018",
+            "text": "Failed login displays an error message without exposing whether the email exists",
+            "done": false
+          },
+          {
+            "id": "AC-0019",
+            "text": "Session persists via cookies set by Supabase SSR client",
+            "done": false
+          },
+          {
+            "id": "AC-0020",
+            "text": "`/logout` route clears the session and redirects to `/login`",
+            "done": false
+          },
+          {
+            "id": "AC-0021",
+            "text": "Next.js middleware refreshes the session on every request",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0002"
+        ]
+      },
+      {
+        "id": "US-0005",
+        "epicId": "EPIC-0001",
+        "title": "As a developer, I want the complete DB schema migrated, so that all subsequent feature work has the tables it needs.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0005-db-schema",
+        "acs": [
+          {
+            "id": "AC-0022",
+            "text": "Migration creates tables: tournaments, courses, holes, players, user_roles, tournament_registrations, teams, rounds, shots, shot_edits, shot_attestations, hole_scores, team_hole_scores, clubs, tournament_clubs, score_disputes",
+            "done": false
+          },
+          {
+            "id": "AC-0023",
+            "text": "All enums defined: tournament_format, tournament_start_style, tournament_status, role_type, registration_status, round_status, shot_outcome, rehit_origin_type, hole_score_status, club_type, dispute_status",
+            "done": false
+          },
+          {
+            "id": "AC-0024",
+            "text": "Foreign keys and unique constraints match the data model in design spec section 4",
+            "done": false
+          },
+          {
+            "id": "AC-0025",
+            "text": "`teams.team_size` int column with check constraint (2 <= team_size <= 5)",
+            "done": false
+          },
+          {
+            "id": "AC-0026",
+            "text": "`shots.updated_at` defaults to now() and triggers update on row change",
+            "done": false
+          },
+          {
+            "id": "AC-0027",
+            "text": "Migration runs cleanly on a fresh database via `supabase db reset`",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0002"
+        ]
+      },
+      {
+        "id": "US-0006",
+        "epicId": "EPIC-0001",
+        "title": "As a developer, I want Row Level Security policies enforced on every table, so that tournament data is isolated and roles are respected.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0006-rls-policies",
+        "acs": [
+          {
+            "id": "AC-0028",
+            "text": "RLS enabled on every table created in US-0005",
+            "done": false
+          },
+          {
+            "id": "AC-0029",
+            "text": "Public read on tournaments, team_hole_scores, clubs (drives the public leaderboard and registration landing)",
+            "done": false
+          },
+          {
+            "id": "AC-0030",
+            "text": "Players can read self + own team members; admin bypass exists",
+            "done": false
+          },
+          {
+            "id": "AC-0031",
+            "text": "Players can write shots only during own round",
+            "done": false
+          },
+          {
+            "id": "AC-0032",
+            "text": "tournament_organizer scoped to their tournament_id",
+            "done": false
+          },
+          {
+            "id": "AC-0033",
+            "text": "Public payload on team_hole_scores includes player name + company only (no email, phone, year_of_birth, gender)",
+            "done": false
+          },
+          {
+            "id": "AC-0034",
+            "text": "SQL tests verify each policy with a non-privileged JWT",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0005"
+        ]
+      },
+      {
+        "id": "US-0007",
+        "epicId": "EPIC-0001",
+        "title": "As a player, I want a Mapbox map ready to render in the app, so that round tracking can show me my position and the hole pin.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0007-mapbox",
+        "acs": [
+          {
+            "id": "AC-0035",
+            "text": "`mapbox-gl` and `react-map-gl` installed",
+            "done": false
+          },
+          {
+            "id": "AC-0036",
+            "text": "`MapView` component renders a Mapbox map centred on a passed-in lat/lng",
+            "done": false
+          },
+          {
+            "id": "AC-0037",
+            "text": "Custom golf-course-style URL configurable via env var with sensible default",
+            "done": false
+          },
+          {
+            "id": "AC-0038",
+            "text": "Component renders without errors when used in a Client Component",
+            "done": false
+          },
+          {
+            "id": "AC-0039",
+            "text": "Mapbox token loaded from `NEXT_PUBLIC_MAPBOX_TOKEN` env var; missing token shows a friendly fallback message instead of crashing",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0001"
+        ]
+      },
+      {
+        "id": "US-0008",
+        "epicId": "EPIC-0001",
+        "title": "As an admin, I want the master club list seeded with a standard golf bag, so that tournaments can use it out of the box.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0008-seed-clubs",
+        "acs": [
+          {
+            "id": "AC-0040",
+            "text": "Seed migration inserts 15 standard clubs: Driver, 3-wood, 5-wood, 3-hybrid, 4–9 iron, PW, GW, SW, LW, Putter",
+            "done": false
+          },
+          {
+            "id": "AC-0041",
+            "text": "Each club has `club_type`, `default_loft_degrees` (except Putter), `display_order`, `is_active=true`",
+            "done": false
+          },
+          {
+            "id": "AC-0042",
+            "text": "Display order matches a real golfer's bag traversal (Driver → wedges → Putter)",
+            "done": false
+          },
+          {
+            "id": "AC-0043",
+            "text": "Seed is idempotent (re-running does not create duplicates)",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0005"
+        ]
+      },
+      {
+        "id": "US-0009",
+        "epicId": "EPIC-0002",
+        "title": "As an admin, I want to create a tournament with basic info, so that registration and play can be configured around it.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0009-tournament-create",
+        "acs": [
+          {
+            "id": "AC-0044",
+            "text": "Form fields: name (req), starts_at date+time (req), venue (req), format (req, defaults Best Ball), start_style (req, defaults shotgun), holes_count (req, defaults 18)",
+            "done": false
+          },
+          {
+            "id": "AC-0045",
+            "text": "On submit, tournament is created with status=draft",
+            "done": false
+          },
+          {
+            "id": "AC-0046",
+            "text": "Slug auto-generated from name (lowercase, hyphens, ascii-only)",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0006"
+        ]
+      },
+      {
+        "id": "US-0010",
+        "epicId": "EPIC-0002",
+        "title": "As an admin, I want to override the auto-generated slug, so that the public URL matches the printed invitations.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0010-slug-override",
+        "acs": [
+          {
+            "id": "AC-0047",
+            "text": "Slug field is editable on the basics step of the wizard",
+            "done": false
+          },
+          {
+            "id": "AC-0048",
+            "text": "Uniqueness check runs on blur; conflict shows inline error",
+            "done": false
+          },
+          {
+            "id": "AC-0049",
+            "text": "Only lowercase letters, digits, hyphens accepted",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0009"
+        ]
+      },
+      {
+        "id": "US-0011",
+        "epicId": "EPIC-0002",
+        "title": "As an admin, I want to enter par, yardage, and stroke index for each hole, so that the scoring engine and round map have the data they need.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0011-course-holes",
+        "acs": [
+          {
+            "id": "AC-0050",
+            "text": "Course holes table renders one editable row per hole (1 to holes_count)",
+            "done": false
+          },
+          {
+            "id": "AC-0051",
+            "text": "Par values constrained to 3, 4, 5",
+            "done": false
+          },
+          {
+            "id": "AC-0052",
+            "text": "Stroke indices constrained to 1–18, unique within the course",
+            "done": false
+          },
+          {
+            "id": "AC-0053",
+            "text": "Total par computed and displayed at the bottom",
+            "done": false
+          },
+          {
+            "id": "AC-0054",
+            "text": "Save persists rows to the `holes` table linked to the tournament's course",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0009"
+        ]
+      },
+      {
+        "id": "US-0012",
+        "epicId": "EPIC-0002",
+        "title": "As an admin, I want a Granite Ridge GC preset to one-tap import, so that I don't hand-key 18 rows for the first tournament.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0012-course-preset",
+        "acs": [
+          {
+            "id": "AC-0055",
+            "text": "\"Import preset\" button shows a list of available presets (at least Granite Ridge GC)",
+            "done": false
+          },
+          {
+            "id": "AC-0056",
+            "text": "Importing populates the 18-hole table with par, yardage, stroke index",
+            "done": false
+          },
+          {
+            "id": "AC-0057",
+            "text": "Admin can then edit any value before saving",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0011"
+        ]
+      },
+      {
+        "id": "US-0013",
+        "epicId": "EPIC-0002",
+        "title": "As an admin, I want to drop pin coordinates for each hole on a satellite map, so that the round tracking app can compute distance-to-pin.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0013-pin-placement",
+        "acs": [
+          {
+            "id": "AC-0058",
+            "text": "Satellite map renders for each hole at a sensible default zoom around the course",
+            "done": false
+          },
+          {
+            "id": "AC-0059",
+            "text": "Click on the map drops a pin; coordinates saved to holes.pin_lat / pin_lng",
+            "done": false
+          },
+          {
+            "id": "AC-0060",
+            "text": "Tee coordinates can also be dropped (separate mode)",
+            "done": false
+          },
+          {
+            "id": "AC-0061",
+            "text": "Progress bar shows N of 18 holes with pins set",
+            "done": false
+          },
+          {
+            "id": "AC-0062",
+            "text": "\"Save and continue to next hole\" button auto-advances",
+            "done": false
+          },
+          {
+            "id": "AC-0063",
+            "text": "Holes table shows pin status (Set or Missing) per hole",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0011",
+          "US-0007"
+        ]
+      },
+      {
+        "id": "US-0014",
+        "epicId": "EPIC-0002",
+        "title": "As a player, I want a Mapbox Static API PNG snapshot stored per hole, so that distance-to-pin works even if the Mapbox tile API is rate-limited mid-round.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0014-static-map-snapshot",
+        "acs": [
+          {
+            "id": "AC-0064",
+            "text": "On pin save, a request is made to Mapbox Static API for the hole region",
+            "done": false
+          },
+          {
+            "id": "AC-0065",
+            "text": "PNG is uploaded to Supabase Storage in `course-maps/{courseId}/hole-{n}.png`",
+            "done": false
+          },
+          {
+            "id": "AC-0066",
+            "text": "`holes.static_map_url` populated with the public URL",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0013"
+        ]
+      },
+      {
+        "id": "US-0015",
+        "epicId": "EPIC-0002",
+        "title": "As an admin, I want to pick which clubs from the master list are available in this tournament, so that I can enforce sponsor-supplied bags or simplified club lists.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0015-tournament-clubs",
+        "acs": [
+          {
+            "id": "AC-0067",
+            "text": "All master clubs listed with toggle controls; defaults to all-active",
+            "done": false
+          },
+          {
+            "id": "AC-0068",
+            "text": "Disabled clubs are excluded from the player's bag picker in pre-round setup",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0008",
+          "US-0009"
+        ]
+      },
+      {
+        "id": "US-0016",
+        "epicId": "EPIC-0002",
+        "title": "As an admin, I want CIBC tournament sponsor logos (First Derivative, AI/Run) hardcoded for the first tournament, so that the public leaderboard ships on schedule.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0016-sponsor-hardcode",
+        "acs": [
+          {
+            "id": "AC-0069",
+            "text": "Logos shipped as static assets in `public/sponsors/`",
+            "done": false
+          },
+          {
+            "id": "AC-0070",
+            "text": "Tournament with slug `cibc-arc-2024` (or current first tournament's slug) shows both logos on public leaderboard",
+            "done": false
+          },
+          {
+            "id": "AC-0071",
+            "text": "Tournaments with other slugs show no sponsor logos until admin upload UI ships in Phase 2",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0009"
+        ]
+      },
+      {
+        "id": "US-0017",
+        "epicId": "EPIC-0002",
+        "title": "As an admin, I want a pre-flight checklist before activation, so that I don't open registration on a misconfigured tournament.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0017-preflight-checklist",
+        "acs": [
+          {
+            "id": "AC-0072",
+            "text": "Checklist shows green checks for: basics complete, all holes configured (par 72 or expected), all 18 pin coordinates set, slug verified unique",
+            "done": false
+          },
+          {
+            "id": "AC-0073",
+            "text": "Checklist shows amber reminders for: clubs configured, teams unassigned",
+            "done": false
+          },
+          {
+            "id": "AC-0074",
+            "text": "Activate button disabled until all green checks pass",
+            "done": false
+          },
+          {
+            "id": "AC-0075",
+            "text": "Live preview card shows what the public leaderboard banner will look like",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0013",
+          "US-0015"
+        ]
+      },
+      {
+        "id": "US-0018",
+        "epicId": "EPIC-0002",
+        "title": "As an admin, I want buttons to move the tournament between statuses, so that I can open registration, start play, and close the tournament cleanly.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0018-status-workflow",
+        "acs": [
+          {
+            "id": "AC-0076",
+            "text": "From draft, \"Open registration\" moves status to registration_open",
+            "done": false
+          },
+          {
+            "id": "AC-0077",
+            "text": "From registration_open, \"Start tournament\" moves status to active",
+            "done": false
+          },
+          {
+            "id": "AC-0078",
+            "text": "From active, \"Complete tournament\" moves status to completed",
+            "done": false
+          },
+          {
+            "id": "AC-0079",
+            "text": "Paused status reachable via DB direct update; no UI in Phase 1",
+            "done": false
+          },
+          {
+            "id": "AC-0080",
+            "text": "Transitions are logged with timestamp and admin actor",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0017"
+        ]
+      },
+      {
+        "id": "US-0019",
+        "epicId": "EPIC-0002",
+        "title": "As an admin, I want the public registration URL displayed after activation, so that I can copy-paste it into the invite emails.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0019-post-activation-url",
+        "acs": [
+          {
+            "id": "AC-0081",
+            "text": "Post-activation confirmation screen shows the URL `fdgolf.app/register/{slug}`",
+            "done": false
+          },
+          {
+            "id": "AC-0082",
+            "text": "Copy-to-clipboard button",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0018"
+        ]
+      },
+      {
+        "id": "US-0020",
+        "epicId": "EPIC-0002",
+        "title": "As an admin, I want to promote a player to tournament_organizer for a specific tournament, so that ops responsibility can be delegated without granting global admin.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0020-organizer-role",
+        "acs": [
+          {
+            "id": "AC-0083",
+            "text": "Admin can search any player and click \"Make organizer\" for a tournament",
+            "done": false
+          },
+          {
+            "id": "AC-0084",
+            "text": "user_roles row inserted with role=tournament_organizer and tournament_id=this_tournament",
+            "done": false
+          },
+          {
+            "id": "AC-0085",
+            "text": "Organizer can perform admin actions only on rows where tournament_id matches their role's tournament_id",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0006"
+        ]
+      },
+      {
+        "id": "US-0021",
+        "epicId": "EPIC-0003",
+        "title": "As a player, I want a tournament-branded invite landing page, so that I know what I'm signing up for before I start the form.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0021-invite-landing",
+        "acs": [
+          {
+            "id": "AC-0086",
+            "text": "Route `/register/{slug}` resolves the tournament from the slug",
+            "done": false
+          },
+          {
+            "id": "AC-0087",
+            "text": "Tournament name, venue, date, format displayed",
+            "done": false
+          },
+          {
+            "id": "AC-0088",
+            "text": "Sponsor logos visible (if configured)",
+            "done": false
+          },
+          {
+            "id": "AC-0089",
+            "text": "\"Register\" CTA and \"I have an account\" link",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0009"
+        ]
+      },
+      {
+        "id": "US-0022",
+        "epicId": "EPIC-0003",
+        "title": "As a player, I want to enter my personal info, so that the system knows who I am and how to contact me.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0022-personal-info",
+        "acs": [
+          {
+            "id": "AC-0090",
+            "text": "Required fields: full name, title, company, email, mobile phone",
+            "done": false
+          },
+          {
+            "id": "AC-0091",
+            "text": "Optional fields explicitly labelled: year of birth (opt), gender (opt with prefer-not-to-say)",
+            "done": false
+          },
+          {
+            "id": "AC-0092",
+            "text": "Email format and phone format validated client-side and server-side",
+            "done": false
+          },
+          {
+            "id": "AC-0093",
+            "text": "Form values persist across step navigation",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0021"
+        ]
+      },
+      {
+        "id": "US-0023",
+        "epicId": "EPIC-0003",
+        "title": "As a player, I want to set a password with confirmation, so that I can log in next time.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0023-password-set",
+        "acs": [
+          {
+            "id": "AC-0094",
+            "text": "Two password fields with match validation",
+            "done": false
+          },
+          {
+            "id": "AC-0095",
+            "text": "Minimum 8 characters required in Phase 1 (Phase 2 strengthens)",
+            "done": false
+          },
+          {
+            "id": "AC-0096",
+            "text": "On submit, account created via Supabase Auth and player row inserted",
+            "done": false
+          },
+          {
+            "id": "AC-0097",
+            "text": "Player is auto-logged-in after account creation",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0022"
+        ]
+      },
+      {
+        "id": "US-0024",
+        "epicId": "EPIC-0003",
+        "title": "As a player, I want to choose my team and search for foursome members, so that I'm grouped with my colleagues for play.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0024-team-search",
+        "acs": [
+          {
+            "id": "AC-0098",
+            "text": "Team number selector lists 1 to tournament max teams",
+            "done": false
+          },
+          {
+            "id": "AC-0099",
+            "text": "Member search returns existing registered players by name or email",
+            "done": false
+          },
+          {
+            "id": "AC-0100",
+            "text": "\"Add member\" can add placeholder rows for non-registered players (email-only)",
+            "done": false
+          },
+          {
+            "id": "AC-0101",
+            "text": "tournament_registrations row created with team_id linked",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0023"
+        ]
+      },
+      {
+        "id": "US-0025",
+        "epicId": "EPIC-0003",
+        "title": "As a team captain, I want to register and assign all my team members in one flow, so that non-tech executives don't have to use the app themselves.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0025-captain-concierge",
+        "acs": [
+          {
+            "id": "AC-0102",
+            "text": "During registration, player can check \"I'm the team captain\"",
+            "done": false
+          },
+          {
+            "id": "AC-0103",
+            "text": "Captain dashboard at /team/{teamId}/captain accessible post-login",
+            "done": false
+          },
+          {
+            "id": "AC-0104",
+            "text": "Captain can add new team members by name + email",
+            "done": false
+          },
+          {
+            "id": "AC-0105",
+            "text": "Each added member gets a signed invite link sent (stub email; logged to console in Phase 1)",
+            "done": false
+          },
+          {
+            "id": "AC-0106",
+            "text": "Invite link goes to a one-step \"Set password\" page with profile pre-filled by captain",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0024"
+        ]
+      },
+      {
+        "id": "US-0026",
+        "epicId": "EPIC-0003",
+        "title": "As a developer, I want a signed invite link generator and verifier, so that captain-issued invites are tamper-proof.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0026-invite-tokens",
+        "acs": [
+          {
+            "id": "AC-0107",
+            "text": "Generator produces a JWT signed with Supabase service role key containing player_id and team_id",
+            "done": false
+          },
+          {
+            "id": "AC-0108",
+            "text": "Verifier rejects expired (>14 days) and invalid signatures",
+            "done": false
+          },
+          {
+            "id": "AC-0109",
+            "text": "Email send is stubbed in Phase 1 (logged); real send wired in Phase 2",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0025"
+        ]
+      },
+      {
+        "id": "US-0027",
+        "epicId": "EPIC-0003",
+        "title": "As a player, I want a profile page where I can view and edit my info, so that I can correct mistakes and see my tournament history.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0027-profile-page",
+        "acs": [
+          {
+            "id": "AC-0110",
+            "text": "Route `/profile` shows current player's profile",
+            "done": false
+          },
+          {
+            "id": "AC-0111",
+            "text": "Editable: name, title, company, phone, year of birth, gender",
+            "done": false
+          },
+          {
+            "id": "AC-0112",
+            "text": "Read-only: email, handicap (Phase 2 edits handicap)",
+            "done": false
+          },
+          {
+            "id": "AC-0113",
+            "text": "Tournament history list (Phase 1 shows current tournament only)",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0023"
+        ]
+      },
+      {
+        "id": "US-0028",
+        "epicId": "EPIC-0003",
+        "title": "As a player, I want to request a password reset link, so that I can recover my account if I forget my password.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0028-password-reset",
+        "acs": [
+          {
+            "id": "AC-0114",
+            "text": "`/forgot-password` accepts email, calls Supabase Auth reset",
+            "done": false
+          },
+          {
+            "id": "AC-0115",
+            "text": "Confirmation shown (\"Check your inbox\") regardless of whether the email exists",
+            "done": false
+          },
+          {
+            "id": "AC-0116",
+            "text": "Reset link from email opens `/reset-password?token=...` page where new password can be set",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0023"
+        ]
+      },
+      {
+        "id": "US-0029",
+        "epicId": "EPIC-0003",
+        "title": "As an admin, I want teams to support 2-, 3-, 4-, or 5-player sizes, so that drop-outs and oversized teams are handled cleanly.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0029-variable-team-size",
+        "acs": [
+          {
+            "id": "AC-0117",
+            "text": "Team form has team_size selector 2-5 (default 4)",
+            "done": false
+          },
+          {
+            "id": "AC-0118",
+            "text": "Team detail UI says \"Foursome\" when team_size=4, \"team of N\" otherwise",
+            "done": false
+          },
+          {
+            "id": "AC-0119",
+            "text": "Best Ball calculation in EPIC-0006 uses actual team_size (not hardcoded 4)",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0005"
+        ]
+      },
+      {
+        "id": "US-0030",
+        "epicId": "EPIC-0004",
+        "title": "As a player, I want a tournament home page after I log in, so that I know my tee time, my team, and where to start.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0030-tournament-home",
+        "acs": [
+          {
+            "id": "AC-0120",
+            "text": "Countdown to starts_at displayed at top",
+            "done": false
+          },
+          {
+            "id": "AC-0121",
+            "text": "Team card with all members and their company",
+            "done": false
+          },
+          {
+            "id": "AC-0122",
+            "text": "Starting hole pin card with par, yardage",
+            "done": false
+          },
+          {
+            "id": "AC-0123",
+            "text": "\"Start Round\" primary CTA",
+            "done": false
+          },
+          {
+            "id": "AC-0124",
+            "text": "\"View leaderboard\" secondary link",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0023",
+          "US-0018"
+        ]
+      },
+      {
+        "id": "US-0031",
+        "epicId": "EPIC-0004",
+        "title": "As a player, I want to confirm or remove clubs from my bag before I start, so that the picker shows only clubs I actually have.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0031-bag-confirm",
+        "acs": [
+          {
+            "id": "AC-0125",
+            "text": "Tournament club list rendered as toggleable chips",
+            "done": false
+          },
+          {
+            "id": "AC-0126",
+            "text": "Defaults all on",
+            "done": false
+          },
+          {
+            "id": "AC-0127",
+            "text": "Tap to remove (greys out)",
+            "done": false
+          },
+          {
+            "id": "AC-0128",
+            "text": "Bag selection persisted to the round record",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0015",
+          "US-0030"
+        ]
+      },
+      {
+        "id": "US-0032",
+        "epicId": "EPIC-0004",
+        "title": "As a player, I want to confirm who goes first, so that the team starts in the right order.",
+        "priority": "Low",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0032-first-player",
+        "acs": [
+          {
+            "id": "AC-0129",
+            "text": "\"Going on first\" defaults to current player",
+            "done": false
+          },
+          {
+            "id": "AC-0130",
+            "text": "\"Change\" button opens picker with team members",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0030"
+        ]
+      },
+      {
+        "id": "US-0033",
+        "epicId": "EPIC-0004",
+        "title": "As a player, I want my round record created when I tap Start Round, so that subsequent shots have a parent.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0033-round-create",
+        "acs": [
+          {
+            "id": "AC-0131",
+            "text": "Inserts rounds row with status=in_progress, start_hole=tournament-assigned, started_at=now()",
+            "done": false
+          },
+          {
+            "id": "AC-0132",
+            "text": "Redirects to /round/{roundId} after creation",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0030"
+        ]
+      },
+      {
+        "id": "US-0034",
+        "epicId": "EPIC-0004",
+        "title": "As a player, I want a Begin Hole X entry screen, so that I see the map, distance, and club picker before I take my first shot.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0034-begin-hole",
+        "acs": [
+          {
+            "id": "AC-0133",
+            "text": "Map view shows hole pin, my GPS location, tee marker",
+            "done": false
+          },
+          {
+            "id": "AC-0134",
+            "text": "Distance-to-pin displayed (approx prefix)",
+            "done": false
+          },
+          {
+            "id": "AC-0135",
+            "text": "Club picker shows tournament bag with smart default (Driver on tee, otherwise last-used)",
+            "done": false
+          },
+          {
+            "id": "AC-0136",
+            "text": "\"Start shot — capture GPS\" CTA",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0033",
+          "US-0007"
+        ]
+      },
+      {
+        "id": "US-0035",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want the active hole map view to show my shot trail, so that I can see where I've been and where the pin is.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0035-active-map",
+        "acs": [
+          {
+            "id": "AC-0137",
+            "text": "Map shows fairway base layer from cached Mapbox Static URL",
+            "done": false
+          },
+          {
+            "id": "AC-0138",
+            "text": "Hole pin marker rendered",
+            "done": false
+          },
+          {
+            "id": "AC-0139",
+            "text": "Tee marker rendered",
+            "done": false
+          },
+          {
+            "id": "AC-0140",
+            "text": "Prior shots rendered as dashed lines + numbered markers",
+            "done": false
+          },
+          {
+            "id": "AC-0141",
+            "text": "Current player position pulsed in red",
+            "done": false
+          },
+          {
+            "id": "AC-0142",
+            "text": "Distance-to-pin overlay top-left",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0034",
+          "US-0014"
+        ]
+      },
+      {
+        "id": "US-0036",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want to capture my GPS position when I take a shot, so that the system knows where I hit from.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0036-shot-gps",
+        "acs": [
+          {
+            "id": "AC-0143",
+            "text": "navigator.geolocation.getCurrentPosition called with high accuracy",
+            "done": false
+          },
+          {
+            "id": "AC-0144",
+            "text": "lat/lng captured to local state on Start Shot tap",
+            "done": false
+          },
+          {
+            "id": "AC-0145",
+            "text": "Selected club persisted with the shot draft",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0035"
+        ]
+      },
+      {
+        "id": "US-0037",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want four outcome buttons after I hit a shot, so that I can record what happened.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0037-outcome-picker",
+        "acs": [
+          {
+            "id": "AC-0146",
+            "text": "Four buttons: In Play (neutral green), Sunk (filled green), Mulligan (amber), OOB (red)",
+            "done": false
+          },
+          {
+            "id": "AC-0147",
+            "text": "In Play / Sunk / Mulligan tap inserts shots row with appropriate stroke_count (1 / 1 / 0)",
+            "done": false
+          },
+          {
+            "id": "AC-0148",
+            "text": "OOB tap triggers the OOB rehit prompt (US-0038)",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0036"
+        ]
+      },
+      {
+        "id": "US-0038",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want to choose where my rehit comes from after OOB, so that the recorded GPS origin is accurate.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0038-oob-rehit",
+        "acs": [
+          {
+            "id": "AC-0149",
+            "text": "Prompt offers \"Rehit from OOB location\" or \"Rehit from prior position\"",
+            "done": false
+          },
+          {
+            "id": "AC-0150",
+            "text": "OOB shot inserted with stroke_count=2 (1 for shot + 1 penalty)",
+            "done": false
+          },
+          {
+            "id": "AC-0151",
+            "text": "Follow-up shot's origin_lat/lng set to chosen rehit position",
+            "done": false
+          },
+          {
+            "id": "AC-0152",
+            "text": "rehit_from_shot_id and rehit_origin set on the follow-up shot",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0037"
+        ]
+      },
+      {
+        "id": "US-0039",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want Mulligan to not count as a stroke, so that I can reshoot without penalty.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0039-mulligan",
+        "acs": [
+          {
+            "id": "AC-0153",
+            "text": "Mulligan outcome inserts shot with stroke_count=0",
+            "done": false
+          },
+          {
+            "id": "AC-0154",
+            "text": "Next shot's origin defaults to same location",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0037"
+        ]
+      },
+      {
+        "id": "US-0040",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want Shot Sunk to close the hole for me, so that the hole score is recorded and the turn moves on.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0040-shot-sunk",
+        "acs": [
+          {
+            "id": "AC-0155",
+            "text": "Sunk outcome inserts shot with stroke_count=1",
+            "done": false
+          },
+          {
+            "id": "AC-0156",
+            "text": "Computes gross_score as sum of stroke_count on this hole",
+            "done": false
+          },
+          {
+            "id": "AC-0157",
+            "text": "Inserts/updates hole_scores row with status=provisional or final",
+            "done": false
+          },
+          {
+            "id": "AC-0158",
+            "text": "Triggers team_hole_scores recalc via EPIC-0006",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0037"
+        ]
+      },
+      {
+        "id": "US-0041",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want to edit any prior shot in this round, so that I can correct mistakes without admin help.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0041-edit-shot",
+        "acs": [
+          {
+            "id": "AC-0159",
+            "text": "Tap a shot in the map or hole summary to open the edit panel",
+            "done": false
+          },
+          {
+            "id": "AC-0160",
+            "text": "Editable: club, outcome, GPS origin",
+            "done": false
+          },
+          {
+            "id": "AC-0161",
+            "text": "Before/after states recorded in shot_edits audit table",
+            "done": false
+          },
+          {
+            "id": "AC-0162",
+            "text": "shots.updated_at and updated_by set on save",
+            "done": false
+          },
+          {
+            "id": "AC-0163",
+            "text": "Hole scores recalculated if outcome or stroke_count changed",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0040"
+        ]
+      },
+      {
+        "id": "US-0042",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want the foursome turn picker to auto-select the next player by farthest from pin, so that the team plays in golf order without thinking.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0042-turn-picker",
+        "acs": [
+          {
+            "id": "AC-0164",
+            "text": "After a shot is recorded, compute distance-to-pin for each team member's last unfinalized shot",
+            "done": false
+          },
+          {
+            "id": "AC-0165",
+            "text": "Auto-select the player with greatest distance",
+            "done": false
+          },
+          {
+            "id": "AC-0166",
+            "text": "Manual override available",
+            "done": false
+          },
+          {
+            "id": "AC-0167",
+            "text": "Players with sunk outcome on current hole excluded",
+            "done": false
+          },
+          {
+            "id": "AC-0168",
+            "text": "Works with team_size 2-5",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0040",
+          "US-0029"
+        ]
+      },
+      {
+        "id": "US-0043",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want a hole summary after all teammates hole out, so that I can see who scored what and our team total.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0043-hole-summary",
+        "acs": [
+          {
+            "id": "AC-0169",
+            "text": "Per-player gross score listed with par-relative annotation (e.g., \"bogey\", \"+2\")",
+            "done": false
+          },
+          {
+            "id": "AC-0170",
+            "text": "\"BEST\" badge on the contributing player whose score won the hole",
+            "done": false
+          },
+          {
+            "id": "AC-0171",
+            "text": "Team standing pre-loaded (current position out of N)",
+            "done": false
+          },
+          {
+            "id": "AC-0172",
+            "text": "\"Next: Hole X\" CTA where X is the next physical hole (handles shotgun start wrap)",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0040"
+        ]
+      },
+      {
+        "id": "US-0044",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want to move to the next hole, so that play continues smoothly.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0044-next-hole",
+        "acs": [
+          {
+            "id": "AC-0173",
+            "text": "Next advances to next physical hole accounting for 18-hole wrap from shotgun start",
+            "done": false
+          },
+          {
+            "id": "AC-0174",
+            "text": "New hole map renders; shot stream resets",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0043"
+        ]
+      },
+      {
+        "id": "US-0045",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want a \"Hole X of 18\" pill, so that I can see tournament progress regardless of which physical hole I'm on.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0045-progress-pill",
+        "acs": [
+          {
+            "id": "AC-0175",
+            "text": "Pill shows holes completed by team (1-18) plus current hole",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0044"
+        ]
+      },
+      {
+        "id": "US-0046",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want my round automatically marked complete when all 18 holes are scored, so that I'm not stuck in an \"active\" state.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0046-round-complete",
+        "acs": [
+          {
+            "id": "AC-0176",
+            "text": "When all 18 hole_scores are final, rounds.status set to completed and completed_at set",
+            "done": false
+          },
+          {
+            "id": "AC-0177",
+            "text": "Player is shown a \"Round complete\" screen with final score",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0044"
+        ]
+      },
+      {
+        "id": "US-0047",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want manual coordinate entry if GPS permission is denied, so that I can still record shots.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0047-gps-fallback",
+        "acs": [
+          {
+            "id": "AC-0178",
+            "text": "If geolocation permission denied, show explanation and \"Tap the map\" instructions",
+            "done": false
+          },
+          {
+            "id": "AC-0179",
+            "text": "Click on the map sets the shot's origin coordinates manually",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0036"
+        ]
+      },
+      {
+        "id": "US-0048",
+        "epicId": "EPIC-0005",
+        "title": "As a player, I want distances shown as approximate, so that I'm not misled by GPS accuracy limits.",
+        "priority": "Low",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0048-approx-distances",
+        "acs": [
+          {
+            "id": "AC-0180",
+            "text": "Display format \"~245 yds to pin\" with the approx prefix",
+            "done": false
+          },
+          {
+            "id": "AC-0181",
+            "text": "GPS accuracy (in metres) stored on the shot record (optional column)",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0035"
+        ]
+      },
+      {
+        "id": "US-0049",
+        "epicId": "EPIC-0006",
+        "title": "As a developer, I want a PostgreSQL function calc_best_ball_for_hole, so that team scoring is computed server-side consistently.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0049-best-ball-function",
+        "acs": [
+          {
+            "id": "AC-0182",
+            "text": "Function signature: calc_best_ball_for_hole(p_team_id uuid, p_hole_number int) returns (best_score int, contributing_player_id uuid, status hole_score_status)",
+            "done": false
+          },
+          {
+            "id": "AC-0183",
+            "text": "Returns min gross_score across team members for the hole",
+            "done": false
+          },
+          {
+            "id": "AC-0184",
+            "text": "Status is final only when all team_size members have final hole_score for this hole",
+            "done": false
+          },
+          {
+            "id": "AC-0185",
+            "text": "SQL tests verify with 2-, 3-, 4-, 5-player teams",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0005"
+        ]
+      },
+      {
+        "id": "US-0050",
+        "epicId": "EPIC-0006",
+        "title": "As a developer, I want a DB trigger on hole_scores that upserts team_hole_scores, so that team totals stay in sync without app-side bookkeeping.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0050-trigger-team-scores",
+        "acs": [
+          {
+            "id": "AC-0186",
+            "text": "AFTER INSERT/UPDATE on hole_scores calls calc_best_ball_for_hole",
+            "done": false
+          },
+          {
+            "id": "AC-0187",
+            "text": "team_hole_scores row created or updated with returned values",
+            "done": false
+          },
+          {
+            "id": "AC-0188",
+            "text": "status (provisional/final) flows from the function result",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0049"
+        ]
+      },
+      {
+        "id": "US-0051",
+        "epicId": "EPIC-0006",
+        "title": "As a developer, I want score-vs-par helpers, so that the leaderboard can show \"-2 to par\" without app-side math.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0051-vs-par-helpers",
+        "acs": [
+          {
+            "id": "AC-0189",
+            "text": "SQL view returns per-hole and cumulative score-vs-par",
+            "done": false
+          },
+          {
+            "id": "AC-0190",
+            "text": "Handles missing holes (returns null cumulative until first hole completes)",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0050"
+        ]
+      },
+      {
+        "id": "US-0052",
+        "epicId": "EPIC-0006",
+        "title": "As a developer, I want a team_standings SQL view, so that the leaderboard query is a single fetch.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0052-team-standings-view",
+        "acs": [
+          {
+            "id": "AC-0191",
+            "text": "View aggregates team_hole_scores into total score, thru count, score-vs-par",
+            "done": false
+          },
+          {
+            "id": "AC-0192",
+            "text": "Sorted by score ascending, then thru descending",
+            "done": false
+          },
+          {
+            "id": "AC-0193",
+            "text": "Includes rank column with proper tied handling",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0051"
+        ]
+      },
+      {
+        "id": "US-0053",
+        "epicId": "EPIC-0006",
+        "title": "As a developer, I want provisional vs final status to be deterministic, so that the leaderboard never disagrees with the round.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0053-provisional-status",
+        "acs": [
+          {
+            "id": "AC-0194",
+            "text": "hole_scores.status=final when player has outcome=sunk OR shot count on hole > 8 (auto-finalize blowout)",
+            "done": false
+          },
+          {
+            "id": "AC-0195",
+            "text": "team_hole_scores.status=final only when all team_size members have final hole_score for the hole",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0049"
+        ]
+      },
+      {
+        "id": "US-0054",
+        "epicId": "EPIC-0006",
+        "title": "As a developer, I want test coverage of Best Ball edge cases, so that scoring bugs don't blow up the tournament.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0054-best-ball-edges",
+        "acs": [
+          {
+            "id": "AC-0196",
+            "text": "Tests cover variable team_size (2, 3, 4, 5)",
+            "done": false
+          },
+          {
+            "id": "AC-0197",
+            "text": "Mulligan shots (stroke_count=0) do not inflate scores",
+            "done": false
+          },
+          {
+            "id": "AC-0198",
+            "text": "OOB penalty stroke is correctly included in gross_score",
+            "done": false
+          },
+          {
+            "id": "AC-0199",
+            "text": "Withdrawn players excluded from team Best Ball calc",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0049"
+        ]
+      },
+      {
+        "id": "US-0055",
+        "epicId": "EPIC-0006",
+        "title": "As a player, I want provisional team scores shown distinctly on the leaderboard, so that I know which holes aren't fully scored yet.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0055-provisional-flag",
+        "acs": [
+          {
+            "id": "AC-0200",
+            "text": "team_hole_scores.status returned in leaderboard payload",
+            "done": false
+          },
+          {
+            "id": "AC-0201",
+            "text": "Client renders italic grey for provisional, solid for final",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0053"
+        ]
+      },
+      {
+        "id": "US-0056",
+        "epicId": "EPIC-0007",
+        "title": "As a spectator, I want a public leaderboard URL at /t/{slug}/leaderboard, so that I can follow the tournament without logging in.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0056-public-leaderboard",
+        "acs": [
+          {
+            "id": "AC-0202",
+            "text": "SSR; renders fast first-paint",
+            "done": false
+          },
+          {
+            "id": "AC-0203",
+            "text": "Tournament header: name, venue, date, sponsor logos",
+            "done": false
+          },
+          {
+            "id": "AC-0204",
+            "text": "No auth required",
+            "done": false
+          },
+          {
+            "id": "AC-0205",
+            "text": "Basic Open Graph meta tags (og:title, og:description)",
+            "done": false
+          },
+          {
+            "id": "AC-0206",
+            "text": "Privacy guard: only name + company shown for players",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0052"
+        ]
+      },
+      {
+        "id": "US-0057",
+        "epicId": "EPIC-0007",
+        "title": "As a player, I want my team's position prominent on the post-login leaderboard, so that I can see how we're doing at a glance.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0057-current-team-card",
+        "acs": [
+          {
+            "id": "AC-0207",
+            "text": "Hero card with green gradient pinned above the top-20 list",
+            "done": false
+          },
+          {
+            "id": "AC-0208",
+            "text": "Shows team #, members, current rank, score, thru count",
+            "done": false
+          },
+          {
+            "id": "AC-0209",
+            "text": "Shown regardless of where my team ranks",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0056"
+        ]
+      },
+      {
+        "id": "US-0058",
+        "epicId": "EPIC-0007",
+        "title": "As a player, I want a LIVE indicator on the leaderboard, so that I trust the data is fresh.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0058-live-indicator",
+        "acs": [
+          {
+            "id": "AC-0210",
+            "text": "Red blinking pill when websocket connected",
+            "done": false
+          },
+          {
+            "id": "AC-0211",
+            "text": "\"AUTO 30s\" pill when polling-only",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0059"
+        ]
+      },
+      {
+        "id": "US-0059",
+        "epicId": "EPIC-0007",
+        "title": "As a player, I want the leaderboard to update in real time, so that I see new scores as they come in.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0059-realtime-channel",
+        "acs": [
+          {
+            "id": "AC-0212",
+            "text": "Client subscribes to Supabase Realtime channel tournament:{slug}",
+            "done": false
+          },
+          {
+            "id": "AC-0213",
+            "text": "Broadcasts on team_hole_scores changes only",
+            "done": false
+          },
+          {
+            "id": "AC-0214",
+            "text": "Reconnects on disconnect",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0056"
+        ]
+      },
+      {
+        "id": "US-0060",
+        "epicId": "EPIC-0007",
+        "title": "As a player, I want leaderboard updates coalesced, so that the UI doesn't thrash during heavy scoring activity.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0060-render-coalescing",
+        "acs": [
+          {
+            "id": "AC-0215",
+            "text": "Multiple incoming events within 5s coalesce into one render",
+            "done": false
+          },
+          {
+            "id": "AC-0216",
+            "text": "Uses requestAnimationFrame for batching",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0059"
+        ]
+      },
+      {
+        "id": "US-0061",
+        "epicId": "EPIC-0007",
+        "title": "As a player, I want polling fallback when websocket fails, so that I'm not stuck with stale data.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0061-polling-fallback",
+        "acs": [
+          {
+            "id": "AC-0217",
+            "text": "If websocket fails or stays disconnected >10s, switch to 30s polling",
+            "done": false
+          },
+          {
+            "id": "AC-0218",
+            "text": "Resume websocket when it comes back available",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0059"
+        ]
+      },
+      {
+        "id": "US-0062",
+        "epicId": "EPIC-0007",
+        "title": "As a player, I want to drill into a team to see their hole-by-hole scores, so that I can see how they're playing.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0062-team-drilldown",
+        "acs": [
+          {
+            "id": "AC-0219",
+            "text": "Tap team row opens detail view",
+            "done": false
+          },
+          {
+            "id": "AC-0220",
+            "text": "9-hole strip x 2 (front and back nine)",
+            "done": false
+          },
+          {
+            "id": "AC-0221",
+            "text": "Rows: par, best score per hole",
+            "done": false
+          },
+          {
+            "id": "AC-0222",
+            "text": "Birdies+ highlighted gold",
+            "done": false
+          },
+          {
+            "id": "AC-0223",
+            "text": "Provisional scores italic grey",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0056"
+        ]
+      },
+      {
+        "id": "US-0063",
+        "epicId": "EPIC-0007",
+        "title": "As a player, I want personal data hidden on the public view, so that my privacy is respected.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0063-privacy-guard",
+        "acs": [
+          {
+            "id": "AC-0224",
+            "text": "Public leaderboard payload omits email, phone, year_of_birth, gender",
+            "done": false
+          },
+          {
+            "id": "AC-0225",
+            "text": "Server-side filter enforced (not client-side)",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0056"
+        ]
+      },
+      {
+        "id": "US-0064",
+        "epicId": "EPIC-0007",
+        "title": "As a spectator, I want a clear indication when the tournament is paused, so that I understand the standings might not be live.",
+        "priority": "Low",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0064-paused-banner",
+        "acs": [
+          {
+            "id": "AC-0226",
+            "text": "When tournaments.status=paused, banner shows \"Tournament paused\"",
+            "done": false
+          },
+          {
+            "id": "AC-0227",
+            "text": "LIVE pill disabled; data still visible",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0056"
+        ]
+      },
+      {
+        "id": "US-0065",
+        "epicId": "EPIC-0008",
+        "title": "As an admin, I want a persistent left sidebar layout, so that I can navigate quickly between sections.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0065-admin-layout",
+        "acs": [
+          {
+            "id": "AC-0228",
+            "text": "Sidebar with 8 items: Dashboard, Tournaments, Players, Teams, Scores, Courses, Clubs, Stats",
+            "done": false
+          },
+          {
+            "id": "AC-0229",
+            "text": "Items grouped (operational vs setup)",
+            "done": false
+          },
+          {
+            "id": "AC-0230",
+            "text": "Current section highlighted",
+            "done": false
+          },
+          {
+            "id": "AC-0231",
+            "text": "Route-protected to admin role",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0004"
+        ]
+      },
+      {
+        "id": "US-0066",
+        "epicId": "EPIC-0008",
+        "title": "As an admin, I want 4 KPI stat cards on the dashboard, so that I can monitor tournament health at a glance.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0066-admin-kpis",
+        "acs": [
+          {
+            "id": "AC-0232",
+            "text": "Players card shows registered count and recent delta",
+            "done": false
+          },
+          {
+            "id": "AC-0233",
+            "text": "Teams playing card shows in_progress rounds count",
+            "done": false
+          },
+          {
+            "id": "AC-0234",
+            "text": "Avg pace card shows computed minutes-per-hole vs target",
+            "done": false
+          },
+          {
+            "id": "AC-0235",
+            "text": "Sync issues card shows count and team numbers",
+            "done": false
+          },
+          {
+            "id": "AC-0236",
+            "text": "Auto-refresh every 30s",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0065"
+        ]
+      },
+      {
+        "id": "US-0067",
+        "epicId": "EPIC-0008",
+        "title": "As an admin, I want a live rounds table with pace warnings, so that I can chase slow groups before they back up the course.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0067-live-rounds",
+        "acs": [
+          {
+            "id": "AC-0237",
+            "text": "Table shows all in_progress rounds with team, players, thru, score, pace",
+            "done": false
+          },
+          {
+            "id": "AC-0238",
+            "text": "Rows where pace exceeds target by more than 2 min/hole highlighted amber",
+            "done": false
+          },
+          {
+            "id": "AC-0239",
+            "text": "Pace target configurable per tournament (default 12 min/hole)",
+            "done": false
+          },
+          {
+            "id": "AC-0240",
+            "text": "Click row to view the team's round",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0066"
+        ]
+      },
+      {
+        "id": "US-0068",
+        "epicId": "EPIC-0008",
+        "title": "As an admin, I want to search and filter players, so that I can find specific people fast.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0068-player-list",
+        "acs": [
+          {
+            "id": "AC-0241",
+            "text": "Server-side search by name, email, or company",
+            "done": false
+          },
+          {
+            "id": "AC-0242",
+            "text": "Chip filters: Unassigned, No 2FA, by company",
+            "done": false
+          },
+          {
+            "id": "AC-0243",
+            "text": "Pagination at 50 per page",
+            "done": false
+          },
+          {
+            "id": "AC-0244",
+            "text": "Row actions: Edit, Reset PW, Delete",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0065"
+        ]
+      },
+      {
+        "id": "US-0069",
+        "epicId": "EPIC-0008",
+        "title": "As an admin, I want to edit player profiles, so that I can fix mistakes and reset passwords.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0069-player-edit",
+        "acs": [
+          {
+            "id": "AC-0245",
+            "text": "Edit modal with all profile fields",
+            "done": false
+          },
+          {
+            "id": "AC-0246",
+            "text": "Reset PW sends Supabase Auth recovery email",
+            "done": false
+          },
+          {
+            "id": "AC-0247",
+            "text": "Force-2FA toggle (Phase 2 enforcement)",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0068"
+        ]
+      },
+      {
+        "id": "US-0070",
+        "epicId": "EPIC-0008",
+        "title": "As an admin, I want to delete a player with confirmation, so that I can clean up test accounts.",
+        "priority": "Low",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0070-player-delete",
+        "acs": [
+          {
+            "id": "AC-0248",
+            "text": "Soft delete; preserves shot history for audit",
+            "done": false
+          },
+          {
+            "id": "AC-0249",
+            "text": "Player marked withdrawn in registration",
+            "done": false
+          },
+          {
+            "id": "AC-0250",
+            "text": "Confirmation dialog required",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0068"
+        ]
+      },
+      {
+        "id": "US-0071",
+        "epicId": "EPIC-0008",
+        "title": "As an admin, I want to drill into a round and edit any shot, so that I can resolve disputes.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0071-score-editor",
+        "acs": [
+          {
+            "id": "AC-0251",
+            "text": "Round detail page shows holes 1-18 with shot lists",
+            "done": false
+          },
+          {
+            "id": "AC-0252",
+            "text": "Each shot row is editable: club, outcome, GPS, distance",
+            "done": false
+          },
+          {
+            "id": "AC-0253",
+            "text": "Save persists shot_edits audit row with admin actor",
+            "done": false
+          },
+          {
+            "id": "AC-0254",
+            "text": "Hole scores and team_hole_scores recompute via trigger",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0041"
+        ]
+      },
+      {
+        "id": "US-0072",
+        "epicId": "EPIC-0008",
+        "title": "As an admin, I want the audit trail visible per shot, so that I can defend score changes.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0072-audit-display",
+        "acs": [
+          {
+            "id": "AC-0255",
+            "text": "Shot edit panel shows all changes with timestamp and author",
+            "done": false
+          },
+          {
+            "id": "AC-0256",
+            "text": "Admin edits shown amber for visual distinction",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0071"
+        ]
+      },
+      {
+        "id": "US-0073",
+        "epicId": "EPIC-0008",
+        "title": "As an admin, I want to assign and reassign players to teams, so that late changes can be made.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0073-team-assign",
+        "acs": [
+          {
+            "id": "AC-0257",
+            "text": "Player row has team selector (dropdown or drag-drop)",
+            "done": false
+          },
+          {
+            "id": "AC-0258",
+            "text": "team_size respected on assignment",
+            "done": false
+          },
+          {
+            "id": "AC-0259",
+            "text": "Unassigned pool shown separately",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0029"
+        ]
+      },
+      {
+        "id": "US-0074",
+        "epicId": "EPIC-0008",
+        "title": "As an admin, I want to manage the master club list with drag-to-reorder, so that I can keep it tidy.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0074-club-management",
+        "acs": [
+          {
+            "id": "AC-0260",
+            "text": "Drag handles on each row",
+            "done": false
+          },
+          {
+            "id": "AC-0261",
+            "text": "Toggle active per club",
+            "done": false
+          },
+          {
+            "id": "AC-0262",
+            "text": "Edit display name, loft",
+            "done": false
+          },
+          {
+            "id": "AC-0263",
+            "text": "Soft delete on remove",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0008",
+          "US-0065"
+        ]
+      },
+      {
+        "id": "US-0075",
+        "epicId": "EPIC-0008",
+        "title": "As an admin, I want sync issues flagged automatically, so that I can intervene without spotting them manually.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0075-sync-detect",
+        "acs": [
+          {
+            "id": "AC-0264",
+            "text": "Round flagged sync_issue when no shot insert AND no GPS heartbeat for >10 min during active round AND current hole not marked complete",
+            "done": false
+          },
+          {
+            "id": "AC-0265",
+            "text": "Background job (or cron RPC) updates a sync_issue field on rounds",
+            "done": false
+          },
+          {
+            "id": "AC-0266",
+            "text": "Dashboard KPI card shows count; click to drill in",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0066"
+        ]
+      },
+      {
+        "id": "US-0076",
+        "epicId": "EPIC-0008",
+        "title": "As an admin, I want a list of all tournaments, so that I can switch context between events.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0076-tournament-list",
+        "acs": [
+          {
+            "id": "AC-0267",
+            "text": "List shows all tournaments with name, date, status pill",
+            "done": false
+          },
+          {
+            "id": "AC-0268",
+            "text": "Filter by status",
+            "done": false
+          },
+          {
+            "id": "AC-0269",
+            "text": "Click enters tournament context (sets active tournament in admin session)",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0065"
+        ]
+      },
+      {
+        "id": "US-0077",
+        "epicId": "EPIC-0009",
+        "title": "As a developer, I want IndexedDB set up via idb library, so that the shot queue has a reliable client storage layer.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0077-indexeddb-setup",
+        "acs": [
+          {
+            "id": "AC-0270",
+            "text": "idb library installed",
+            "done": false
+          },
+          {
+            "id": "AC-0271",
+            "text": "Versioned schema with shots store (key=tempId)",
+            "done": false
+          },
+          {
+            "id": "AC-0272",
+            "text": "Database opens on app boot",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0036"
+        ]
+      },
+      {
+        "id": "US-0078",
+        "epicId": "EPIC-0009",
+        "title": "As a player, I want shots written to IndexedDB first, so that no data is lost when the network drops.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0078-write-through",
+        "acs": [
+          {
+            "id": "AC-0273",
+            "text": "Every shot insert writes IndexedDB first with status=pending",
+            "done": false
+          },
+          {
+            "id": "AC-0274",
+            "text": "Background process drains pending shots to Supabase",
+            "done": false
+          },
+          {
+            "id": "AC-0275",
+            "text": "On Supabase success, IndexedDB row status=synced",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0077"
+        ]
+      },
+      {
+        "id": "US-0079",
+        "epicId": "EPIC-0009",
+        "title": "As a player, I want a visible offline indicator with queue depth, so that I know when sync is pending.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0079-offline-banner",
+        "acs": [
+          {
+            "id": "AC-0276",
+            "text": "Banner appears when navigator.onLine=false",
+            "done": false
+          },
+          {
+            "id": "AC-0277",
+            "text": "Banner shows queue depth (e.g., \"3 shots queued\")",
+            "done": false
+          },
+          {
+            "id": "AC-0278",
+            "text": "Auto-dismisses when online and queue is empty",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0078"
+        ]
+      },
+      {
+        "id": "US-0080",
+        "epicId": "EPIC-0009",
+        "title": "As a player, I want my queue to drain on reconnect with newer-wins resolution, so that my latest edits stick.",
+        "priority": "High",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0080-sync-reconnect",
+        "acs": [
+          {
+            "id": "AC-0279",
+            "text": "Online event triggers queue drain",
+            "done": false
+          },
+          {
+            "id": "AC-0280",
+            "text": "Upsert by id; server compares updated_at and rejects older",
+            "done": false
+          },
+          {
+            "id": "AC-0281",
+            "text": "Rejected upserts logged to dev console for debugging",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0078"
+        ]
+      },
+      {
+        "id": "US-0081",
+        "epicId": "EPIC-0009",
+        "title": "As an admin, I want my edits to always win over client edits, so that disputes don't get overwritten by stale offline queues.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0081-admin-wins",
+        "acs": [
+          {
+            "id": "AC-0282",
+            "text": "Admin edit sets updated_by=admin_id and updated_at=now()",
+            "done": false
+          },
+          {
+            "id": "AC-0283",
+            "text": "Server-side trigger rejects any subsequent client upsert with older updated_at",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0080"
+        ]
+      },
+      {
+        "id": "US-0082",
+        "epicId": "EPIC-0009",
+        "title": "As a tester, I want an offline manual test pass, so that I'm confident the queue actually works on iOS Safari and Android Chrome.",
+        "priority": "High",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0082-offline-test-matrix",
+        "acs": [
+          {
+            "id": "AC-0284",
+            "text": "Test matrix documented: iOS 16/17/18 x Safari/Chrome x foreground/background mid-shot x airplane-mode toggle",
+            "done": false
+          },
+          {
+            "id": "AC-0285",
+            "text": "Each cell run manually with pass/fail captured",
+            "done": false
+          },
+          {
+            "id": "AC-0286",
+            "text": "Failures opened as BUGs in BUGS.md",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0080"
+        ]
+      },
+      {
+        "id": "US-0083",
+        "epicId": "EPIC-0010",
+        "title": "As a player, I want to enroll in 2FA via SMS, so that my account is more secure.",
+        "priority": "Medium",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0083-2fa-enroll",
+        "acs": [
+          {
+            "id": "AC-0287",
+            "text": "Profile page has \"Enable 2FA\" CTA",
+            "done": false
+          },
+          {
+            "id": "AC-0288",
+            "text": "SMS sent to registered phone with verification code",
+            "done": false
+          },
+          {
+            "id": "AC-0289",
+            "text": "Code verification enrolls the factor in Supabase Auth",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0027"
+        ]
+      },
+      {
+        "id": "US-0084",
+        "epicId": "EPIC-0010",
+        "title": "As a player, I want a 2FA challenge on login, so that password compromise alone isn't enough to access my account.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0084-2fa-challenge",
+        "acs": [
+          {
+            "id": "AC-0290",
+            "text": "When factor exists, login prompts for SMS code after password",
+            "done": false
+          },
+          {
+            "id": "AC-0291",
+            "text": "\"Remember this device\" option for 30 days",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0083"
+        ]
+      },
+      {
+        "id": "US-0085",
+        "epicId": "EPIC-0010",
+        "title": "As an admin, I want to force 2FA per player, so that high-privilege accounts must enroll.",
+        "priority": "Low",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0085-force-2fa",
+        "acs": [
+          {
+            "id": "AC-0292",
+            "text": "Admin toggle on player edit screen",
+            "done": false
+          },
+          {
+            "id": "AC-0293",
+            "text": "Next login forces enrollment before accessing the app",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0083"
+        ]
+      },
+      {
+        "id": "US-0086",
+        "epicId": "EPIC-0010",
+        "title": "As an admin, I want a log of sensitive admin actions, so that I can audit changes after the fact.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0086-audit-log",
+        "acs": [
+          {
+            "id": "AC-0294",
+            "text": "admin_audit_log table created",
+            "done": false
+          },
+          {
+            "id": "AC-0295",
+            "text": "Records every admin action with target, before/after, timestamp",
+            "done": false
+          },
+          {
+            "id": "AC-0296",
+            "text": "Admin can view audit log filtered by date or actor",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0071"
+        ]
+      },
+      {
+        "id": "US-0087",
+        "epicId": "EPIC-0010",
+        "title": "As a player, I want to flag a hole score for dispute, so that I can request a review without admin help.",
+        "priority": "Low",
+        "estimate": "M",
+        "status": "Planned",
+        "branch": "feature/US-0087-score-dispute",
+        "acs": [
+          {
+            "id": "AC-0297",
+            "text": "Round summary has a \"Dispute\" button per hole",
+            "done": false
+          },
+          {
+            "id": "AC-0298",
+            "text": "Dispute creates a score_disputes row with reason text",
+            "done": false
+          },
+          {
+            "id": "AC-0299",
+            "text": "tournament_organizer sees disputes queue",
+            "done": false
+          },
+          {
+            "id": "AC-0300",
+            "text": "Resolve or dismiss closes the dispute with a note",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0043"
+        ]
+      },
+      {
+        "id": "US-0088",
+        "epicId": "EPIC-0010",
+        "title": "As a developer, I want stronger password rules, so that accounts are harder to compromise.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0088-password-rules",
+        "acs": [
+          {
+            "id": "AC-0301",
+            "text": "Min 12 chars, mixed case, number, symbol",
+            "done": false
+          },
+          {
+            "id": "AC-0302",
+            "text": "Strength meter on password fields",
+            "done": false
+          },
+          {
+            "id": "AC-0303",
+            "text": "Server-side validation matches client rules",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0023"
+        ]
+      },
+      {
+        "id": "US-0089",
+        "epicId": "EPIC-0010",
+        "title": "As a player, I want real emails for invites and password reset, so that I can use the app outside dev mode.",
+        "priority": "Medium",
+        "estimate": "S",
+        "status": "Planned",
+        "branch": "feature/US-0089-real-email",
+        "acs": [
+          {
+            "id": "AC-0304",
+            "text": "SMTP integration (Resend or AWS SES) configured",
+            "done": false
+          },
+          {
+            "id": "AC-0305",
+            "text": "Branded HTML templates for invite, password reset, 2FA codes",
+            "done": false
+          },
+          {
+            "id": "AC-0306",
+            "text": "Email send logs captured for support",
+            "done": false
+          }
+        ],
+        "dependencies": [
+          "US-0026"
+        ]
+      }
+    ],
+    "bugs": [],
+    "costs": {
+      "US-0001": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0002": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0003": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0004": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0005": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0006": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0007": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0008": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0009": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0010": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0011": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0012": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0013": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0014": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0015": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0016": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0017": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0018": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0019": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0020": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0021": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0022": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0023": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0024": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0025": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0026": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0027": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0028": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0029": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0030": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0031": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0032": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0033": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0034": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0035": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0036": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0037": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0038": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0039": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0040": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0041": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0042": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0043": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0044": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0045": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0046": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0047": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0048": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0049": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0050": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0051": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0052": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0053": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0054": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0055": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0056": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0057": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0058": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0059": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0060": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0061": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0062": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0063": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0064": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0065": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0066": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0067": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0068": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0069": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0070": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0071": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0072": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0073": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0074": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0075": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0076": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0077": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0078": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0079": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0080": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0081": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0082": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0083": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0084": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0085": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0086": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0087": {
+        "projectedUsd": 800,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0088": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "US-0089": {
+        "projectedUsd": 400,
+        "costUsd": 0.160622,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "_totals": {
+        "costUsd": 14.2954,
+        "inputTokens": 859675,
+        "outputTokens": 263806
+      },
+      "_bugs": {
+        "_totals": {
+          "costUsd": 0,
+          "inputTokens": 0,
+          "outputTokens": 0
+        }
+      }
+    },
+    "coverage": {
+      "lines": 0,
+      "statements": 0,
+      "functions": 0,
+      "branches": 0,
+      "overall": 0,
+      "meetsTarget": false,
+      "available": false
+    },
+    "lessons": [
+      {
+        "id": "L-0001",
+        "title": "Initial project setup",
+        "rule": "",
+        "context": "",
+        "date": "",
+        "bugIds": []
+      }
+    ],
+    "testCases": []
+  }
+}
