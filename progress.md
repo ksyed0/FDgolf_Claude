@@ -81,6 +81,15 @@
 
 ---
 
+## Phase 8: Build — US-0009 + US-0020 (parallel) — 2026-06-09
+
+**Agent(s):** Pixel (x2, worktree-isolated)
+**Stories touched:** US-0009, US-0020
+**Status:** Complete — both merged to develop (PR #12 + PR #13, squash merge)
+**Notes:** US-0009: generateSlug utility (11 tests), createTournamentAction Server Action, TournamentForm Client Component, admin page with fdgolf_is_admin() guard, middleware extended to protect /admin/*, 76 tests total. US-0020: assignOrganizerAction + searchPlayersAction, OrganizerSearch component, admin organizers page, 69 tests. No migration needed — UNIQUE constraint already in schema. AC-0085 covered by US-0006 RLS.
+
+---
+
 ## Retry Log
 
 | Task | Agent | Attempt | Max | Outcome | Timestamp |

@@ -226,13 +226,13 @@ Acceptance Criteria:
 US-0009 (EPIC-0002): As an admin, I want to create a tournament with basic info, so that registration and play can be configured around it.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0009-tournament-create
 Dependencies: US-0006
 Acceptance Criteria:
-  - [ ] AC-0044: Form fields: name (req), starts_at date+time (req), venue (req), format (req, defaults Best Ball), start_style (req, defaults shotgun), holes_count (req, defaults 18)
-  - [ ] AC-0045: On submit, tournament is created with status=draft
-  - [ ] AC-0046: Slug auto-generated from name (lowercase, hyphens, ascii-only)
+  - [x] AC-0044: Form fields: name (req), starts_at date+time (req), venue (req), format (req, defaults Best Ball), start_style (req, defaults shotgun), holes_count (req, defaults 18)
+  - [x] AC-0045: On submit, tournament is created with status=draft
+  - [x] AC-0046: Slug auto-generated from name (lowercase, hyphens, ascii-only)
 ```
 
 ```
@@ -375,13 +375,13 @@ Acceptance Criteria:
 US-0020 (EPIC-0002): As an admin, I want to promote a player to tournament_organizer for a specific tournament, so that ops responsibility can be delegated without granting global admin.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0020-organizer-role
 Dependencies: US-0006
 Acceptance Criteria:
-  - [ ] AC-0083: Admin can search any player and click "Make organizer" for a tournament
-  - [ ] AC-0084: user_roles row inserted with role=tournament_organizer and tournament_id=this_tournament
-  - [ ] AC-0085: Organizer can perform admin actions only on rows where tournament_id matches their role's tournament_id
+  - [x] AC-0083: Admin can search any player and click "Make organizer" for a tournament
+  - [x] AC-0084: user_roles row inserted with role=tournament_organizer and tournament_id=this_tournament
+  - [x] AC-0085: Organizer can perform admin actions only on rows where tournament_id matches their role's tournament_id
 ```
 
 ---

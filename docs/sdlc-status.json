@@ -134,10 +134,10 @@
       "tasksCompleted": 0
     },
     "Pixel": {
-      "status": "active",
-      "currentTask": "Bootstrap Next.js 14 scaffold with shadcn/ui, Supabase clients, env template",
-      "tasksCompleted": 0,
-      "model": "sonnet"
+      "status": "idle",
+      "currentTask": null,
+      "tasksCompleted": 2,
+      "model": null
     },
     "Sentinel": {
       "status": "idle",
@@ -170,13 +170,27 @@
       "assignedAgent": "Pixel",
       "startedAt": "2026-06-09T15:22:47.122Z",
       "completedAt": null
+    },
+    "US-0009": {
+      "status": "Complete",
+      "epic": "EPIC-0002",
+      "assignedAgent": null,
+      "startedAt": null,
+      "completedAt": "2026-06-09T23:20:51.625Z"
+    },
+    "US-0020": {
+      "status": "Complete",
+      "epic": "EPIC-0002",
+      "assignedAgent": null,
+      "startedAt": null,
+      "completedAt": "2026-06-09T23:20:51.815Z"
     }
   },
   "cycles": [],
   "metrics": {
-    "storiesCompleted": 0,
+    "storiesCompleted": 2,
     "storiesTotal": 8,
-    "tasksCompleted": 0,
+    "tasksCompleted": 2,
     "tasksTotal": 0,
     "testsPassed": 0,
     "testsFailed": 0,
@@ -294,6 +308,31 @@
       "agent": "Pixel",
       "message": "started US-0001: Bootstrap Next.js 14 scaffold with shadcn/ui, Supabase clients, env template",
       "model": "sonnet"
+    },
+    {
+      "time": "2026-06-09T23:20:51.532Z",
+      "agent": "Pixel",
+      "message": "finished US-0009"
+    },
+    {
+      "time": "2026-06-09T23:20:51.626Z",
+      "agent": "Conductor",
+      "message": "completed US-0009 (EPIC-0002)"
+    },
+    {
+      "time": "2026-06-09T23:20:51.718Z",
+      "agent": "Pixel",
+      "message": "finished US-0020"
+    },
+    {
+      "time": "2026-06-09T23:20:51.816Z",
+      "agent": "Conductor",
+      "message": "completed US-0020 (EPIC-0002)"
+    },
+    {
+      "time": "2026-06-09T23:20:51.908Z",
+      "agent": "Conductor",
+      "message": "10 stories done (US-0001–US-0009, US-0020). EPIC-0001 foundation complete. US-0010/0011/0015/0016/0017/0021 now unblocked."
     }
   ],
   "tasks": {
