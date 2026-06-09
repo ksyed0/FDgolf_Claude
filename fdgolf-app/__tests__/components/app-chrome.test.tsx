@@ -1,6 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { AppChrome } from '@/components/app-chrome'
+
+vi.mock('@/lib/actions/auth', () => ({
+  logoutAction: vi.fn(),
+}))
 
 describe('AppChrome', () => {
   // AC-0011: header bar has dark forest-green background
@@ -61,6 +65,12 @@ describe('AppChrome', () => {
     const builtWithEl = screen.getByText('built with')
     expect(builtWithEl.className).toMatch(/hidden/)
     expect(builtWithEl.className).toMatch(/sm:inline/)
+  })
+
+  // AC-0020: logout button
+  it('renders a Sign out button', () => {
+    render(<AppChrome />)
+    expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument()
   })
 
   // AC-0015: component is a Server Component (no "use client")

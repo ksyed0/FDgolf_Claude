@@ -1,5 +1,8 @@
-// AppChrome — persistent header shell rendered on every authenticated page.
+// AppChrome — persistent header shell rendered on every page.
 // Server Component: no "use client" directive.
+// Logout form uses a Server Action — valid in Server Components (Next.js 14).
+
+import { logoutAction } from '@/lib/actions/auth'
 
 export function AppChrome() {
   return (
@@ -19,8 +22,18 @@ export function AppChrome() {
         </span>
       </div>
 
-      {/* Right: AI/RUN tagline badge */}
-      <div className="flex items-center gap-2">
+      {/* Right: logout + AI/RUN badge */}
+      <div className="flex items-center gap-3">
+        {/* Logout form — Server Action clears session and redirects to /login (AC-0020) */}
+        <form action={logoutAction}>
+          <button
+            type="submit"
+            className="text-xs text-white/70 hover:text-white transition-colors"
+          >
+            Sign out
+          </button>
+        </form>
+
         <span className="text-white text-xs opacity-70 hidden sm:inline">
           built with
         </span>
