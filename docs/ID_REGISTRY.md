@@ -9,7 +9,7 @@ working in parallel don't collide.
 | EPIC     | EPIC-0011         | EPIC-0010     |
 | US       | US-0090           | US-0089       |
 | AC       | AC-0307           | AC-0306       |
-| TASK     | TASK-0278         | TASK-0277     |
+| TASK     | TASK-0287         | TASK-0286     |
 | TC       | TC-0001           | None          |
 | BUG      | BUG-0001          | None          |
 | L        | L-0002            | L-0001        |
@@ -26,5 +26,5 @@ working in parallel don't collide.
 - **Epics:** EPIC-0001 through EPIC-0010 (10 total — see `docs/RELEASE_PLAN.md`)
 - **User Stories:** US-0001 through US-0089 (89 total)
 - **Acceptance Criteria:** AC-0001 through AC-0306 (306 total across all stories)
-- **Tasks:** TASK-0001 through TASK-0277 (277 total across all 10 epics)
+- **Tasks:** TASK-0001 through TASK-0286 (286 total across all 10 epics)
 - **Lessons:** L-0001 (seeded during install)
