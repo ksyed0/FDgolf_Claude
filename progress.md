@@ -61,6 +61,16 @@
 
 ---
 
+## Phase 6: Build — US-0004 + US-0005 (parallel) — 2026-06-09
+
+**Agent(s):** Pixel (US-0004), Relay (US-0005) — worktree-isolated
+**Stories touched:** US-0004, US-0005
+**Status:** Complete — both merged to develop (PR #8 + PR #9, squash merge)
+**Develop tip after merge:** pulled to 1d18850 (US-0004), then US-0005 squash
+**Notes:** Worktree isolation worked — no branch cross-contamination this time. US-0004: Server Actions auth (loginAction/logoutAction), /login page (Server+Client Component), middleware session refresh, logout in AppChrome, 48 tests. US-0005: single migration file (1 extension, 11 ENUMs, trigger fn, 16 tables, 6 trigger bindings), validate-schema.sh (51 checks), supabase db reset exits 0. US-0006 (RLS) and US-0008 (club seed) now unblocked.
+
+---
+
 ## Retry Log
 
 | Task | Agent | Attempt | Max | Outcome | Timestamp |

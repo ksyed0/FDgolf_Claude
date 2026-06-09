@@ -144,32 +144,32 @@ Acceptance Criteria:
 US-0004 (EPIC-0001): As a player, I want to log in with email and password and stay logged in across page navigation, so that I don't have to re-authenticate constantly during my round.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0004-auth-login
 Dependencies: US-0002
 Acceptance Criteria:
-  - [ ] AC-0016: `/login` page renders email + password form with FDgolf branding
-  - [ ] AC-0017: Successful login redirects to intended route (default `/`)
-  - [ ] AC-0018: Failed login displays an error message without exposing whether the email exists
-  - [ ] AC-0019: Session persists via cookies set by Supabase SSR client
-  - [ ] AC-0020: `/logout` route clears the session and redirects to `/login`
-  - [ ] AC-0021: Next.js middleware refreshes the session on every request
+  - [x] AC-0016: `/login` page renders email + password form with FDgolf branding
+  - [x] AC-0017: Successful login redirects to intended route (default `/`)
+  - [x] AC-0018: Failed login displays an error message without exposing whether the email exists
+  - [x] AC-0019: Session persists via cookies set by Supabase SSR client
+  - [x] AC-0020: `/logout` route clears the session and redirects to `/login`
+  - [x] AC-0021: Next.js middleware refreshes the session on every request
 ```
 
 ```
 US-0005 (EPIC-0001): As a developer, I want the complete DB schema migrated, so that all subsequent feature work has the tables it needs.
 Priority: High
 Estimate: M
-Status: Planned
+Status: Done
 Branch: feature/US-0005-db-schema
 Dependencies: US-0002
 Acceptance Criteria:
-  - [ ] AC-0022: Migration creates tables: tournaments, courses, holes, players, user_roles, tournament_registrations, teams, rounds, shots, shot_edits, shot_attestations, hole_scores, team_hole_scores, clubs, tournament_clubs, score_disputes
-  - [ ] AC-0023: All enums defined: tournament_format, tournament_start_style, tournament_status, role_type, registration_status, round_status, shot_outcome, rehit_origin_type, hole_score_status, club_type, dispute_status
-  - [ ] AC-0024: Foreign keys and unique constraints match the data model in design spec section 4
-  - [ ] AC-0025: `teams.team_size` int column with check constraint (2 <= team_size <= 5)
-  - [ ] AC-0026: `shots.updated_at` defaults to now() and triggers update on row change
-  - [ ] AC-0027: Migration runs cleanly on a fresh database via `supabase db reset`
+  - [x] AC-0022: Migration creates tables: tournaments, courses, holes, players, user_roles, tournament_registrations, teams, rounds, shots, shot_edits, shot_attestations, hole_scores, team_hole_scores, clubs, tournament_clubs, score_disputes
+  - [x] AC-0023: All enums defined: tournament_format, tournament_start_style, tournament_status, role_type, registration_status, round_status, shot_outcome, rehit_origin_type, hole_score_status, club_type, dispute_status
+  - [x] AC-0024: Foreign keys and unique constraints match the data model in design spec section 4
+  - [x] AC-0025: `teams.team_size` int column with check constraint (2 <= team_size <= 5)
+  - [x] AC-0026: `shots.updated_at` defaults to now() and triggers update on row change
+  - [x] AC-0027: Migration runs cleanly on a fresh database via `supabase db reset`
 ```
 
 ```
