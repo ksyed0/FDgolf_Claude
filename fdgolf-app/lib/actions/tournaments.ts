@@ -7,14 +7,31 @@ import { generateSlug } from '@/lib/utils/slug'
 type ActionState = { error: string | null }
 
 /**
+ * checkSlugAvailableAction — Server Action for slug uniqueness check (US-0010).
+ *
+ * AC-0048: Returns { available: true } if no tournament uses the given slug.
+ */
+export async function checkSlugAvailableAction(slug: string): Promise<{ available: boolean }> {
+  if (!slug) return { available: false }
+  const supabase = createClient()
+  const { data } = await supabase
+    .from('tournaments')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle()
+  return { available: data === null }
+}
+
+/**
  * createTournamentAction — Server Action for tournament creation (US-0009).
  *
- * Validates required fields, generates a slug from name, inserts the row
- * with status='draft', and redirects to /admin/tournaments/[slug].
+ * Validates required fields, generates a slug from name (or uses slug_override),
+ * inserts the row with status='draft', and redirects to /admin/tournaments/[slug].
  *
  * AC-0044: name, starts_at, venue, format, start_style, holes_count required.
  * AC-0045: status always set to 'draft' on creation.
  * AC-0046: slug auto-generated from name.
+ * AC-0047/AC-0049: slug_override used if provided and valid (a-z, 0-9, hyphens only).
  */
 export async function createTournamentAction(
   _prevState: ActionState,
@@ -26,12 +43,17 @@ export async function createTournamentAction(
   const format     = (formData.get('format')      as string | null) ?? 'best_ball'
   const start_style = (formData.get('start_style') as string | null) ?? 'shotgun'
   const holes_count = parseInt(formData.get('holes_count') as string ?? '18', 10)
+  const slugOverride = (formData.get('slug_override') as string | null)?.trim() ?? ''
 
   if (!name)      return { error: 'Tournament name is required.' }
   if (!venue)     return { error: 'Venue is required.' }
   if (!starts_at) return { error: 'Start date and time are required.' }
 
-  const slug = generateSlug(name)
+  if (slugOverride && !/^[a-z0-9-]+$/.test(slugOverride)) {
+    return { error: 'Slug may only contain lowercase letters, digits, and hyphens.' }
+  }
+
+  const slug = slugOverride || generateSlug(name)
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 

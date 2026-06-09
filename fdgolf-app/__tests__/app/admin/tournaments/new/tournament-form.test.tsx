@@ -1,11 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { TournamentForm } from '@/app/admin/tournaments/new/tournament-form'
 
-// Mock the server action
-vi.mock('@/lib/actions/tournaments', () => ({
-  createTournamentAction: vi.fn(),
-}))
+// Mock the server actions — include checkSlugAvailableAction for US-0010
+vi.mock('@/lib/actions/tournaments', async (importOriginal) => {
+  const actual = await importOriginal() as object
+  return {
+    ...actual,
+    createTournamentAction: vi.fn(),
+    checkSlugAvailableAction: vi.fn().mockResolvedValue({ available: true }),
+  }
+})
 
 const mockFormAction = vi.fn()
 let mockState: { error: string | null } = { error: null }
@@ -66,15 +71,34 @@ describe('TournamentForm', () => {
     expect(screen.getByRole('button', { name: /create tournament/i })).toBeInTheDocument()
   })
 
-  it('does not show error when state.error is null', () => {
+  it('does not show server error when state.error is null', () => {
     mockState = { error: null }
     render(<TournamentForm />)
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.queryByText(/tournament name is required/i)).not.toBeInTheDocument()
   })
 
   it('shows error message when state has an error', () => {
     mockState = { error: 'Tournament name is required.' }
     render(<TournamentForm />)
     expect(screen.getByRole('alert')).toHaveTextContent('Tournament name is required.')
+  })
+
+  // US-0010 slug field tests (AC-0047, AC-0048, AC-0049)
+  it('renders slug field with label "URL Slug"', () => {
+    render(<TournamentForm />)
+    expect(screen.getByLabelText(/url slug/i)).toBeInTheDocument()
+  })
+
+  it('slug field has correct name attribute', () => {
+    render(<TournamentForm />)
+    const slugInput = screen.getByLabelText(/url slug/i) as HTMLInputElement
+    expect(slugInput.name).toBe('slug_override')
+  })
+
+  it('shows format error for invalid slug characters', () => {
+    render(<TournamentForm />)
+    const slugInput = screen.getByLabelText(/url slug/i)
+    fireEvent.change(slugInput, { target: { value: 'CAPS!' } })
+    expect(screen.getByRole('alert')).toHaveTextContent(/only lowercase letters/i)
   })
 })

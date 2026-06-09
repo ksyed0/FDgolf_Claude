@@ -1,7 +1,9 @@
 'use client'
 
+import { useRef, useState } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
-import { createTournamentAction } from '@/lib/actions/tournaments'
+import { createTournamentAction, checkSlugAvailableAction } from '@/lib/actions/tournaments'
+import { generateSlug } from '@/lib/utils/slug'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,10 +20,11 @@ function SubmitButton() {
 }
 
 /**
- * TournamentForm — Client Component for tournament creation (US-0009).
+ * TournamentForm — Client Component for tournament creation (US-0009, US-0010).
  *
  * Fields (AC-0044):
  *   - name (required)
+ *   - slug_override (editable, auto-populated from name) — AC-0047, AC-0048, AC-0049
  *   - venue (required)
  *   - starts_at datetime-local (required)
  *   - format select, default best_ball
@@ -30,6 +33,43 @@ function SubmitButton() {
  */
 export function TournamentForm() {
   const [state, formAction] = useFormState(createTournamentAction, initialState)
+  const [slugValue, setSlugValue] = useState('')
+  const [slugError, setSlugError] = useState('')
+  const [slugChecking, setSlugChecking] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleNameChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setSlugValue(generateSlug(value))
+      setSlugError('')
+    }, 300)
+  }
+
+  function handleSlugChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value
+    setSlugValue(value)
+    if (value && !/^[a-z0-9-]*$/.test(value)) {
+      setSlugError('Only lowercase letters, digits, and hyphens')
+    } else {
+      setSlugError('')
+    }
+  }
+
+  async function handleSlugBlur() {
+    if (!slugValue) return
+    if (!/^[a-z0-9-]+$/.test(slugValue)) return
+    setSlugChecking(true)
+    try {
+      const { available } = await checkSlugAvailableAction(slugValue)
+      if (!available) {
+        setSlugError('This URL is already taken')
+      }
+    } finally {
+      setSlugChecking(false)
+    }
+  }
 
   return (
     <form action={formAction} className="space-y-5">
@@ -42,7 +82,33 @@ export function TournamentForm() {
           type="text"
           required
           placeholder="e.g. Summer Classic 2026"
+          onChange={handleNameChange}
         />
+      </div>
+
+      {/* URL Slug */}
+      <div className="space-y-1">
+        <Label htmlFor="slug_override">URL Slug</Label>
+        <Input
+          id="slug_override"
+          name="slug_override"
+          type="text"
+          value={slugValue}
+          onChange={handleSlugChange}
+          onBlur={handleSlugBlur}
+          placeholder="e.g. summer-classic-2026"
+          aria-describedby={slugError ? 'slug-error' : 'slug-hint'}
+          disabled={slugChecking}
+        />
+        {slugError ? (
+          <p id="slug-error" role="alert" className="text-sm text-red-600">
+            {slugError}
+          </p>
+        ) : (
+          <p id="slug-hint" className="text-xs text-muted-foreground">
+            e.g. summer-classic-2026
+          </p>
+        )}
       </div>
 
       {/* Venue */}
