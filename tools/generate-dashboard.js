@@ -41,7 +41,7 @@ function findGitRoot(start) {
   }
 }
 const GIT_ROOT = findGitRoot(ROOT);
-const STATUS_PATH = path.join(GIT_ROOT, 'docs', 'sdlc-status.json');
+const STATUS_PATH = path.join(ROOT, 'docs', 'sdlc-status.json');
 const PLAN_STATUS_PATH = path.join(ROOT, 'docs', 'plan-status.json');
 const OUTPUT_PATH = path.join(ROOT, 'docs', 'dashboard.html');
 
