@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import localFont from 'next/font/local'
 import './globals.css'
 import { cn } from '@/lib/utils'
+import { AppChrome } from '@/components/app-chrome'
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -26,7 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn(geistSans.variable, geistMono.variable)}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <AppChrome />
+        <main>{children}</main>
+      </body>
     </html>
   )
 }
