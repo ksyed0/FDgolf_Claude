@@ -1930,6 +1930,16 @@ function generateHTML(status) {
   .mc-active-story-id { color: oklch(83% 0.15 70); font-weight: 700; margin-right: 6px; }
   .mc-active-story-desc { color: oklch(70% 0.15 50); }
   .mc-active-meta { display: flex; gap: 14px; font-size: 9px; color: var(--text-muted); font-family: var(--font-mono); flex-wrap: wrap; }
+  /* Light-mode contrast fixes: .agent-card.is-active overrides the card background to
+     near-white, but mc-active text colors are hard-coded for dark. Fix per-property. */
+  :root:not([data-theme="dark"]) .mc-active-card { background: transparent; box-shadow: 0 0 14px oklch(72% 0.19 38 / 14%); }
+  :root:not([data-theme="dark"]) .mc-active-portrait-banner::after { background: linear-gradient(to bottom, transparent 55%, transparent 100%); }
+  :root:not([data-theme="dark"]) .mc-active-name { color: var(--agent-color, oklch(35% 0.15 38)); }
+  :root:not([data-theme="dark"]) .mc-active-role { color: oklch(40% 0.06 220); }
+  :root:not([data-theme="dark"]) .mc-active-story { background: oklch(0% 0 0 / .07); }
+  :root:not([data-theme="dark"]) .mc-active-story-id { color: var(--agent-color, oklch(35% 0.15 38)); }
+  :root:not([data-theme="dark"]) .mc-active-story-desc { color: oklch(22% 0.04 220); }
+  :root:not([data-theme="dark"]) .mc-active-status-dot { border-color: oklch(14% 0.025 220); }
   .mc-active-meta span { color: var(--text-secondary); }
   /* ── BUG-0186: Conductor last-dispatch strip ── */
   .mc-conductor-dispatch {

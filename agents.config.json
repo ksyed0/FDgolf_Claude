@@ -7,11 +7,11 @@
   },
   "phases": [
     { "name": "Blueprint", "agents": ["Compass"], "deliverables": ["refined ACs", "priority list"] },
-    { "name": "Architect", "agents": ["Keystone"], "deliverables": ["scaffold", "types", "service stubs"] },
+    { "name": "Architect", "agents": ["Keystone", "Relay"], "deliverables": ["scaffold", "types", "service stubs", "CI/CD pipeline", "infra provisioning"] },
     { "name": "Build", "agents": ["Pixel", "Forge", "Palette"], "deliverables": ["implementation", "unit tests"] },
     { "name": "Integration", "agents": ["Pixel"], "deliverables": ["wired services", "e2e flows"] },
     { "name": "Test", "agents": ["Sentinel", "Circuit"], "deliverables": ["test report", "coverage"] },
-    { "name": "Polish", "agents": ["Pixel", "Forge"], "deliverables": ["bug fixes", "demo prep"] }
+    { "name": "Polish", "agents": ["Pixel", "Forge", "Relay"], "deliverables": ["bug fixes", "demo prep", "production deployment"] }
   ],
   "agents": {
     "Conductor": {
@@ -76,13 +76,20 @@
       "color": "oklch(40% 0.22 285)",
       "avatar": "circuit",
       "instructionFile": "docs/agents/AUTOMATION_TESTER_AGENT.md"
+    },
+    "Relay": {
+      "role": "DevOps",
+      "icon": "🚀",
+      "color": "oklch(48% 0.20 200)",
+      "avatar": "relay",
+      "instructionFile": "docs/agents/DEVOPS_AGENT.md"
     }
   },
   "dashboard": {
-    "title": "My Project",
-    "subtitle": "Agentic AI SDLC",
-    "footer": "Claude Code Agentic AI SDLC",
-    "repoUrl": "https://github.com/yourorg/your-project",
+    "title": "Claude",
+    "subtitle": "FDgolf — Agentic AI SDLC",
+    "footer": "FDgolf Claude Project | Agentic AI SDLC",
+    "repoUrl": "https://github.com/ksyed0/FDgolf",
     "primaryColor": "oklch(50% 0.20 264)",
     "platform": "Claude Code",
     "author": "Kamal Syed"
@@ -92,7 +99,7 @@
     "reviewer": "Lens",
     "avatarGrid": {
       "topRow": ["Conductor", "Compass", "Keystone", "Lens", "Palette"],
-      "bottomRow": ["Forge", "Pixel", "Sentinel", "Circuit"]
+      "bottomRow": ["Forge", "Pixel", "Sentinel", "Circuit", "Relay"]
     }
   }
 }

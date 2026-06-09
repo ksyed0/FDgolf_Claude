@@ -1,7 +1,7 @@
 {
   "project": {
-    "name": "FDgolf",
-    "tagline": "FDgolf Claude project."
+    "name": "Claude",
+    "tagline": "FDgolf tournament app — Claude project."
   },
   "docs": {
     "releasePlan": "docs/RELEASE_PLAN.md",

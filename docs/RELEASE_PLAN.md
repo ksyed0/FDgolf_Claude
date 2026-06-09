@@ -99,16 +99,16 @@ Dependencies: EPIC-0003
 US-0001 (EPIC-0001): As a developer, I want a Next.js 14 App Router project scaffolded with TypeScript, Tailwind, shadcn/ui, and Supabase client, so that all subsequent epics can build on a consistent foundation.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0001-nextjs-scaffold
 Dependencies: None
 Acceptance Criteria:
-  - [ ] AC-0001: Next.js 14 App Router project boots locally with `npm run dev` and renders a placeholder page
-  - [ ] AC-0002: TypeScript strict mode enabled; `tsconfig.json` extends Next.js defaults
-  - [ ] AC-0003: Tailwind CSS configured with PostCSS pipeline; sample utility class renders
-  - [ ] AC-0004: shadcn/ui CLI initialized; `components/ui` directory exists with at least Button installed
-  - [ ] AC-0005: `@supabase/ssr` and `@supabase/supabase-js` installed; browser + server client factories in `lib/supabase/`
-  - [ ] AC-0006: `.env.local.example` documents `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_MAPBOX_TOKEN`
+  - [x] AC-0001: Next.js 14 App Router project boots locally with `npm run dev` and renders a placeholder page
+  - [x] AC-0002: TypeScript strict mode enabled; `tsconfig.json` extends Next.js defaults
+  - [x] AC-0003: Tailwind CSS configured with PostCSS pipeline; sample utility class renders
+  - [x] AC-0004: shadcn/ui CLI initialized; `components/ui` directory exists with at least Button installed
+  - [x] AC-0005: `@supabase/ssr` and `@supabase/supabase-js` installed; browser + server client factories in `lib/supabase/`
+  - [x] AC-0006: `.env.local.example` documents `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_MAPBOX_TOKEN`
 ```
 
 ```
