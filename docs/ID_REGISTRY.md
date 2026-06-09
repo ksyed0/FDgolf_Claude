@@ -9,7 +9,7 @@ working in parallel don't collide.
 | EPIC     | EPIC-0011         | EPIC-0010     |
 | US       | US-0090           | US-0089       |
 | AC       | AC-0307           | AC-0306       |
-| TASK     | TASK-0274         | TASK-0273     |
+| TASK     | TASK-0278         | TASK-0277     |
 | TC       | TC-0001           | None          |
 | BUG      | BUG-0001          | None          |
 | L        | L-0002            | L-0001        |
