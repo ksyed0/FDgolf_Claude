@@ -51,6 +51,16 @@
 
 ---
 
+## Phase 5: Build — US-0003 + US-0007 (parallel) — 2026-06-09
+
+**Agent(s):** Pixel (x2, parallel)
+**Stories touched:** US-0003, US-0007
+**Status:** Complete — both merged to develop (PR #6 + PR #7, squash merge)
+**Commits:** 54a26c3 (post-merge develop tip)
+**Notes:** Both features built and tested in parallel. Branch cross-contamination occurred (parallel agents sharing git working tree) — resolved via cherry-pick onto clean branches. Future parallel builds should use `isolation: 'worktree'`. US-0003: AppChrome Server Component, 8 tests, 100% coverage. US-0007: MapView Client Component with token fallback + env-configurable style URL, 11 tests, 100% coverage. react-map-gl v8 uses `react-map-gl/mapbox` subpath import. CI env updated with `NEXT_PUBLIC_MAPBOX_TOKEN` placeholder.
+
+---
+
 ## Retry Log
 
 | Task | Agent | Attempt | Max | Outcome | Timestamp |

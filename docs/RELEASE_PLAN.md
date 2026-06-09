@@ -129,15 +129,15 @@ Acceptance Criteria:
 US-0003 (EPIC-0001): As a player, I want the FDgolf — built with AI/RUN app chrome on every authenticated page, so that the brand identity is consistent across the entire app.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0003-app-chrome
 Dependencies: US-0001
 Acceptance Criteria:
-  - [ ] AC-0011: `AppChrome` component renders dark forest-green (#0e2818) header bar
-  - [ ] AC-0012: Header displays "FDgolf" with green "FD" mark (#6ee7a0) and white "golf"
-  - [ ] AC-0013: Header displays "built with AI/RUN" tagline with AI/RUN logo on the right
-  - [ ] AC-0014: AppChrome is responsive (mobile, tablet, desktop)
-  - [ ] AC-0015: Used in the root `app/layout.tsx` so all routes inherit it
+  - [x] AC-0011: `AppChrome` component renders dark forest-green (#0e2818) header bar
+  - [x] AC-0012: Header displays "FDgolf" with green "FD" mark (#6ee7a0) and white "golf"
+  - [x] AC-0013: Header displays "built with AI/RUN" tagline with AI/RUN logo on the right
+  - [x] AC-0014: AppChrome is responsive (mobile, tablet, desktop)
+  - [x] AC-0015: Used in the root `app/layout.tsx` so all routes inherit it
 ```
 
 ```
@@ -193,15 +193,15 @@ Acceptance Criteria:
 US-0007 (EPIC-0001): As a player, I want a Mapbox map ready to render in the app, so that round tracking can show me my position and the hole pin.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0007-mapbox
 Dependencies: US-0001
 Acceptance Criteria:
-  - [ ] AC-0035: `mapbox-gl` and `react-map-gl` installed
-  - [ ] AC-0036: `MapView` component renders a Mapbox map centred on a passed-in lat/lng
-  - [ ] AC-0037: Custom golf-course-style URL configurable via env var with sensible default
-  - [ ] AC-0038: Component renders without errors when used in a Client Component
-  - [ ] AC-0039: Mapbox token loaded from `NEXT_PUBLIC_MAPBOX_TOKEN` env var; missing token shows a friendly fallback message instead of crashing
+  - [x] AC-0035: `mapbox-gl` and `react-map-gl` installed
+  - [x] AC-0036: `MapView` component renders a Mapbox map centred on a passed-in lat/lng
+  - [x] AC-0037: Custom golf-course-style URL configurable via env var with sensible default
+  - [x] AC-0038: Component renders without errors when used in a Client Component
+  - [x] AC-0039: Mapbox token loaded from `NEXT_PUBLIC_MAPBOX_TOKEN` env var; missing token shows a friendly fallback message instead of crashing
 ```
 
 ```
