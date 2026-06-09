@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node tools/capture-cost.js"
+            "command": "node /Users/Kamal_Syed/Projects/FDgolf/Claude/tools/capture-cost.js"
           }
         ]
       }

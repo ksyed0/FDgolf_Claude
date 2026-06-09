@@ -115,14 +115,14 @@ Acceptance Criteria:
 US-0002 (EPIC-0001): As a developer, I want a Supabase project provisioned with PostgreSQL and email auth enabled, so that we have a backend ready for schema migrations and authentication.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0002-supabase-project
 Dependencies: US-0001
 Acceptance Criteria:
-  - [ ] AC-0007: Supabase project created (cloud or local via `supabase start`)
-  - [ ] AC-0008: Email + password auth provider enabled in Supabase Auth settings
-  - [ ] AC-0009: Project URL and anon key documented in `.env.local`
-  - [ ] AC-0010: `supabase/config.toml` checked into repo for reproducible local dev
+  - [x] AC-0007: Supabase project created (cloud or local via `supabase start`)
+  - [x] AC-0008: Email + password auth provider enabled in Supabase Auth settings
+  - [x] AC-0009: Project URL and anon key documented in `.env.local`
+  - [x] AC-0010: `supabase/config.toml` checked into repo for reproducible local dev
 ```
 
 ```
