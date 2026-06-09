@@ -71,6 +71,16 @@
 
 ---
 
+## Phase 7: Build — US-0006 + US-0008 (parallel) — 2026-06-09
+
+**Agent(s):** Relay (x2, worktree-isolated)
+**Stories touched:** US-0006, US-0008
+**Status:** Complete — both merged to develop (PR #10 + PR #11, squash merge)
+**Develop tip after merge:** 7f0bff1 (fast-forward)
+**Notes:** US-0006: RLS migration (666 lines, 3 SECURITY DEFINER helpers, 42 policies, public_hole_scores view), validate-rls.sh 25/25 checks. Added fdgolf_is_teammate() helper beyond plan to resolve bootstrapping issue with tournament_registrations RLS. US-0008: seed migration with UNIQUE constraint on display_name + 15 clubs INSERT ON CONFLICT, validate-clubs.sh 63/63 checks. EPIC-0001 foundation complete: schema + RLS + seed + auth all done. US-0009 (create tournament) now unblocked.
+
+---
+
 ## Retry Log
 
 | Task | Agent | Attempt | Max | Outcome | Timestamp |

@@ -176,17 +176,17 @@ Acceptance Criteria:
 US-0006 (EPIC-0001): As a developer, I want Row Level Security policies enforced on every table, so that tournament data is isolated and roles are respected.
 Priority: High
 Estimate: M
-Status: Planned
+Status: Done
 Branch: feature/US-0006-rls-policies
 Dependencies: US-0005
 Acceptance Criteria:
-  - [ ] AC-0028: RLS enabled on every table created in US-0005
-  - [ ] AC-0029: Public read on tournaments, team_hole_scores, clubs (drives the public leaderboard and registration landing)
-  - [ ] AC-0030: Players can read self + own team members; admin bypass exists
-  - [ ] AC-0031: Players can write shots only during own round
-  - [ ] AC-0032: tournament_organizer scoped to their tournament_id
-  - [ ] AC-0033: Public payload on team_hole_scores includes player name + company only (no email, phone, year_of_birth, gender)
-  - [ ] AC-0034: SQL tests verify each policy with a non-privileged JWT
+  - [x] AC-0028: RLS enabled on every table created in US-0005
+  - [x] AC-0029: Public read on tournaments, team_hole_scores, clubs (drives the public leaderboard and registration landing)
+  - [x] AC-0030: Players can read self + own team members; admin bypass exists
+  - [x] AC-0031: Players can write shots only during own round
+  - [x] AC-0032: tournament_organizer scoped to their tournament_id
+  - [x] AC-0033: Public payload on team_hole_scores includes player name + company only (no email, phone, year_of_birth, gender)
+  - [x] AC-0034: SQL tests verify each policy with a non-privileged JWT
 ```
 
 ```
@@ -208,14 +208,14 @@ Acceptance Criteria:
 US-0008 (EPIC-0001): As an admin, I want the master club list seeded with a standard golf bag, so that tournaments can use it out of the box.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0008-seed-clubs
 Dependencies: US-0005
 Acceptance Criteria:
-  - [ ] AC-0040: Seed migration inserts 15 standard clubs: Driver, 3-wood, 5-wood, 3-hybrid, 4–9 iron, PW, GW, SW, LW, Putter
-  - [ ] AC-0041: Each club has `club_type`, `default_loft_degrees` (except Putter), `display_order`, `is_active=true`
-  - [ ] AC-0042: Display order matches a real golfer's bag traversal (Driver → wedges → Putter)
-  - [ ] AC-0043: Seed is idempotent (re-running does not create duplicates)
+  - [x] AC-0040: Seed migration inserts 15 standard clubs: Driver, 3-wood, 5-wood, 3-hybrid, 4–9 iron, PW, GW, SW, LW, Putter
+  - [x] AC-0041: Each club has `club_type`, `default_loft_degrees` (except Putter), `display_order`, `is_active=true`
+  - [x] AC-0042: Display order matches a real golfer's bag traversal (Driver → wedges → Putter)
+  - [x] AC-0043: Seed is idempotent (re-running does not create duplicates)
 ```
 
 ---
