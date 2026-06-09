@@ -136,7 +136,7 @@
     "Pixel": {
       "status": "idle",
       "currentTask": null,
-      "tasksCompleted": 2,
+      "tasksCompleted": 5,
       "model": null
     },
     "Sentinel": {
@@ -184,13 +184,41 @@
       "assignedAgent": null,
       "startedAt": null,
       "completedAt": "2026-06-09T23:20:51.815Z"
+    },
+    "undefined": {
+      "status": "Complete",
+      "epic": null,
+      "assignedAgent": null,
+      "startedAt": null,
+      "completedAt": "2026-06-09T23:40:15.486Z"
+    },
+    "US-0016": {
+      "status": "Complete",
+      "epic": null,
+      "assignedAgent": null,
+      "startedAt": null,
+      "completedAt": "2026-06-09T23:40:23.428Z"
+    },
+    "US-0011": {
+      "status": "Complete",
+      "epic": null,
+      "assignedAgent": null,
+      "startedAt": null,
+      "completedAt": "2026-06-09T23:40:23.608Z"
+    },
+    "US-0010": {
+      "status": "Complete",
+      "epic": null,
+      "assignedAgent": null,
+      "startedAt": null,
+      "completedAt": "2026-06-09T23:41:09.198Z"
     }
   },
   "cycles": [],
   "metrics": {
-    "storiesCompleted": 2,
+    "storiesCompleted": 6,
     "storiesTotal": 8,
-    "tasksCompleted": 2,
+    "tasksCompleted": 5,
     "tasksTotal": 0,
     "testsPassed": 0,
     "testsFailed": 0,
@@ -333,6 +361,41 @@
       "time": "2026-06-09T23:20:51.908Z",
       "agent": "Conductor",
       "message": "10 stories done (US-0001–US-0009, US-0020). EPIC-0001 foundation complete. US-0010/0011/0015/0016/0017/0021 now unblocked."
+    },
+    {
+      "time": "2026-06-09T23:40:15.487Z",
+      "agent": "Conductor",
+      "message": "completed undefined"
+    },
+    {
+      "time": "2026-06-09T23:40:23.428Z",
+      "agent": "Conductor",
+      "message": "completed US-0016"
+    },
+    {
+      "time": "2026-06-09T23:40:23.520Z",
+      "agent": "Pixel",
+      "message": "finished US-0016"
+    },
+    {
+      "time": "2026-06-09T23:40:23.609Z",
+      "agent": "Conductor",
+      "message": "completed US-0011"
+    },
+    {
+      "time": "2026-06-09T23:40:23.706Z",
+      "agent": "Pixel",
+      "message": "finished US-0011"
+    },
+    {
+      "time": "2026-06-09T23:41:09.198Z",
+      "agent": "Conductor",
+      "message": "completed US-0010"
+    },
+    {
+      "time": "2026-06-09T23:41:09.296Z",
+      "agent": "Pixel",
+      "message": "finished US-0010"
     }
   ],
   "tasks": {

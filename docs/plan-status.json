@@ -484,23 +484,23 @@
       "title": "As an admin, I want to override the auto-generated slug, so that the public URL matches the printed invitations.",
       "priority": "Medium",
       "estimate": "S",
-      "status": "Planned",
+      "status": "Done",
       "branch": "feature/US-0010-slug-override",
       "acs": [
         {
           "id": "AC-0047",
           "text": "Slug field is editable on the basics step of the wizard",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0048",
           "text": "Uniqueness check runs on blur; conflict shows inline error",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0049",
           "text": "Only lowercase letters, digits, hyphens accepted",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -513,33 +513,33 @@
       "title": "As an admin, I want to enter par, yardage, and stroke index for each hole, so that the scoring engine and round map have the data they need.",
       "priority": "High",
       "estimate": "S",
-      "status": "Planned",
+      "status": "Done",
       "branch": "feature/US-0011-course-holes",
       "acs": [
         {
           "id": "AC-0050",
           "text": "Course holes table renders one editable row per hole (1 to holes_count)",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0051",
           "text": "Par values constrained to 3, 4, 5",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0052",
           "text": "Stroke indices constrained to 1–18, unique within the course",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0053",
           "text": "Total par computed and displayed at the bottom",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0054",
           "text": "Save persists rows to the `holes` table linked to the tournament's course",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -680,23 +680,23 @@
       "title": "As an admin, I want CIBC tournament sponsor logos (First Derivative, AI/Run) hardcoded for the first tournament, so that the public leaderboard ships on schedule.",
       "priority": "High",
       "estimate": "S",
-      "status": "Planned",
+      "status": "Done",
       "branch": "feature/US-0016-sponsor-hardcode",
       "acs": [
         {
           "id": "AC-0069",
           "text": "Logos shipped as static assets in `public/sponsors/`",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0070",
-          "text": "Tournament with slug `cibc-arc-2024` (or current first tournament's slug) shows both logos on public leaderboard",
-          "done": false
+          "text": "Tournament with slug `cibc-granite-ridge-2026` shows both logos on public leaderboard",
+          "done": true
         },
         {
           "id": "AC-0071",
           "text": "Tournaments with other slugs show no sponsor logos until admin upload UI ships in Phase 2",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -5693,24 +5693,24 @@
     },
     "US-0009": {
       "projectedUsd": 400,
-      "costUsd": 37.047899,
-      "inputTokens": 2329905,
-      "outputTokens": 448063
-    },
-    "US-0010": {
-      "projectedUsd": 6.250427999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
+    "US-0010": {
+      "projectedUsd": 400,
+      "costUsd": 42.583999,
+      "inputTokens": 2743332,
+      "outputTokens": 547938
+    },
     "US-0011": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 400,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0012": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -5722,37 +5722,37 @@
       "outputTokens": 0
     },
     "US-0014": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0015": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0016": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 400,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0017": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0018": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0019": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -5764,25 +5764,25 @@
       "outputTokens": 0
     },
     "US-0021": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0022": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0023": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0024": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -5794,55 +5794,55 @@
       "outputTokens": 0
     },
     "US-0026": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0027": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0028": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0029": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0030": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0031": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0032": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0033": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0034": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -5854,13 +5854,13 @@
       "outputTokens": 0
     },
     "US-0036": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0037": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -5872,13 +5872,13 @@
       "outputTokens": 0
     },
     "US-0039": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0040": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -5890,7 +5890,7 @@
       "outputTokens": 0
     },
     "US-0042": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -5902,31 +5902,31 @@
       "outputTokens": 0
     },
     "US-0044": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0045": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0046": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0047": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0048": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -5938,109 +5938,109 @@
       "outputTokens": 0
     },
     "US-0050": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0051": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0052": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0053": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0054": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0055": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0056": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0057": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0058": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0059": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0060": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0061": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0062": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0063": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0064": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0065": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0066": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0067": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -6052,13 +6052,13 @@
       "outputTokens": 0
     },
     "US-0069": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0070": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -6070,37 +6070,37 @@
       "outputTokens": 0
     },
     "US-0072": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0073": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0074": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0075": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0076": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0077": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -6112,7 +6112,7 @@
       "outputTokens": 0
     },
     "US-0079": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -6124,13 +6124,13 @@
       "outputTokens": 0
     },
     "US-0081": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0082": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -6142,19 +6142,19 @@
       "outputTokens": 0
     },
     "US-0084": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0085": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0086": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
@@ -6166,21 +6166,21 @@
       "outputTokens": 0
     },
     "US-0088": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0089": {
-      "projectedUsd": 6.250427999999999,
+      "projectedUsd": 5.385707999999999,
       "costUsd": 0.388799,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "_totals": {
-      "costUsd": 71.2622,
-      "inputTokens": 4215231,
-      "outputTokens": 1059203
+      "costUsd": 76.7983,
+      "inputTokens": 4628658,
+      "outputTokens": 1159078
     },
     "_bugs": {
       "_totals": {
@@ -6259,14 +6259,14 @@
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0011": {
       "missingTCs": true,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0012": {
       "missingTCs": true,
@@ -6301,7 +6301,7 @@
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0017": {
       "missingTCs": true,
@@ -6839,9 +6839,9 @@
       "bugIds": []
     }
   ],
-  "generatedAt": "2026-06-09T23:21:21.135Z",
-  "commitSha": "7077e73",
-  "buildNumber": "25",
+  "generatedAt": "2026-06-09T23:44:27.627Z",
+  "commitSha": "fa6b598",
+  "buildNumber": "31",
   "branch": "develop",
   "sessionTimeline": [
     {
@@ -6850,7 +6850,7 @@
     },
     {
       "date": "2026-06-09",
-      "cumCost": 71.2622
+      "cumCost": 76.7983
     }
   ],
   "costHistory": {
@@ -6860,14 +6860,14 @@
         "costUsd": 34.6031
       }
     ],
-    "feature/US-0009-tournament-create": [
+    "feature/US-0010-slug-override": [
       {
         "date": "2026-06-09",
-        "costUsd": 36.6591
+        "costUsd": 42.1952
       }
     ]
   },
-  "deltaSpend": 36.66,
+  "deltaSpend": 42.2,
   "projectName": "Claude",
   "tagline": "FDgolf tournament app — Claude project.",
   "version": "1.0.0",
@@ -6947,13 +6947,13 @@
     }
   },
   "budget": {
-    "totalBudget": 495.4904479999999,
-    "totalSpent": 71.2622,
-    "totalProjected": 5224.228248000014,
-    "percentUsed": 14,
-    "burnRate": 28.483400000000003,
-    "daysRemaining": 14,
-    "projectedExhaustion": 14,
+    "totalBudget": 427.797904,
+    "totalSpent": 76.7983,
+    "totalProjected": 6350.999603999982,
+    "percentUsed": 18,
+    "burnRate": 31.25145,
+    "daysRemaining": 11,
+    "projectedExhaustion": 11,
     "thresholds": [
       50,
       75,
@@ -6973,74 +6973,74 @@
       {
         "id": "EPIC-0002",
         "title": "Tournament Setup (Admin)",
-        "budget": 98.47853999999998,
-        "spent": 41.32468799999999,
-        "remaining": 57.15385199999999,
-        "percentUsed": 42
+        "budget": 80.07503599999998,
+        "spent": 46.860787999999985,
+        "remaining": 33.214248,
+        "percentUsed": 59
       },
       {
         "id": "EPIC-0005",
         "title": "Round Tracking",
-        "budget": 71.54746599999999,
+        "budget": 62.900266,
         "spent": 5.443186,
-        "remaining": 66.10427999999999,
-        "percentUsed": 8
+        "remaining": 57.457080000000005,
+        "percentUsed": 9
       },
       {
         "id": "EPIC-0009",
         "title": "Offline & Sync",
-        "budget": 29.134506,
+        "budget": 25.675626,
         "spent": 2.3327940000000003,
-        "remaining": 26.801712,
-        "percentUsed": 8
+        "remaining": 23.342832,
+        "percentUsed": 9
       },
       {
         "id": "EPIC-0010",
         "title": "Security & 2FA",
-        "budget": 35.77373299999999,
+        "budget": 31.450132999999994,
         "spent": 2.7215930000000004,
-        "remaining": 33.052139999999994,
-        "percentUsed": 8
+        "remaining": 28.728539999999995,
+        "percentUsed": 9
       },
       {
         "id": "EPIC-0006",
         "title": "Scoring Engine",
-        "budget": 41.124160999999994,
+        "budget": 35.935840999999996,
         "spent": 2.7215930000000004,
-        "remaining": 38.402567999999995,
-        "percentUsed": 7
+        "remaining": 33.214248,
+        "percentUsed": 8
       },
       {
         "id": "EPIC-0008",
         "title": "Admin Operations",
-        "budget": 68.96986799999999,
+        "budget": 60.322668,
         "spent": 4.6655880000000005,
-        "remaining": 64.30427999999999,
-        "percentUsed": 7
+        "remaining": 55.65708,
+        "percentUsed": 8
       },
       {
         "id": "EPIC-0003",
         "title": "Registration & Profile",
-        "budget": 54.402615,
+        "budget": 47.484855,
         "spent": 3.4991910000000006,
-        "remaining": 50.903423999999994,
-        "percentUsed": 6
+        "remaining": 43.985664,
+        "percentUsed": 7
       },
       {
         "id": "EPIC-0004",
         "title": "Pre-Round Setup",
-        "budget": 33.196135,
+        "budget": 28.872535,
         "spent": 1.9439950000000001,
-        "remaining": 31.252139999999997,
-        "percentUsed": 6
+        "remaining": 26.928539999999998,
+        "percentUsed": 7
       },
       {
         "id": "EPIC-0007",
         "title": "Leaderboard",
-        "budget": 59.753043,
+        "budget": 51.970563000000006,
         "spent": 3.4991910000000006,
-        "remaining": 56.253851999999995,
-        "percentUsed": 6
+        "remaining": 48.471372,
+        "percentUsed": 7
       }
     ],
     "hasBudget": true
@@ -7050,14 +7050,17 @@
     "dates": [
       "2026-06-08T21:52:52.831Z",
       "2026-06-09T16:06:02.930Z",
-      "2026-06-09T23:21:21.205Z"
+      "2026-06-09T23:21:21.205Z",
+      "2026-06-09T23:44:27.702Z"
     ],
     "doneCounts": [
       0,
       1,
-      10
+      10,
+      13
     ],
     "totalStories": [
+      89,
       89,
       89,
       89
@@ -7065,9 +7068,11 @@
     "aiCosts": [
       18.7247,
       38.577799999999996,
-      71.2622
+      71.2622,
+      76.7983
     ],
     "coverage": [
+      null,
       null,
       null,
       null
@@ -7075,9 +7080,11 @@
     "velocity": [
       0,
       1,
-      14
+      14,
+      17
     ],
     "openBugs": [
+      0,
       0,
       0,
       0
@@ -7085,32 +7092,36 @@
     "atRisk": [
       0,
       0,
+      0,
       0
     ],
     "inputTokens": [
       989608,
       2300102,
-      4215231
+      4215231,
+      4628658
     ],
     "outputTokens": [
       373545,
       660234,
-      1059203
+      1059203,
+      1159078
     ],
     "avgRisk": [
       1.0999999999999985,
       1.0999999999999988,
-      1.0999999999999992
+      1.0999999999999992,
+      1.0999999999999994
     ],
     "velocityByWeek": {
       "labels": [
         "2026-W24"
       ],
       "points": [
-        14
+        17
       ],
       "rollingAvg": [
-        14
+        17
       ]
     }
   }

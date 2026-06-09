@@ -90,6 +90,27 @@
 
 ---
 
+## Phase 9: Build — US-0010 + US-0011 + US-0016 (parallel) — 2026-06-09
+
+**Agent(s):** Pixel (x3, worktree-isolated)
+**Stories touched:** US-0010, US-0011, US-0016
+**Status:** Complete — all merged to develop (PR #15 + PR #16 + PR #17, squash merge)
+**Develop tip after merge:** fa6b598
+**Notes:** US-0016: SponsorBar component with SVG placeholder logos + hardcoded CIBC slug map, 3 tests. US-0011: CourseHolesForm (par/yardage/stroke index per hole, live total par), saveCourseHolesAction with course upsert, 18 tests. US-0010: editable slug field with 300ms debounce auto-fill from name, format validation, on-blur uniqueness check via checkSlugAvailableAction, 9 new tests. US-0010 branch had CodeMie contamination from stale worktree — cherry-picked clean commit and force-pushed before merge.
+
+---
+
+## Phase 10: Repo Split — 2026-06-09
+
+**Agent(s):** Conductor (inline)
+**Action:** Extracted Claude/ subdirectory into standalone GitHub repo
+**Status:** Complete
+**New repo:** https://github.com/ksyed0/FDgolf_Claude
+**Local path:** /Users/Kamal_Syed/Projects/FDgolf_Claude
+**Notes:** Used `git filter-repo --subdirectory-filter Claude` on a fresh clone. Pushed develop + main to FDgolf_Claude. Set develop as default branch. Added fdgolf-app-ci.yml workflow (Vitest tests + build). Updated .claude/settings.json capture-cost hook to new absolute path. Branch protection set on develop (PRs required, 0 approvals). Start new Claude Code sessions from /Users/Kamal_Syed/Projects/FDgolf_Claude.
+
+---
+
 ## Retry Log
 
 | Task | Agent | Attempt | Max | Outcome | Timestamp |

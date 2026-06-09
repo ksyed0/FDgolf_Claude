@@ -239,28 +239,28 @@ Acceptance Criteria:
 US-0010 (EPIC-0002): As an admin, I want to override the auto-generated slug, so that the public URL matches the printed invitations.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0010-slug-override
 Dependencies: US-0009
 Acceptance Criteria:
-  - [ ] AC-0047: Slug field is editable on the basics step of the wizard
-  - [ ] AC-0048: Uniqueness check runs on blur; conflict shows inline error
-  - [ ] AC-0049: Only lowercase letters, digits, hyphens accepted
+  - [x] AC-0047: Slug field is editable on the basics step of the wizard
+  - [x] AC-0048: Uniqueness check runs on blur; conflict shows inline error
+  - [x] AC-0049: Only lowercase letters, digits, hyphens accepted
 ```
 
 ```
 US-0011 (EPIC-0002): As an admin, I want to enter par, yardage, and stroke index for each hole, so that the scoring engine and round map have the data they need.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0011-course-holes
 Dependencies: US-0009
 Acceptance Criteria:
-  - [ ] AC-0050: Course holes table renders one editable row per hole (1 to holes_count)
-  - [ ] AC-0051: Par values constrained to 3, 4, 5
-  - [ ] AC-0052: Stroke indices constrained to 1–18, unique within the course
-  - [ ] AC-0053: Total par computed and displayed at the bottom
-  - [ ] AC-0054: Save persists rows to the `holes` table linked to the tournament's course
+  - [x] AC-0050: Course holes table renders one editable row per hole (1 to holes_count)
+  - [x] AC-0051: Par values constrained to 3, 4, 5
+  - [x] AC-0052: Stroke indices constrained to 1–18, unique within the course
+  - [x] AC-0053: Total par computed and displayed at the bottom
+  - [x] AC-0054: Save persists rows to the `holes` table linked to the tournament's course
 ```
 
 ```
@@ -321,13 +321,13 @@ Acceptance Criteria:
 US-0016 (EPIC-0002): As an admin, I want CIBC tournament sponsor logos (First Derivative, AI/Run) hardcoded for the first tournament, so that the public leaderboard ships on schedule.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0016-sponsor-hardcode
 Dependencies: US-0009
 Acceptance Criteria:
-  - [ ] AC-0069: Logos shipped as static assets in `public/sponsors/`
-  - [ ] AC-0070: Tournament with slug `cibc-arc-2024` (or current first tournament's slug) shows both logos on public leaderboard
-  - [ ] AC-0071: Tournaments with other slugs show no sponsor logos until admin upload UI ships in Phase 2
+  - [x] AC-0069: Logos shipped as static assets in `public/sponsors/`
+  - [x] AC-0070: Tournament with slug `cibc-granite-ridge-2026` shows both logos on public leaderboard
+  - [x] AC-0071: Tournaments with other slugs show no sponsor logos until admin upload UI ships in Phase 2
 ```
 
 ```
