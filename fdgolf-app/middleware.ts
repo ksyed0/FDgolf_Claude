@@ -7,17 +7,18 @@ import { updateSession } from '@/lib/supabase/middleware'
  * 1. Calls updateSession to refresh the Supabase auth token (AC-0021).
  * 2. Redirects unauthenticated requests for protected routes to /login.
  *
- * Protected routes (Phase 1): only /
+ * Protected routes: / and /admin/* (Phase 1)
  * Public routes: /login (always accessible)
+ * Admin-role check: performed inside /admin pages via fdgolf_is_admin() RPC,
+ *                   not here (middleware only checks authentication, not authorization).
  */
 export async function middleware(request: NextRequest) {
   const { response, user } = await updateSession(request)
 
   const { pathname } = request.nextUrl
 
-  // Only protect the root route in Phase 1.
-  // /login is always public. Static assets and _next are excluded by the matcher.
-  const isProtected = pathname === '/'
+  // Protect / and all /admin/* routes.
+  const isProtected = pathname === '/' || pathname.startsWith('/admin')
 
   if (isProtected && !user) {
     const loginUrl = new URL('/login', request.url)
