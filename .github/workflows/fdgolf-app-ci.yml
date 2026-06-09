@@ -1,0 +1,57 @@
+name: FDgolf App CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'fdgolf-app/**'
+      - '.github/workflows/fdgolf-app-ci.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'fdgolf-app/**'
+
+defaults:
+  run:
+    working-directory: fdgolf-app
+
+jobs:
+  quality:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: fdgolf-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          NEXT_PUBLIC_MAPBOX_TOKEN: pk.placeholder-mapbox-token
+
+      - name: Unit tests with coverage
+        run: npm run test:ci
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fdgolf-app-coverage
+          path: fdgolf-app/coverage/
+          retention-days: 14
