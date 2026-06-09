@@ -26,5 +26,5 @@ working in parallel don't collide.
 - **Epics:** EPIC-0001 through EPIC-0010 (10 total — see `docs/RELEASE_PLAN.md`)
 - **User Stories:** US-0001 through US-0089 (89 total)
 - **Acceptance Criteria:** AC-0001 through AC-0306 (306 total across all stories)
-- **Tasks:** TASK-0001 through TASK-0273 (273 total across all 10 epics)
+- **Tasks:** TASK-0001 through TASK-0277 (277 total across all 10 epics)
 - **Lessons:** L-0001 (seeded during install)
