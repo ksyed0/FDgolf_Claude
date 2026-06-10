@@ -3,6 +3,17 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 1 — 2026-06-10
+
+### What Was Done
+
+- Rewrote CLAUDE.md and AGENTS.md with full process, session, agent, and standards content from PlanVisualizer docs
+- Created docs/ARCHITECTURE.md with C4-inspired Mermaid diagrams (context, container, component, auth flows, DB schema, user journeys)
+- Fixed PlanVisualizer CI gaps: added `test:ci` to fdgolf-app, `test:coverage` to root, corrected coverage path in config, added vitest json-summary reporter
+- Designed and implemented a two-layer E2E test suite: 5 Playwright `.spec.ts` files (TC-0002–TC-0006, TC-0008–TC-0013, TC-0015), TEST_CASES.md TC-0001–TC-0015, and MCP Markdown guide scripts
+
+---
+
 ## Session Start — 2026-06-08
 
 **Conductor initialized.** All mandatory startup files created:
