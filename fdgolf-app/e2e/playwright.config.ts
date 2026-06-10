@@ -10,7 +10,7 @@ export default defineConfig({
   testDir: '.',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: 0,
+  retries: process.env.CI ? 1 : 0,
   workers: 1,
   reporter: [['html', { outputFolder: 'playwright-report' }], ['list']],
   globalSetup: require.resolve('./global-setup'),
