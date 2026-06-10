@@ -3,6 +3,17 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 1 — 2026-06-10
+
+### What Was Done
+
+- Rewrote CLAUDE.md and AGENTS.md with full process, session, agent, and standards content from PlanVisualizer docs
+- Created docs/ARCHITECTURE.md with C4-inspired Mermaid diagrams (context, container, component, auth flows, DB schema, user journeys)
+- Fixed PlanVisualizer CI gaps: added `test:ci` to fdgolf-app, `test:coverage` to root, corrected coverage path in config, added vitest json-summary reporter
+- Designed and implemented a two-layer E2E test suite: 5 Playwright `.spec.ts` files (TC-0002–TC-0006, TC-0008–TC-0013, TC-0015), TEST_CASES.md TC-0001–TC-0015, and MCP Markdown guide scripts
+
+---
+
 ## Session Start — 2026-06-08
 
 **Conductor initialized.** All mandatory startup files created:
@@ -87,6 +98,27 @@
 **Stories touched:** US-0009, US-0020
 **Status:** Complete — both merged to develop (PR #12 + PR #13, squash merge)
 **Notes:** US-0009: generateSlug utility (11 tests), createTournamentAction Server Action, TournamentForm Client Component, admin page with fdgolf_is_admin() guard, middleware extended to protect /admin/*, 76 tests total. US-0020: assignOrganizerAction + searchPlayersAction, OrganizerSearch component, admin organizers page, 69 tests. No migration needed — UNIQUE constraint already in schema. AC-0085 covered by US-0006 RLS.
+
+---
+
+## Phase 9: Build — US-0010 + US-0011 + US-0016 (parallel) — 2026-06-09
+
+**Agent(s):** Pixel (x3, worktree-isolated)
+**Stories touched:** US-0010, US-0011, US-0016
+**Status:** Complete — all merged to develop (PR #15 + PR #16 + PR #17, squash merge)
+**Develop tip after merge:** fa6b598
+**Notes:** US-0016: SponsorBar component with SVG placeholder logos + hardcoded CIBC slug map, 3 tests. US-0011: CourseHolesForm (par/yardage/stroke index per hole, live total par), saveCourseHolesAction with course upsert, 18 tests. US-0010: editable slug field with 300ms debounce auto-fill from name, format validation, on-blur uniqueness check via checkSlugAvailableAction, 9 new tests. US-0010 branch had CodeMie contamination from stale worktree — cherry-picked clean commit and force-pushed before merge.
+
+---
+
+## Phase 10: Repo Split — 2026-06-09
+
+**Agent(s):** Conductor (inline)
+**Action:** Extracted Claude/ subdirectory into standalone GitHub repo
+**Status:** Complete
+**New repo:** https://github.com/ksyed0/FDgolf_Claude
+**Local path:** /Users/Kamal_Syed/Projects/FDgolf_Claude
+**Notes:** Used `git filter-repo --subdirectory-filter Claude` on a fresh clone. Pushed develop + main to FDgolf_Claude. Set develop as default branch. Added fdgolf-app-ci.yml workflow (Vitest tests + build). Updated .claude/settings.json capture-cost hook to new absolute path. Branch protection set on develop (PRs required, 0 approvals). Start new Claude Code sessions from /Users/Kamal_Syed/Projects/FDgolf_Claude.
 
 ---
 

@@ -8,8 +8,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    exclude: ['**/node_modules/**', '**/e2e/**', '**/e2e-mcp/**'],
     coverage: {
       provider: 'v8',
+      reporter: ['text', 'json-summary'],
       include: ['lib/**/*.ts', 'components/**/*.tsx', 'app/**/*.tsx'],
       exclude: [
         'lib/supabase/**',

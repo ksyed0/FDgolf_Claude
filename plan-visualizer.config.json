@@ -12,7 +12,7 @@
     "outputDir": "docs"
   },
   "coverage": {
-    "summaryPath": "docs/coverage/coverage-summary.json"
+    "summaryPath": "fdgolf-app/coverage/coverage-summary.json"
   },
   "progress": {
     "path": "progress.md"

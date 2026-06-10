@@ -9,6 +9,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "test:coverage": "jest --watchAll=false --coverage",
     "plan:test": "jest --watchAll=false",
     "plan:test:coverage": "jest --watchAll=false --coverage",
     "plan:generate": "node tools/generate-plan.js",
