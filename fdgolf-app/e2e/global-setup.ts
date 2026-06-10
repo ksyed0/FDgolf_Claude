@@ -13,20 +13,23 @@ export default async function globalSetup() {
   }
 
   const browser = await chromium.launch()
-  const context = await browser.newContext()
-  const page = await context.newPage()
+  try {
+    const context = await browser.newContext()
+    const page = await context.newPage()
 
-  await page.goto('http://localhost:3000/login')
-  await page.fill('input[name="email"]', email)
-  await page.fill('input[name="password"]', password)
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await page.waitForURL('http://localhost:3000/', { timeout: 10_000 })
+    await page.goto('http://localhost:3000/login')
+    await page.fill('input[name="email"]', email)
+    await page.fill('input[name="password"]', password)
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.waitForURL('http://localhost:3000/', { timeout: 10_000 })
 
-  const stateDir = path.resolve(__dirname, '../.playwright')
-  if (!fs.existsSync(stateDir)) fs.mkdirSync(stateDir, { recursive: true })
+    const stateDir = path.resolve(__dirname, '../.playwright')
+    if (!fs.existsSync(stateDir)) fs.mkdirSync(stateDir, { recursive: true })
 
-  await context.storageState({
-    path: path.resolve(stateDir, 'storageState.json'),
-  })
-  await browser.close()
+    await context.storageState({
+      path: path.resolve(stateDir, 'storageState.json'),
+    })
+  } finally {
+    await browser.close()
+  }
 }
