@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import React from 'react'
 
 const mockTransitionAction = vi.hoisted(() => vi.fn())
@@ -198,6 +198,51 @@ describe('LifecycleClient — registration_open status', () => {
         nextStatus="active"
       />
     )
+    expect(screen.getByRole('button', { name: /start tournament/i })).toBeInTheDocument()
+  })
+})
+
+describe('registration_open status', () => {
+  it('shows registration URL banner', () => {
+    render(
+      <LifecycleClient
+        tournament={{ ...BASE_TOURNAMENT, status: 'registration_open' }}
+        preflightResult={null}
+        nextStatus="active"
+      />
+    )
+    expect(screen.getByText(/registration is open/i)).toBeInTheDocument()
+    expect(screen.getByText(/fdgolf\.app\/register\/spring-open/i)).toBeInTheDocument()
+  })
+
+  it('copy button writes URL to clipboard', async () => {
+    Object.assign(navigator, {
+      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+    })
+    render(
+      <LifecycleClient
+        tournament={{ ...BASE_TOURNAMENT, status: 'registration_open' }}
+        preflightResult={null}
+        nextStatus="active"
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /copy/i }))
+    await waitFor(() => {
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        'https://fdgolf.app/register/spring-open'
+      )
+    })
+  })
+
+  it('still shows preflight checklist and transition button below the URL banner', () => {
+    render(
+      <LifecycleClient
+        tournament={{ ...BASE_TOURNAMENT, status: 'registration_open' }}
+        preflightResult={ALL_PASS_RESULT}
+        nextStatus="active"
+      />
+    )
+    expect(screen.getByText(/fdgolf\.app\/register\/spring-open/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /start tournament/i })).toBeInTheDocument()
   })
 })
