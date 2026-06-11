@@ -11,8 +11,7 @@ type HoleRow = {
   number: number
   pin_lat: number | null
   pin_lng: number | null
-  tee_lat: number | null
-  tee_lng: number | null
+  tees: { colour: string; lat: number | null; lng: number | null }[]
 }
 
 /**
@@ -23,7 +22,7 @@ type HoleRow = {
  *
  * AC-0058: Satellite map renders at sensible zoom.
  * AC-0059: Click drops pin coords saved to holes.pin_lat/pin_lng.
- * AC-0060: Tee mode available via mode toggle.
+ * AC-0060: Tee mode available via mode toggle; saves into holes.tees JSONB by colour.
  * AC-0061: Progress bar counts holes with pins.
  * AC-0062: "Save and next hole" advances automatically.
  */
@@ -52,10 +51,10 @@ export default async function PinsPage({ params }: PageProps) {
     redirect(`/admin/tournaments/${params.slug}/course`)
   }
 
-  // Fetch holes with coordinates
+  // Fetch holes with coordinates (tees JSONB replaces flat tee_lat/tee_lng)
   const { data: holesData, error: holesError } = await supabase
     .from('holes')
-    .select('id,number,pin_lat,pin_lng,tee_lat,tee_lng')
+    .select('id,number,pin_lat,pin_lng,tees')
     .eq('course_id', tournament.course_id)
     .order('number')
 
@@ -63,11 +62,16 @@ export default async function PinsPage({ params }: PageProps) {
     notFound()
   }
 
-  const holes: HoleCoords[] = (holesData ?? []) as HoleRow[]
+  // Normalise: ensure tees is always an array (DB may return null for holes with no tees defined)
+  const holes: HoleCoords[] = (holesData ?? []).map((row: HoleRow) => ({
+    ...row,
+    tees: Array.isArray(row.tees) ? row.tees : [],
+  }))
 
   return (
     <PinPlacementMap
       holes={holes}
+      courseId={tournament.course_id}
       tournamentVenue={tournament.venue}
       tournamentSlug={params.slug}
     />

@@ -4,36 +4,43 @@ import { useState, useEffect, useCallback, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Map, { Marker } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { savePinAction, type PinActionState } from '@/lib/actions/pins'
+import { savePinAction, saveTeeCoordAction } from '@/lib/actions/pins'
 import { Button } from '@/components/ui/button'
+
+export interface TeeCoord {
+  colour: string
+  lat: number | null
+  lng: number | null
+}
 
 export interface HoleCoords {
   id: string
   number: number
   pin_lat: number | null
   pin_lng: number | null
-  tee_lat: number | null
-  tee_lng: number | null
+  tees: TeeCoord[]
 }
+
+// 'pin' for pin placement, or a colour string for tee placement
+type PlacementMode = 'pin' | string
 
 interface Props {
   holes: HoleCoords[]
+  courseId: string
   tournamentVenue: string
   tournamentSlug: string
 }
-
-type Mode = 'pin' | 'tee'
 
 /**
  * PinPlacementMap — Client Component for pin/tee coordinate capture (US-0013).
  *
  * AC-0058: Satellite map renders at sensible zoom around the course.
  * AC-0059: Click on map drops a pin; coordinates saved to holes.pin_lat / pin_lng.
- * AC-0060: Tee mode drops tee_lat / tee_lng.
+ * AC-0060: Tee mode drops tee lat/lng into holes.tees JSONB array by colour.
  * AC-0061: Progress bar shows N of holes_count with pins set.
  * AC-0062: "Save and next hole" auto-advances to next hole.
  */
-export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Props) {
+export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSlug }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -48,50 +55,47 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
       : { lat: 43.65, lng: -79.38 }
 
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0)
-  const [mode, setMode] = useState<Mode>('pin')
+  const [mode, setMode] = useState<PlacementMode>('pin')
 
-  // Local pin/tee state — starts from server data
+  // Local hole state — starts from server data
   const [localHoles, setLocalHoles] = useState<HoleCoords[]>(holes)
 
-  const [actionState, setActionState] = useState<PinActionState>({ error: null })
+  const [actionState, setActionState] = useState<{ error: string | null }>({ error: null })
   const [saveSuccess, setSaveSuccess] = useState(false)
 
   const currentHole = localHoles[currentHoleIndex]
   const pinsSetCount = localHoles.filter((h) => h.pin_lat !== null).length
 
-  // Determine the marker to show on the map for the current hole
-  const currentPin =
-    mode === 'pin'
-      ? currentHole.pin_lat !== null && currentHole.pin_lng !== null
-        ? { lat: currentHole.pin_lat, lng: currentHole.pin_lng }
+  // Derive the pending coords seed for current hole+mode
+  function getSavedCoords(hole: HoleCoords, m: PlacementMode): { lat: number; lng: number } | null {
+    if (m === 'pin') {
+      return hole.pin_lat !== null && hole.pin_lng !== null
+        ? { lat: hole.pin_lat, lng: hole.pin_lng }
         : null
-      : currentHole.tee_lat !== null && currentHole.tee_lng !== null
-      ? { lat: currentHole.tee_lat, lng: currentHole.tee_lng }
+    }
+    const tee = hole.tees.find((t) => t.colour === m)
+    return tee && tee.lat !== null && tee.lng !== null
+      ? { lat: tee.lat, lng: tee.lng }
       : null
+  }
 
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(
-    currentPin
+    getSavedCoords(currentHole, mode)
   )
 
-  // When hole changes, reset pending coords to saved coords for that hole/mode
+  // When hole or mode changes, reset pending coords and status messages
   useEffect(() => {
     const hole = localHoles[currentHoleIndex]
-    if (mode === 'pin') {
-      setPendingCoords(
-        hole.pin_lat !== null && hole.pin_lng !== null
-          ? { lat: hole.pin_lat, lng: hole.pin_lng }
-          : null
-      )
-    } else {
-      setPendingCoords(
-        hole.tee_lat !== null && hole.tee_lng !== null
-          ? { lat: hole.tee_lat, lng: hole.tee_lng }
-          : null
-      )
-    }
+    setPendingCoords(getSavedCoords(hole, mode))
     setSaveSuccess(false)
     setActionState({ error: null })
   }, [currentHoleIndex, mode]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When switching holes, reset mode to 'pin'
+  const handleSelectHole = useCallback((index: number) => {
+    setCurrentHoleIndex(index)
+    setMode('pin')
+  }, [])
 
   const handleMapClick = useCallback(
     (e: { lngLat: { lat: number; lng: number } }) => {
@@ -104,16 +108,21 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
   async function handleSave(advance: boolean) {
     if (!pendingCoords) return
 
-    const formData = new FormData()
-    formData.set('hole_id', currentHole.id)
-    formData.set('lat', String(pendingCoords.lat))
-    formData.set('lng', String(pendingCoords.lng))
-    formData.set('mode', mode)
-    formData.set('tournament_slug', tournamentSlug)
-    formData.set('hole_number', String(currentHole.number))
-
     startTransition(async () => {
-      const result = await savePinAction({ error: null }, formData)
+      let result: { error: string | null }
+
+      if (mode === 'pin') {
+        result = await savePinAction(courseId, currentHole.id, pendingCoords.lat, pendingCoords.lng)
+      } else {
+        result = await saveTeeCoordAction(
+          courseId,
+          currentHole.id,
+          mode,
+          pendingCoords.lat,
+          pendingCoords.lng
+        )
+      }
+
       setActionState(result)
 
       if (!result.error) {
@@ -124,7 +133,15 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
             if (mode === 'pin') {
               return { ...h, pin_lat: pendingCoords.lat, pin_lng: pendingCoords.lng }
             } else {
-              return { ...h, tee_lat: pendingCoords.lat, tee_lng: pendingCoords.lng }
+              // Update the matching tee's lat/lng in the tees array
+              return {
+                ...h,
+                tees: h.tees.map((t) =>
+                  t.colour === mode
+                    ? { ...t, lat: pendingCoords.lat, lng: pendingCoords.lng }
+                    : t
+                ),
+              }
             }
           })
         )
@@ -133,6 +150,7 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
 
         if (advance && currentHoleIndex < localHoles.length - 1) {
           setCurrentHoleIndex((prev) => prev + 1)
+          setMode('pin')
         } else if (advance) {
           // On last hole, navigate back to course page
           router.push(`/admin/tournaments/${tournamentSlug}/course`)
@@ -142,6 +160,113 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
   }
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+
+  // Determine the display label for the current mode
+  const modeLabel = mode === 'pin' ? 'Pin' : mode
+
+  // Mode selector UI helper
+  function renderModeSelector() {
+    const teeCount = currentHole.tees.length
+
+    if (teeCount === 0) {
+      return (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMode('pin')}
+            aria-pressed={mode === 'pin'}
+            className={[
+              'px-3 py-1 rounded-md text-sm font-medium border transition-colors',
+              mode === 'pin'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
+            ].join(' ')}
+          >
+            Pin
+          </button>
+          <button
+            type="button"
+            disabled
+            title="Define tees in course setup first"
+            aria-pressed={false}
+            className="px-3 py-1 rounded-md text-sm font-medium border bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+          >
+            Tee
+          </button>
+        </div>
+      )
+    }
+
+    if (teeCount === 1) {
+      const colour = currentHole.tees[0].colour
+      return (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMode('pin')}
+            aria-pressed={mode === 'pin'}
+            className={[
+              'px-3 py-1 rounded-md text-sm font-medium border transition-colors',
+              mode === 'pin'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
+            ].join(' ')}
+          >
+            Pin
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode(colour)}
+            aria-pressed={mode === colour}
+            className={[
+              'px-3 py-1 rounded-md text-sm font-medium border transition-colors',
+              mode === colour
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
+            ].join(' ')}
+          >
+            {colour}
+          </button>
+        </div>
+      )
+    }
+
+    // Multiple tees: Pin button + select dropdown
+    return (
+      <div className="flex gap-2 items-center">
+        <button
+          type="button"
+          onClick={() => setMode('pin')}
+          aria-pressed={mode === 'pin'}
+          className={[
+            'px-3 py-1 rounded-md text-sm font-medium border transition-colors',
+            mode === 'pin'
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
+          ].join(' ')}
+        >
+          Pin
+        </button>
+        <select
+          aria-label="Select tee colour"
+          value={mode === 'pin' ? '' : mode}
+          onChange={(e) => {
+            if (e.target.value) setMode(e.target.value)
+          }}
+          className="px-2 py-1 rounded-md text-sm border border-gray-300 bg-white text-gray-700"
+        >
+          <option value="" disabled>
+            Tee colour…
+          </option>
+          {currentHole.tees.map((t) => (
+            <option key={t.colour} value={t.colour}>
+              {t.colour}
+            </option>
+          ))}
+        </select>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
@@ -180,7 +305,7 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
             type="button"
             aria-label={`Hole ${hole.number}${hole.pin_lat !== null ? ' (pin set)' : ''}`}
             aria-pressed={i === currentHoleIndex}
-            onClick={() => setCurrentHoleIndex(i)}
+            onClick={() => handleSelectHole(i)}
             className={[
               'w-10 h-10 rounded-full text-sm font-medium border transition-colors',
               i === currentHoleIndex
@@ -198,34 +323,7 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
       {/* Mode selector */}
       <div className="flex items-center gap-4">
         <span className="text-sm font-medium text-gray-700">Placing:</span>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setMode('pin')}
-            aria-pressed={mode === 'pin'}
-            className={[
-              'px-3 py-1 rounded-md text-sm font-medium border transition-colors',
-              mode === 'pin'
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
-            ].join(' ')}
-          >
-            Pin
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('tee')}
-            aria-pressed={mode === 'tee'}
-            className={[
-              'px-3 py-1 rounded-md text-sm font-medium border transition-colors',
-              mode === 'tee'
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
-            ].join(' ')}
-          >
-            Tee
-          </button>
-        </div>
+        {renderModeSelector()}
       </div>
 
       {/* Current hole info */}
@@ -233,12 +331,12 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
         <strong>Hole {currentHole.number}</strong>
         {pendingCoords ? (
           <span className="ml-2">
-            — {mode === 'pin' ? 'Pin' : 'Tee'}: {pendingCoords.lat.toFixed(5)},{' '}
+            — {modeLabel}: {pendingCoords.lat.toFixed(5)},{' '}
             {pendingCoords.lng.toFixed(5)}
           </span>
         ) : (
           <span className="ml-2 text-gray-400">
-            — Click the map to place the {mode === 'pin' ? 'pin' : 'tee'}
+            — Click the map to place the {modeLabel.toLowerCase()}
           </span>
         )}
       </div>
@@ -251,7 +349,7 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
       )}
       {saveSuccess && !actionState.error && (
         <p role="status" className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-4 py-3">
-          {mode === 'pin' ? 'Pin' : 'Tee'} saved for hole {currentHole.number}!
+          {modeLabel} saved for hole {currentHole.number}!
         </p>
       )}
 
@@ -278,17 +376,41 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
             onClick={handleMapClick}
             cursor="crosshair"
           >
-            {pendingCoords && (
+            {/* Pin marker */}
+            {mode === 'pin' && pendingCoords && (
               <Marker longitude={pendingCoords.lng} latitude={pendingCoords.lat}>
                 <div
-                  className={[
-                    'w-4 h-4 rounded-full border-2 border-white shadow-md',
-                    mode === 'pin' ? 'bg-red-500' : 'bg-yellow-400',
-                  ].join(' ')}
-                  aria-label={`${mode === 'pin' ? 'Pin' : 'Tee'} marker`}
+                  className="w-4 h-4 rounded-full border-2 border-white shadow-md bg-red-500"
+                  aria-label="Pin marker"
                 />
               </Marker>
             )}
+
+            {/* Pending tee marker (current mode colour) */}
+            {mode !== 'pin' && pendingCoords && (
+              <Marker longitude={pendingCoords.lng} latitude={pendingCoords.lat}>
+                <div
+                  className="w-4 h-4 rounded-full border-2 border-white shadow-md bg-yellow-400 flex items-center justify-center text-xs font-bold text-gray-800"
+                  aria-label={`${mode} tee marker`}
+                >
+                  {mode[0]}
+                </div>
+              </Marker>
+            )}
+
+            {/* Saved tee markers for all tees with coords */}
+            {currentHole.tees
+              .filter((t) => t.lat !== null && t.lng !== null && !(mode !== 'pin' && t.colour === mode))
+              .map((t) => (
+                <Marker key={t.colour} longitude={t.lng!} latitude={t.lat!}>
+                  <div
+                    className="w-4 h-4 rounded-full border-2 border-white shadow-md bg-yellow-400 flex items-center justify-center text-xs font-bold text-gray-800"
+                    aria-label={`${t.colour} tee marker`}
+                  >
+                    {t.colour[0]}
+                  </div>
+                </Marker>
+              ))}
           </Map>
         )}
       </div>
@@ -301,7 +423,7 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
           disabled={!pendingCoords || isPending}
           variant="outline"
         >
-          {isPending ? 'Saving…' : `Save ${mode === 'pin' ? 'Pin' : 'Tee'}`}
+          {isPending ? 'Saving…' : `Save ${modeLabel}`}
         </Button>
         <Button
           type="button"
