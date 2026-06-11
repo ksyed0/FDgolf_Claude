@@ -1863,45 +1863,45 @@ Notes: Snapshot test or row count assertion. 6 preset import tests added; 13 pre
 TASK-0059 (US-0013): Create pin placement page app/admin/tournaments/[id]/pins/page.tsx
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0013-pin-placement
-Notes: Renders MapView per hole; click handler captures lng/lat.
+Notes: Renders MapView per hole; click handler captures lng/lat. Implemented at app/admin/tournaments/[slug]/course/pins/page.tsx + pin-placement-map.tsx.
 ```
 
 ```
 TASK-0060 (US-0013): Test click on map updates pin state
 Type: Test
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0013-pin-placement
-Notes: Mock geolocation; simulate click; assert state captured.
+Notes: Mock geolocation; simulate click; assert state captured. 29 component tests in __tests__/components/pin-placement-map.test.tsx; 19 action tests in __tests__/lib/actions/pins.test.ts.
 ```
 
 ```
 TASK-0061 (US-0013): Implement savePinCoordinate server action
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0013-pin-placement
-Notes: Updates holes.pin_lat / pin_lng; revalidates.
+Notes: Updates holes.pin_lat / pin_lng; revalidates. Implemented as savePinAction in lib/actions/pins.ts; supports pin and tee modes.
 ```
 
 ```
 TASK-0062 (US-0013): Add progress bar showing N of 18 holes with pins
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0013-pin-placement
-Notes: Server query counts; displayed at top.
+Notes: Server query counts; displayed at top. Progress bar with aria-progressbar in PinPlacementMap; pin status (✓/–) column added to CourseHolesForm.
 ```
 
 ```
 TASK-0063 (US-0013): Add "Save and next hole" auto-advance behavior
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0013-pin-placement
-Notes: Successful save routes to ?hole=N+1.
+Notes: Successful save routes to ?hole=N+1. Auto-advances hole index state; on last hole routes to course page.
 ```
 
 ```
