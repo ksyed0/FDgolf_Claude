@@ -6,7 +6,7 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 1 — 2026-06-10
+Session 3 — 2026-06-11
 
 ---
 
@@ -16,8 +16,8 @@ Session 1 — 2026-06-10
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `789f798` (after E2E test suite implementation)
-- **Stories done:** US-0001–US-0011, US-0016, US-0020 (EPIC-0001 complete; EPIC-0002 setup stories complete)
+- **Develop tip:** `44ae4c6` (after US-0012, US-0013, US-0015 merge + Lens bug logs)
+- **Stories done:** US-0001–US-0013, US-0015, US-0016, US-0020 (EPIC-0001 complete; EPIC-0002 setup + club picker + preset import + pin placement done)
 
 ---
 
@@ -51,7 +51,7 @@ Session 1 — 2026-06-10
 | AC       | AC-0307        |
 | TASK     | TASK-0313      |
 | TC       | TC-0016        |
-| BUG      | BUG-0001       |
+| BUG      | BUG-0015       |
 | L        | L-0002         |
 
 ---
@@ -69,9 +69,17 @@ Session 1 — 2026-06-10
 ## Next Priorities
 
 From RELEASE_PLAN.md, next unbuilt stories in EPIC-0002:
-- US-0012 (course preset import) — depends US-0011 ✓
-- US-0013 (pin coordinates map) — depends US-0011 ✓, US-0007 ✓
-- US-0015 (tournament readiness checklist) — depends US-0011 ✓
 - US-0017 (tournament lifecycle transitions) — depends US-0009 ✓
 - US-0018 (activation confirmation) — depends US-0017
+- US-0014 (player search / organizer assignment) — EPIC-0002 admin tools
 - US-0021 (registration landing page) — starts EPIC-0003 registration flow
+
+## Known Patterns / Gotchas (additions from Session 3)
+
+- **tournament_clubs invariant:** zero rows = all clubs active; US-0031 bag picker must handle BOTH states
+- **savePinAction signature:** `(courseId, holeId, mode, lat, lng)` — courseId always first for ownership scope
+- **HoleState in CourseHolesForm:** `par` is `number`, `yardage`/`strokeIndex` are `string`
+- **Course-holes-form test path:** `__tests__/app/admin/tournaments/course-holes-form.test.tsx` (NOT `__tests__/components/`)
+- **gh pr review --approve on own PR:** `GraphQL: Review Can not approve your own pull request` — skip self-approval, merge directly
+- **git stash -u:** use `-u` (include untracked) when untracked worktree dirs block rebase
+- **Worktree cleanup:** `git worktree remove --force` after PR merge; never delete branch while worktree holds it

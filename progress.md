@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 3 — 2026-06-11
+
+### What Was Done
+
+- Implemented US-0012 (course preset import), US-0013 (pin placement map), US-0015 (tournament club picker) via Conductor DM_AGENT pipeline
+- 87 new tests across 3 stories; 240 tests pass; all coverage ≥ 80%; type-check and lint clean
+- BUG-0001–0014 logged to docs/BUGS.md by Lens review agents and fixed in the same cycle; all 3 PRs (#2, #3, #4) squash-merged to develop
+
+---
+
 ## Session 2 — 2026-06-11
 
 ### What Was Done
