@@ -31,6 +31,8 @@ export default defineConfig({
         'app/admin/venues/[venueId]/courses/new/page.tsx',            // Server Component, integration-tested
         'app/admin/venues/[venueId]/courses/[courseId]/page.tsx',     // Server Component, integration-tested
         'app/admin/venues/[venueId]/courses/[courseId]/edit/page.tsx', // Server Component, integration-tested
+        'app/admin/tournaments/[slug]/edit/page.tsx',  // Server Component, integration-tested
+        'app/admin/tournaments/[slug]/organizers/page.tsx', // Server Component, integration-tested
         '**/*.config.*',
         '**/node_modules/**',
         '**/.next/**',
