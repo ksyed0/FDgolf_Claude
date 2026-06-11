@@ -296,13 +296,13 @@ Acceptance Criteria:
 US-0014 (EPIC-0002): As a player, I want a Mapbox Static API PNG snapshot stored per hole, so that distance-to-pin works even if the Mapbox tile API is rate-limited mid-round.
 Priority: Medium
 Estimate: S
-Status: Planned
-Branch: feature/US-0014-static-map-snapshot
+Status: Done
+Branch: feature/epic0002-completion
 Dependencies: US-0013
 Acceptance Criteria:
-  - [ ] AC-0064: On pin save, a request is made to Mapbox Static API for the hole region
-  - [ ] AC-0065: PNG is uploaded to Supabase Storage in `course-maps/{courseId}/hole-{n}.png`
-  - [ ] AC-0066: `holes.static_map_url` populated with the public URL
+  - [x] AC-0064: On pin save, a request is made to Mapbox Static API for the hole region
+  - [x] AC-0065: PNG is uploaded to Supabase Storage in `course-maps/{courseId}/hole-{n}.png`
+  - [x] AC-0066: `holes.static_map_url` populated with the public URL
 ```
 
 ```
@@ -363,12 +363,12 @@ Acceptance Criteria:
 US-0019 (EPIC-0002): As an admin, I want the public registration URL displayed after activation, so that I can copy-paste it into the invite emails.
 Priority: Medium
 Estimate: S
-Status: Planned
-Branch: feature/US-0019-post-activation-url
+Status: Done
+Branch: feature/epic0002-completion
 Dependencies: US-0018
 Acceptance Criteria:
-  - [ ] AC-0081: Post-activation confirmation screen shows the URL `fdgolf.app/register/{slug}`
-  - [ ] AC-0082: Copy-to-clipboard button
+  - [x] AC-0081: Post-activation confirmation screen shows the URL `fdgolf.app/register/{slug}`
+  - [x] AC-0082: Copy-to-clipboard button
 ```
 
 ```
