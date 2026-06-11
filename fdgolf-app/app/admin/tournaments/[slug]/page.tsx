@@ -1,6 +1,8 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { getPreflightChecks } from '@/lib/actions/tournament-lifecycle'
+import { LifecycleClient } from './lifecycle-client'
 
 interface PageProps {
   params: { slug: string }
@@ -27,7 +29,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
     .select(
-      'id,name,slug,status,starts_at,venue_id,course_id,venues(id,name),courses:course_id(id,name,venue_id)',
+      'id,name,slug,status,starts_at,format,start_style,venue_id,course_id,venues(id,name),courses:course_id(id,name,venue_id)',
     )
     .eq('slug', params.slug)
     .single()
@@ -35,6 +37,21 @@ export default async function TournamentDetailPage({ params }: PageProps) {
   if (tournamentError || !tournament) {
     notFound()
   }
+
+  // Compute next status and pre-flight checks
+  const NEXT_STATUS: Record<string, 'registration_open' | 'active' | 'completed' | null> = {
+    draft: 'registration_open',
+    registration_open: 'active',
+    active: 'completed',
+    completed: null,
+    paused: null,
+  }
+  const nextStatus = NEXT_STATUS[tournament.status] ?? null
+
+  const preflightResult =
+    nextStatus === 'registration_open' || nextStatus === 'active'
+      ? await getPreflightChecks(tournament.id, nextStatus)
+      : null
 
   // Supabase may return the joined relation as an array — normalise to object | null
   const course = Array.isArray(tournament.courses)
@@ -75,6 +92,22 @@ export default async function TournamentDetailPage({ params }: PageProps) {
 
   return (
     <main className="max-w-3xl mx-auto py-10 px-4 space-y-8">
+      <LifecycleClient
+        tournament={{
+          id: tournament.id,
+          name: tournament.name,
+          slug: tournament.slug,
+          status: tournament.status,
+          venues: venue,
+          courses: course,
+          starts_at: tournament.starts_at ?? null,
+          format: tournament.format ?? null,
+          start_style: tournament.start_style ?? null,
+        }}
+        preflightResult={preflightResult}
+        nextStatus={nextStatus}
+      />
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">{tournament.name}</h1>
