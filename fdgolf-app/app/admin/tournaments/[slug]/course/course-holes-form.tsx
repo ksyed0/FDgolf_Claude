@@ -122,8 +122,8 @@ export function CourseHolesForm({
     setHoles(
       preset.holes.map((h) => ({
         par: h.par,
-        yardage: String(h.yardage),
-        strokeIndex: String(h.strokeIndex),
+        yardage: h.tees[0]?.yardage != null ? String(h.tees[0].yardage) : '',
+        strokeIndex: String(h.handicap),
       }))
     )
     setSelectedPresetId(presetId)
