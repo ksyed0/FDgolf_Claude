@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { saveCourseHolesAction } from '@/lib/actions/course'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { COURSE_PRESETS } from '@/lib/presets/courses'
 
 interface ExistingHole {
   number: number
@@ -68,6 +69,22 @@ export function CourseHolesForm({
   const [holes, setHoles] = useState<HoleState[]>(initialHoles)
   const [clientError, setClientError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [presetDropdownOpen, setPresetDropdownOpen] = useState(false)
+  const presetDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        presetDropdownRef.current &&
+        !presetDropdownRef.current.contains(event.target as Node)
+      ) {
+        setPresetDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const [state, formAction] = useFormState(saveCourseHolesAction, { error: null })
 
@@ -90,6 +107,19 @@ export function CourseHolesForm({
     setHoles((prev) =>
       prev.map((h, i) => (i === index ? { ...h, strokeIndex: value } : h))
     )
+  }
+
+  function handlePresetImport(presetId: string) {
+    const preset = COURSE_PRESETS.find((p) => p.id === presetId)
+    if (!preset) return
+    setHoles(
+      preset.holes.map((h) => ({
+        par: h.par,
+        yardage: String(h.yardage),
+        strokeIndex: String(h.strokeIndex),
+      }))
+    )
+    setPresetDropdownOpen(false)
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -135,6 +165,42 @@ export function CourseHolesForm({
         <input type="hidden" name="course_id" value={courseId ?? ''} />
         <input type="hidden" name="name" value={tournamentName} />
         <input type="hidden" name="venue" value={venue} />
+
+        {/* AC-0055: Import preset dropdown */}
+        <div className="mb-4 flex items-center gap-2" ref={presetDropdownRef}>
+          <div className="relative">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPresetDropdownOpen((open) => !open)}
+              aria-haspopup="listbox"
+              aria-expanded={presetDropdownOpen}
+            >
+              Import preset
+            </Button>
+            {presetDropdownOpen && (
+              <ul
+                role="listbox"
+                aria-label="Available course presets"
+                className="absolute left-0 z-10 mt-1 min-w-[200px] rounded-md border border-gray-200 bg-white shadow-md"
+              >
+                {COURSE_PRESETS.map((preset) => (
+                  <li key={preset.id}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
+                      onClick={() => handlePresetImport(preset.id)}
+                    >
+                      {preset.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 
 // Mock the server action
 vi.mock('@/lib/actions/course', () => ({
@@ -142,5 +142,74 @@ describe('CourseHolesForm', () => {
 
     expect(tidInput?.value).toBe('tid-123')
     expect(cidInput?.value).toBe('cid-456')
+  })
+})
+
+describe('preset import', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockState = { error: null }
+  })
+
+  it('renders an Import preset button', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    expect(screen.getByRole('button', { name: /import preset/i })).toBeInTheDocument()
+  })
+
+  it('opens dropdown when button clicked — shows Granite Ridge GC', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    expect(screen.getByRole('option', { name: /granite ridge gc/i })).toBeInTheDocument()
+  })
+
+  it('clicking Granite Ridge GC closes dropdown', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const graniteRidgeOption = screen.getByRole('option', { name: /granite ridge gc/i })
+    fireEvent.click(graniteRidgeOption)
+    // After selection, the dropdown listbox should be gone
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
+  it('after import, hole 1 par is 4', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const graniteRidgeOption = screen.getByRole('option', { name: /granite ridge gc/i })
+    fireEvent.click(graniteRidgeOption)
+
+    // Hole 1 par select should be 4 (Granite Ridge GC hole 1 is par 4)
+    const parSelects = screen.getAllByRole('combobox')
+    expect((parSelects[0] as HTMLSelectElement).value).toBe('4')
+  })
+
+  it('after import, all 18 yardage inputs are populated', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const graniteRidgeOption = screen.getByRole('option', { name: /granite ridge gc/i })
+    fireEvent.click(graniteRidgeOption)
+
+    const yardageInputs = screen.getAllByLabelText(/yardage/i)
+    expect(yardageInputs).toHaveLength(18)
+    // Every yardage input should be non-empty after import
+    for (const input of yardageInputs) {
+      expect((input as HTMLInputElement).value).not.toBe('')
+    }
+    // Verify hole 1 yardage specifically (Granite Ridge GC hole 1 = 385 yards)
+    expect((yardageInputs[0] as HTMLInputElement).value).toBe('385')
+  })
+
+  it('total par updates to 72 after import', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const graniteRidgeOption = screen.getByRole('option', { name: /granite ridge gc/i })
+    fireEvent.click(graniteRidgeOption)
+
+    const totalPar = screen.getByTestId('total-par')
+    expect(totalPar).toHaveTextContent('Par: 72')
   })
 })

@@ -271,9 +271,9 @@ Status: Planned
 Branch: feature/US-0012-course-preset
 Dependencies: US-0011
 Acceptance Criteria:
-  - [ ] AC-0055: "Import preset" button shows a list of available presets (at least Granite Ridge GC)
-  - [ ] AC-0056: Importing populates the 18-hole table with par, yardage, stroke index
-  - [ ] AC-0057: Admin can then edit any value before saving
+  - [x] AC-0055: "Import preset" button shows a list of available presets (at least Granite Ridge GC)
+  - [x] AC-0056: Importing populates the 18-hole table with par, yardage, stroke index
+  - [x] AC-0057: Admin can then edit any value before saving
 ```
 
 ```
@@ -1836,16 +1836,16 @@ Notes: Computed live as admin edits.
 TASK-0056 (US-0012): Define Granite Ridge GC preset in lib/courses/presets.ts
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0012-course-preset
-Notes: JSON object with 18 holes: par/yards/SI.
+Notes: JSON object with 18 holes: par/yards/SI. Implemented at lib/presets/courses.ts.
 ```
 
 ```
 TASK-0057 (US-0012): Add "Import preset" button to course form
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0012-course-preset
 Notes: Opens dropdown of presets; selection populates the table.
 ```
@@ -1854,9 +1854,9 @@ Notes: Opens dropdown of presets; selection populates the table.
 TASK-0058 (US-0012): Test preset import populates all 18 rows correctly
 Type: Test
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0012-course-preset
-Notes: Snapshot test or row count assertion.
+Notes: Snapshot test or row count assertion. 6 preset import tests added; 13 preset module tests added.
 ```
 
 ```
