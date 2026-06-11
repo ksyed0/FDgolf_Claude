@@ -23,7 +23,7 @@ export interface CoursePreset {
   /** Human-readable course name */
   name: string
   /** 18-hole data */
-  holes: CourseHolePreset[]
+  holes: ReadonlyArray<CourseHolePreset>
 }
 
 /**
@@ -59,4 +59,4 @@ export const GRANITE_RIDGE_GC: CoursePreset = {
  * All available course presets. Add new presets here to make them available in the import
  * dropdown.
  */
-export const COURSE_PRESETS: CoursePreset[] = [GRANITE_RIDGE_GC]
+export const COURSE_PRESETS: ReadonlyArray<CoursePreset> = [GRANITE_RIDGE_GC]

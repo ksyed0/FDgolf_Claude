@@ -70,7 +70,10 @@ export function CourseHolesForm({
   const [clientError, setClientError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [presetDropdownOpen, setPresetDropdownOpen] = useState(false)
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
+  const [focusedPresetIndex, setFocusedPresetIndex] = useState<number>(-1)
   const presetDropdownRef = useRef<HTMLDivElement>(null)
+  const presetOptionRefs = useRef<(HTMLButtonElement | null)[]>([])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -111,6 +114,7 @@ export function CourseHolesForm({
 
   function handlePresetImport(presetId: string) {
     const preset = COURSE_PRESETS.find((p) => p.id === presetId)
+    /* c8 ignore next */
     if (!preset) return
     setHoles(
       preset.holes.map((h) => ({
@@ -119,7 +123,54 @@ export function CourseHolesForm({
         strokeIndex: String(h.strokeIndex),
       }))
     )
+    setSelectedPresetId(presetId)
     setPresetDropdownOpen(false)
+    setFocusedPresetIndex(-1)
+  }
+
+  function handleTriggerKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    if (e.key === 'Escape') {
+      setPresetDropdownOpen(false)
+      setFocusedPresetIndex(-1)
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      if (!presetDropdownOpen) {
+        setPresetDropdownOpen(true)
+        setFocusedPresetIndex(0)
+      } else {
+        const next = Math.min(focusedPresetIndex + 1, COURSE_PRESETS.length - 1)
+        setFocusedPresetIndex(next)
+        presetOptionRefs.current[next]?.focus()
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (presetDropdownOpen) {
+        const prev = Math.max(focusedPresetIndex - 1, 0)
+        setFocusedPresetIndex(prev)
+        presetOptionRefs.current[prev]?.focus()
+      }
+    }
+  }
+
+  function handleOptionKeyDown(e: React.KeyboardEvent<HTMLButtonElement>, presetId: string, index: number) {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      setPresetDropdownOpen(false)
+      setFocusedPresetIndex(-1)
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      const next = Math.min(index + 1, COURSE_PRESETS.length - 1)
+      setFocusedPresetIndex(next)
+      presetOptionRefs.current[next]?.focus()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      const prev = Math.max(index - 1, 0)
+      setFocusedPresetIndex(prev)
+      presetOptionRefs.current[prev]?.focus()
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      handlePresetImport(presetId)
+    }
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -172,7 +223,11 @@ export function CourseHolesForm({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setPresetDropdownOpen((open) => !open)}
+              onClick={() => {
+                setPresetDropdownOpen((open) => !open)
+                setFocusedPresetIndex(-1)
+              }}
+              onKeyDown={handleTriggerKeyDown}
               aria-haspopup="listbox"
               aria-expanded={presetDropdownOpen}
             >
@@ -184,14 +239,16 @@ export function CourseHolesForm({
                 aria-label="Available course presets"
                 className="absolute left-0 z-10 mt-1 min-w-[200px] rounded-md border border-gray-200 bg-white shadow-md"
               >
-                {COURSE_PRESETS.map((preset) => (
+                {COURSE_PRESETS.map((preset, index) => (
                   <li key={preset.id}>
                     <button
+                      ref={(el) => { presetOptionRefs.current[index] = el }}
                       type="button"
                       role="option"
-                      aria-selected={false}
+                      aria-selected={selectedPresetId === preset.id}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
                       onClick={() => handlePresetImport(preset.id)}
+                      onKeyDown={(e) => handleOptionKeyDown(e, preset.id, index)}
                     >
                       {preset.name}
                     </button>
