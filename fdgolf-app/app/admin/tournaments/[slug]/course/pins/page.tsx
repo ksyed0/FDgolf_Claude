@@ -68,6 +68,7 @@ export default async function PinsPage({ params }: PageProps) {
   return (
     <PinPlacementMap
       holes={holes}
+      courseId={tournament.course_id}
       tournamentVenue={tournament.venue}
       tournamentSlug={params.slug}
     />

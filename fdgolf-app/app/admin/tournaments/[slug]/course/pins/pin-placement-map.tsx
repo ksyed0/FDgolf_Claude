@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Map, { Marker } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { savePinAction, type PinActionState } from '@/lib/actions/pins'
+import { savePinAction } from '@/lib/actions/pins'
 import { Button } from '@/components/ui/button'
 
 export interface HoleCoords {
@@ -18,6 +18,7 @@ export interface HoleCoords {
 
 interface Props {
   holes: HoleCoords[]
+  courseId: string
   tournamentVenue: string
   tournamentSlug: string
 }
@@ -33,7 +34,7 @@ type Mode = 'pin' | 'tee'
  * AC-0061: Progress bar shows N of holes_count with pins set.
  * AC-0062: "Save and next hole" auto-advances to next hole.
  */
-export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Props) {
+export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSlug }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -53,7 +54,7 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
   // Local pin/tee state — starts from server data
   const [localHoles, setLocalHoles] = useState<HoleCoords[]>(holes)
 
-  const [actionState, setActionState] = useState<PinActionState>({ error: null })
+  const [actionState, setActionState] = useState<{ error: string | null }>({ error: null })
   const [saveSuccess, setSaveSuccess] = useState(false)
 
   const currentHole = localHoles[currentHoleIndex]
@@ -104,16 +105,17 @@ export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Prop
   async function handleSave(advance: boolean) {
     if (!pendingCoords) return
 
-    const formData = new FormData()
-    formData.set('hole_id', currentHole.id)
-    formData.set('lat', String(pendingCoords.lat))
-    formData.set('lng', String(pendingCoords.lng))
-    formData.set('mode', mode)
-    formData.set('tournament_slug', tournamentSlug)
-    formData.set('hole_number', String(currentHole.number))
-
     startTransition(async () => {
-      const result = await savePinAction({ error: null }, formData)
+      let result: { error: string | null }
+
+      if (mode === 'pin') {
+        result = await savePinAction(courseId, currentHole.id, pendingCoords.lat, pendingCoords.lng)
+      } else {
+        // TODO P3-T3: tee saves will call saveTeeCoordAction once PinPlacementMap is rewritten
+        // for JSONB tees (tee colour selection required). For now, tee mode save is a no-op.
+        result = { error: 'Tee placement requires tee colour selection — coming in P3-T3.' }
+      }
+
       setActionState(result)
 
       if (!result.error) {

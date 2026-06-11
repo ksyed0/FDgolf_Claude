@@ -47,6 +47,7 @@ function makeHoles(count = 3): HoleCoords[] {
 
 const defaultProps = {
   holes: makeHoles(3),
+  courseId: 'course-uuid-1',
   tournamentVenue: 'Granite Ridge GC',
   tournamentSlug: 'granite-ridge-2026',
 }
@@ -55,7 +56,7 @@ describe('PinPlacementMap', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.NEXT_PUBLIC_MAPBOX_TOKEN = 'pk.test-token'
-    mockSavePinAction.mockResolvedValue({ error: null, savedHoleNumber: 1 })
+    mockSavePinAction.mockResolvedValue({ error: null })
   })
 
   // ─── Rendering ──────────────────────────────────────────────────────────────
@@ -200,7 +201,7 @@ describe('PinPlacementMap', () => {
 
   // ─── Save action ────────────────────────────────────────────────────────────
 
-  it('calls savePinAction with correct formData on save', async () => {
+  it('calls savePinAction with courseId, holeId, lat, lng on pin save', async () => {
     render(<PinPlacementMap {...defaultProps} />)
     fireEvent.click(screen.getByTestId('mapbox-map'))
     fireEvent.click(screen.getByRole('button', { name: /^save pin$/i }))
@@ -209,15 +210,10 @@ describe('PinPlacementMap', () => {
       expect(mockSavePinAction).toHaveBeenCalledOnce()
     })
 
-    const [, formData] = mockSavePinAction.mock.calls[0] as [unknown, FormData]
-    expect(formData.get('hole_id')).toBe('hole-uuid-1')
-    expect(formData.get('mode')).toBe('pin')
-    expect(formData.get('tournament_slug')).toBe('granite-ridge-2026')
-    expect(formData.get('lat')).toBe('43.65')
-    expect(formData.get('lng')).toBe('-79.38')
+    expect(mockSavePinAction).toHaveBeenCalledWith('course-uuid-1', 'hole-uuid-1', 43.65, -79.38)
   })
 
-  it('shows success message after save', async () => {
+  it('shows success message after pin save', async () => {
     render(<PinPlacementMap {...defaultProps} />)
     fireEvent.click(screen.getByTestId('mapbox-map'))
     fireEvent.click(screen.getByRole('button', { name: /^save pin$/i }))
@@ -238,15 +234,17 @@ describe('PinPlacementMap', () => {
     })
   })
 
-  it('calls savePinAction with mode=tee after switching to tee mode', async () => {
+  it('shows error message when tee mode save attempted (not yet implemented)', async () => {
     render(<PinPlacementMap {...defaultProps} />)
     fireEvent.click(screen.getByRole('button', { name: /^tee$/i }))
     fireEvent.click(screen.getByTestId('mapbox-map'))
     fireEvent.click(screen.getByRole('button', { name: /^save tee$/i }))
 
-    await waitFor(() => expect(mockSavePinAction).toHaveBeenCalledOnce())
-    const [, fd] = mockSavePinAction.mock.calls[0] as [unknown, FormData]
-    expect(fd.get('mode')).toBe('tee')
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/tee placement requires/i)
+    })
+    // savePinAction should NOT be called for tee mode
+    expect(mockSavePinAction).not.toHaveBeenCalled()
   })
 
   // ─── Save and next ───────────────────────────────────────────────────────────
