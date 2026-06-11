@@ -295,20 +295,30 @@ describe('updateTournamentAction', () => {
     expect(result.error).toMatch(/required/)
   })
 
-  it('updates tournament fields and returns { error: null }', async () => {
+  it('redirects to tournament detail on success', async () => {
     mockRpc.mockResolvedValue({ data: true })
     mockUpdate.mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
+    mockSelect.mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: { slug: 'spring-open' }, error: null }),
+      }),
+    })
     const fd = new FormData()
     fd.set('name', 'Spring Open Updated')
     fd.set('venue_id', 'v-1')
-    const result = await updateTournamentAction('t-1', { error: null }, fd)
-    expect(result.error).toBeNull()
+    await updateTournamentAction('t-1', { error: null }, fd)
+    expect(mockRedirect).toHaveBeenCalledWith('/admin/tournaments/spring-open')
   })
 
   it('does not update slug or status', async () => {
     mockRpc.mockResolvedValue({ data: true })
     const updateSpy = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     mockUpdate.mockImplementation(updateSpy)
+    mockSelect.mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: { slug: 'x' }, error: null }),
+      }),
+    })
     const fd = new FormData()
     fd.set('name', 'X')
     fd.set('slug', 'should-be-ignored')

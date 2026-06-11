@@ -122,7 +122,16 @@ export async function updateTournamentAction(
     .eq('id', tournamentId)
 
   if (error) return { error: error.message }
-  return { error: null }
+
+  // fetch the slug for redirect (slug never changes)
+  const { data: updated } = await supabase
+    .from('tournaments')
+    .select('slug')
+    .eq('id', tournamentId)
+    .single()
+
+  // redirect() throws internally — must not be inside try/catch
+  redirect(`/admin/tournaments/${updated?.slug}`)
 }
 
 /**
