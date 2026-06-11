@@ -80,3 +80,75 @@ export async function createTournamentAction(
   // redirect() throws internally — must not be inside try/catch
   redirect(`/admin/tournaments/${data.slug}`)
 }
+
+/**
+ * updateTournamentAction — Server Action for editing an existing tournament.
+ *
+ * Does NOT update slug or status — those are managed separately.
+ * Admin guard is checked first before any field extraction.
+ */
+export async function updateTournamentAction(
+  tournamentId: string,
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const supabase = createClient()
+  const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
+  if (!isAdmin) return { error: 'Unauthorized.' }
+
+  const name = (formData.get('name') as string | null)?.trim() ?? ''
+  if (!name) return { error: 'Tournament name is required.' }
+
+  const venueId    = (formData.get('venue_id')     as string | null)?.trim() || null
+  const courseId   = (formData.get('course_id')    as string | null)?.trim() || null
+  const startsAt   = (formData.get('starts_at')    as string | null)?.trim() || null
+  const format     = (formData.get('format')       as string | null)?.trim() || null
+  const startStyle = (formData.get('start_style')  as string | null)?.trim() || null
+  const holesCount = formData.get('holes_count')
+    ? parseInt(formData.get('holes_count') as string, 10)
+    : null
+
+  const { error } = await supabase
+    .from('tournaments')
+    .update({
+      name,
+      venue_id: venueId,
+      course_id: courseId,
+      starts_at: startsAt,
+      format,
+      start_style: startStyle,
+      holes_count: holesCount,
+    })
+    .eq('id', tournamentId)
+
+  if (error) return { error: error.message }
+  return { error: null }
+}
+
+/**
+ * deleteTournamentAction — Server Action for deleting a draft tournament.
+ *
+ * Only tournaments with status='draft' may be deleted.
+ * Admin guard is checked first.
+ */
+export async function deleteTournamentAction(
+  tournamentId: string
+): Promise<{ error: string | null }> {
+  const supabase = createClient()
+  const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
+  if (!isAdmin) return { error: 'Unauthorized.' }
+
+  const { data: tournament, error: fetchError } = await supabase
+    .from('tournaments')
+    .select('status')
+    .eq('id', tournamentId)
+    .single()
+
+  if (fetchError) return { error: fetchError.message }
+  if (!tournament) return { error: 'Tournament not found.' }
+  if (tournament.status !== 'draft') return { error: 'Only draft tournaments can be deleted.' }
+
+  const { error } = await supabase.from('tournaments').delete().eq('id', tournamentId)
+  if (error) return { error: error.message }
+  return { error: null }
+}

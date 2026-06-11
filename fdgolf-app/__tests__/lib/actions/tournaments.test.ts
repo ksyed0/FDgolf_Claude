@@ -1,13 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Hoist mocks so factories can reference them
-const { mockRedirect, mockInsert, mockGetUser, mockMaybeSingle } = vi.hoisted(() => ({
+const {
+  mockRedirect,
+  mockInsert,
+  mockGetUser,
+  mockMaybeSingle,
+  mockRpc,
+  mockSelect,
+  mockUpdate,
+  mockDelete,
+} = vi.hoisted(() => ({
   mockRedirect: vi.fn(),
   mockInsert: vi.fn(),
   mockGetUser: vi.fn(),
-  mockMaybySingle: vi.fn(),
-  // renamed to avoid typo below — re-declared properly
   mockMaybeSingle: vi.fn(),
+  mockRpc: vi.fn(),
+  mockSelect: vi.fn(),
+  mockUpdate: vi.fn(),
+  mockDelete: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({ redirect: mockRedirect }))
@@ -15,19 +26,23 @@ vi.mock('next/navigation', () => ({ redirect: mockRedirect }))
 vi.mock('@/lib/supabase/server', () => ({
   createClient: () => ({
     auth: { getUser: mockGetUser },
+    rpc: mockRpc,
     from: (_table: string) => ({
       insert: mockInsert,
-      select: () => ({
-        eq: () => ({
-          maybeSingle: mockMaybeSingle,
-        }),
-      }),
+      select: mockSelect,
+      update: mockUpdate,
+      delete: mockDelete,
     }),
   }),
 }))
 
 // Import after mocks
-import { createTournamentAction, checkSlugAvailableAction } from '@/lib/actions/tournaments'
+import {
+  createTournamentAction,
+  checkSlugAvailableAction,
+  updateTournamentAction,
+  deleteTournamentAction,
+} from '@/lib/actions/tournaments'
 import { generateSlug } from '@/lib/utils/slug'
 
 const validFormData = () => {
@@ -43,7 +58,7 @@ const validFormData = () => {
 
 describe('createTournamentAction', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   it('returns error when name is missing', async () => {
@@ -234,17 +249,21 @@ describe('createTournamentAction', () => {
 
 describe('checkSlugAvailableAction', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   it('returns available:true when slug does not exist', async () => {
-    mockMaybeSingle.mockResolvedValue({ data: null })
+    mockSelect.mockReturnValue({
+      eq: () => ({ maybeSingle: () => Promise.resolve({ data: null }) }),
+    })
     const result = await checkSlugAvailableAction('new-slug')
     expect(result).toEqual({ available: true })
   })
 
   it('returns available:false when slug exists', async () => {
-    mockMaybeSingle.mockResolvedValue({ data: { id: 'x' } })
+    mockSelect.mockReturnValue({
+      eq: () => ({ maybeSingle: () => Promise.resolve({ data: { id: 'x' } }) }),
+    })
     const result = await checkSlugAvailableAction('existing-slug')
     expect(result).toEqual({ available: false })
   })
@@ -252,5 +271,99 @@ describe('checkSlugAvailableAction', () => {
   it('returns available:false for empty slug', async () => {
     const result = await checkSlugAvailableAction('')
     expect(result).toEqual({ available: false })
+  })
+})
+
+describe('updateTournamentAction', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it('returns error when not admin', async () => {
+    mockRpc.mockResolvedValue({ data: false })
+    const fd = new FormData()
+    fd.set('name', 'Updated')
+    const result = await updateTournamentAction('t-1', { error: null }, fd)
+    expect(result.error).toBe('Unauthorized.')
+  })
+
+  it('returns error when name is empty', async () => {
+    mockRpc.mockResolvedValue({ data: true })
+    const fd = new FormData()
+    fd.set('name', '')
+    const result = await updateTournamentAction('t-1', { error: null }, fd)
+    expect(result.error).toMatch(/required/)
+  })
+
+  it('updates tournament fields and returns { error: null }', async () => {
+    mockRpc.mockResolvedValue({ data: true })
+    mockUpdate.mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
+    const fd = new FormData()
+    fd.set('name', 'Spring Open Updated')
+    fd.set('venue_id', 'v-1')
+    const result = await updateTournamentAction('t-1', { error: null }, fd)
+    expect(result.error).toBeNull()
+  })
+
+  it('does not update slug or status', async () => {
+    mockRpc.mockResolvedValue({ data: true })
+    const updateSpy = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
+    mockUpdate.mockImplementation(updateSpy)
+    const fd = new FormData()
+    fd.set('name', 'X')
+    fd.set('slug', 'should-be-ignored')
+    fd.set('status', 'active')
+    await updateTournamentAction('t-1', { error: null }, fd)
+    const updateArgs = updateSpy.mock.calls[0][0]
+    expect(updateArgs).not.toHaveProperty('slug')
+    expect(updateArgs).not.toHaveProperty('status')
+  })
+})
+
+describe('deleteTournamentAction', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it('returns error when not admin', async () => {
+    mockRpc.mockResolvedValue({ data: false })
+    const result = await deleteTournamentAction('t-1')
+    expect(result.error).toBe('Unauthorized.')
+  })
+
+  it('returns error when tournament is active', async () => {
+    mockRpc.mockResolvedValue({ data: true })
+    mockSelect.mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: { status: 'active' }, error: null }),
+      }),
+    })
+    const result = await deleteTournamentAction('t-1')
+    expect(result.error).toMatch(/draft/)
+  })
+
+  it('returns error when tournament not found', async () => {
+    mockRpc.mockResolvedValue({ data: true })
+    mockSelect.mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      }),
+    })
+    const result = await deleteTournamentAction('t-1')
+    expect(result.error).toMatch(/not found/)
+  })
+
+  it('deletes draft tournament and returns { error: null }', async () => {
+    mockRpc.mockResolvedValue({ data: true })
+    mockSelect.mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: { status: 'draft' }, error: null }),
+      }),
+    })
+    const mockDeleteEq = vi.fn().mockResolvedValue({ error: null })
+    mockDelete.mockReturnValue({ eq: mockDeleteEq })
+    const result = await deleteTournamentAction('t-1')
+    expect(result.error).toBeNull()
+    expect(mockDeleteEq).toHaveBeenCalledWith('id', 't-1')
   })
 })
