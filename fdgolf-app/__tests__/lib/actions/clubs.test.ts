@@ -45,13 +45,13 @@ describe('saveClubsAction', () => {
 
   it('returns error when tournament_id is missing', async () => {
     const fd = makeFormData('__omit__')
-    const result = await saveClubsAction({ error: null }, fd)
+    const result = await saveClubsAction({ error: null, success: false }, fd)
     expect(result.error).toMatch(/tournament id is required/i)
   })
 
   it('returns error when tournament_id is blank', async () => {
     const fd = makeFormData('  ')
-    const result = await saveClubsAction({ error: null }, fd)
+    const result = await saveClubsAction({ error: null, success: false }, fd)
     expect(result.error).toMatch(/tournament id is required/i)
   })
 
@@ -60,7 +60,7 @@ describe('saveClubsAction', () => {
   it('returns unauthorized error when fdgolf_is_admin returns false', async () => {
     mockRpc.mockResolvedValue({ data: false, error: null })
 
-    const result = await saveClubsAction({ error: null }, makeFormData('t-uuid'))
+    const result = await saveClubsAction({ error: null, success: false }, makeFormData('t-uuid'))
     expect(result.error).toMatch(/unauthorized/i)
     expect(mockFrom).not.toHaveBeenCalled()
   })
@@ -68,7 +68,7 @@ describe('saveClubsAction', () => {
   it('returns unauthorized error when rpc returns an error', async () => {
     mockRpc.mockResolvedValue({ data: null, error: { message: 'rpc failed' } })
 
-    const result = await saveClubsAction({ error: null }, makeFormData('t-uuid'))
+    const result = await saveClubsAction({ error: null, success: false }, makeFormData('t-uuid'))
     expect(result.error).toMatch(/unauthorized/i)
     expect(mockFrom).not.toHaveBeenCalled()
   })
@@ -90,9 +90,10 @@ describe('saveClubsAction', () => {
 
     const activeIds = ['club-1', 'club-2', 'club-3']
     const fd = makeFormData('t-uuid', activeIds)
-    const result = await saveClubsAction({ error: null }, fd)
+    const result = await saveClubsAction({ error: null, success: false }, fd)
 
     expect(result.error).toBeNull()
+    expect(result.success).toBe(true)
     expect(mockDelete).toHaveBeenCalledTimes(1)
     expect(mockEq).toHaveBeenCalledWith('tournament_id', 't-uuid')
     expect(mockInsert).toHaveBeenCalledWith(
@@ -115,7 +116,7 @@ describe('saveClubsAction', () => {
     })
 
     const fd = makeFormData('t-uuid', []) // no active clubs
-    const result = await saveClubsAction({ error: null }, fd)
+    const result = await saveClubsAction({ error: null, success: false }, fd)
 
     expect(result.error).toBeNull()
     expect(mockDelete).toHaveBeenCalledTimes(1)
@@ -132,7 +133,7 @@ describe('saveClubsAction', () => {
 
     mockFrom.mockReturnValue({ delete: mockDelete })
 
-    const result = await saveClubsAction({ error: null }, makeFormData('t-uuid', ['club-1']))
+    const result = await saveClubsAction({ error: null, success: false }, makeFormData('t-uuid', ['club-1']))
     expect(result.error).toBe('delete constraint error')
     expect(mockInsert).not.toHaveBeenCalled()
   })
@@ -150,7 +151,7 @@ describe('saveClubsAction', () => {
     })
 
     const fd = makeFormData('t-uuid', ['club-uuid-1'])
-    const result = await saveClubsAction({ error: null }, fd)
+    const result = await saveClubsAction({ error: null, success: false }, fd)
     expect(result.error).toBe('insert FK violation')
   })
 })

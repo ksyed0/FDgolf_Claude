@@ -56,9 +56,12 @@ export default async function TournamentClubsPage({ params }: PageProps) {
     .select('id,display_name,club_type,display_order')
     .order('display_order')
 
-  if (clubsError) {
-    // Show the picker with an empty list rather than crashing
-    console.error('Failed to load clubs:', clubsError.message)
+  if (clubsError || !allClubs?.length) {
+    return (
+      <div className="max-w-2xl mx-auto py-8 px-4">
+        <p className="text-red-600">Failed to load clubs. Please refresh the page.</p>
+      </div>
+    )
   }
 
   // Fetch existing tournament_clubs rows to determine current active set

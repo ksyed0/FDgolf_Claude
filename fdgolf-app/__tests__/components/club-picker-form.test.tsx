@@ -9,7 +9,7 @@ vi.mock('@/lib/actions/clubs', () => ({
 // Mock useFormState and useFormStatus following the project pattern from
 // __tests__/app/admin/tournaments/course-holes-form.test.tsx
 const mockFormAction = vi.fn()
-let mockState: { error: string | null } = { error: null }
+let mockState: { error: string | null; success: boolean } = { error: null, success: false }
 
 vi.mock('react-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-dom')>()
@@ -38,7 +38,7 @@ const defaultProps = {
 describe('ClubPickerForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockState = { error: null }
+    mockState = { error: null, success: false }
   })
 
   // ── Rendering ────────────────────────────────────────────────────────────────
@@ -166,19 +166,21 @@ describe('ClubPickerForm', () => {
   // ── Error and success states ──────────────────────────────────────────────────
 
   it('shows error message from server action', () => {
-    mockState = { error: 'DB error: constraint violation' }
+    mockState = { error: 'DB error: constraint violation', success: false }
     render(<ClubPickerForm {...defaultProps} />)
     expect(screen.getByRole('alert')).toHaveTextContent('DB error: constraint violation')
   })
 
-  it('shows success message after submit with no error', () => {
-    mockState = { error: null }
+  it('shows success banner when state.success is true', () => {
+    mockState = { error: null, success: true }
     render(<ClubPickerForm {...defaultProps} />)
-
-    const form = document.querySelector('form')!
-    fireEvent.submit(form)
-
     expect(screen.getByRole('status')).toHaveTextContent('Club selection saved!')
+  })
+
+  it('does not show success banner when state.success is false', () => {
+    mockState = { error: null, success: false }
+    render(<ClubPickerForm {...defaultProps} />)
+    expect(screen.queryByRole('status')).toBeNull()
   })
 
   // ── Empty state ───────────────────────────────────────────────────────────────

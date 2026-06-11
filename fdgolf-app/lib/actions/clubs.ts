@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 
-type ClubsActionState = { error: string | null }
+type ClubsActionState = { error: string | null; success: boolean }
 
 /**
  * saveClubsAction — Server Action for tournament club picker (US-0015).
@@ -11,13 +11,11 @@ type ClubsActionState = { error: string | null }
  * Clubs not in active_club_id list are deleted (or not inserted) so the
  * tournament_clubs table reflects the admin's selection.
  *
- * "no rows = all clubs active" invariant:
- *   When tournament_clubs has zero rows for a tournament, ALL clubs are
- *   considered active by convention. To express "all active" the admin
- *   submits all IDs which results in all rows being present, which is
- *   equivalent to the no-rows state. Conversely, submitting a partial
- *   list restricts the available clubs.
+ * tournament_clubs invariant: zero rows (new tournament) or all is_active=true rows
+ *   both mean "all clubs active". The US-0031 bag picker must handle BOTH states.
  *
+ *   When tournament_clubs has zero rows, ALL clubs are considered active by
+ *   convention. Submitting a partial list restricts the available clubs.
  *   This invariant MUST be respected by any query that reads available
  *   clubs (e.g. bag picker in pre-round setup, US-0031): if
  *   tournament_clubs is empty, treat all master clubs as active.
@@ -32,7 +30,7 @@ export async function saveClubsAction(
   const tournamentId = (formData.get('tournament_id') as string | null)?.trim() ?? ''
 
   if (!tournamentId) {
-    return { error: 'Tournament ID is required.' }
+    return { error: 'Tournament ID is required.', success: false }
   }
 
   const supabase = createClient()
@@ -40,7 +38,7 @@ export async function saveClubsAction(
   // Guard: must be admin
   const { data: isAdmin, error: adminError } = await supabase.rpc('fdgolf_is_admin')
   if (adminError || !isAdmin) {
-    return { error: 'Unauthorized: admin role required' }
+    return { error: 'Unauthorized: admin role required', success: false }
   }
 
   // Collect active club IDs from multi-value form field
@@ -54,7 +52,7 @@ export async function saveClubsAction(
     .eq('tournament_id', tournamentId)
 
   if (deleteError) {
-    return { error: deleteError.message }
+    return { error: deleteError.message, success: false }
   }
 
   // If no clubs are active (or all are active via the no-rows invariant),
@@ -71,9 +69,9 @@ export async function saveClubsAction(
       .insert(rows)
 
     if (insertError) {
-      return { error: insertError.message }
+      return { error: insertError.message, success: false }
     }
   }
 
-  return { error: null }
+  return { error: null, success: true }
 }

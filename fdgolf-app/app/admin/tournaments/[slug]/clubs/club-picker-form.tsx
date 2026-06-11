@@ -52,9 +52,8 @@ export function ClubPickerForm({
   )
 
   const [activeSet, setActiveSet] = useState<Set<string>>(initialActive)
-  const [submitted, setSubmitted] = useState(false)
 
-  const [state, formAction] = useFormState(saveClubsAction, { error: null })
+  const [state, formAction] = useFormState(saveClubsAction, { error: null, success: false })
 
   function toggleClub(clubId: string) {
     setActiveSet((prev) => {
@@ -68,12 +67,6 @@ export function ClubPickerForm({
     })
   }
 
-  function handleSubmit() {
-    setSubmitted(true)
-  }
-
-  const showSuccess = submitted && !state.error && state.error === null
-
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
       <h1 className="text-2xl font-bold">Available Clubs — {tournamentName}</h1>
@@ -83,19 +76,19 @@ export function ClubPickerForm({
         Disabled clubs will not appear in the player&apos;s bag picker.
       </p>
 
-      {showSuccess && (
+      {state.success === true && (
         <p role="status" className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-4 py-3">
           Club selection saved!
         </p>
       )}
 
-      {state.error && (
+      {state.error !== null && (
         <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
           {state.error}
         </p>
       )}
 
-      <form action={formAction} onSubmit={handleSubmit}>
+      <form action={formAction}>
         <input type="hidden" name="tournament_id" value={tournamentId} />
 
         {/* Hidden inputs for each active club ID — inside form so FormData captures them */}
