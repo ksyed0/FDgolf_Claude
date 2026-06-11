@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 2 — 2026-06-11
+
+### What Was Done
+
+- Implemented US-0015 end-to-end: saveClubsAction (lib/actions/clubs.ts), ClubPickerForm (club-picker-form.tsx), clubs page (Server Component), and tournament detail nav card layout
+- 24 new tests (8 action + 16 component); all 153 tests pass; 100% coverage on new files
+- TASK-0067, TASK-0068, TASK-0069 and US-0015 marked Done in RELEASE_PLAN.md
+
+---
+
 ## Session 1 — 2026-06-10
 
 ### What Was Done
