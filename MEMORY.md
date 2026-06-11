@@ -6,7 +6,7 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 3 — 2026-06-11
+Session 4 — 2026-06-11
 
 ---
 
@@ -16,8 +16,9 @@ Session 3 — 2026-06-11
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `44ae4c6` (after US-0012, US-0013, US-0015 merge + Lens bug logs)
+- **Develop tip:** `e15d111` (after design specs + GitHub sync config commit)
 - **Stories done:** US-0001–US-0013, US-0015, US-0016, US-0020 (EPIC-0001 complete; EPIC-0002 setup + club picker + preset import + pin placement done)
+- **Stories planned (specs + implementation plans written, not yet coded):** US-0090–0095 (Master Data V2, Tournament Editor V2, Downstream Updates)
 
 ---
 
@@ -47,8 +48,8 @@ Session 3 — 2026-06-11
 | Sequence | Next Available |
 |----------|----------------|
 | EPIC     | EPIC-0011      |
-| US       | US-0090        |
-| AC       | AC-0307        |
+| US       | US-0096        |
+| AC       | AC-0341        |
 | TASK     | TASK-0313      |
 | TC       | TC-0016        |
 | BUG      | BUG-0015       |
@@ -68,11 +69,27 @@ Session 3 — 2026-06-11
 
 ## Next Priorities
 
-From RELEASE_PLAN.md, next unbuilt stories in EPIC-0002:
-- US-0017 (tournament lifecycle transitions) — depends US-0009 ✓
-- US-0018 (activation confirmation) — depends US-0017
-- US-0014 (player search / organizer assignment) — EPIC-0002 admin tools
-- US-0021 (registration landing page) — starts EPIC-0003 registration flow
+EPIC-0002 rebuild — execute these three implementation plans **in order** via DM_AGENT:
+
+| Plan | File | Stories | Depends on |
+|------|------|---------|------------|
+| 1 — Master Data V2 | `docs/superpowers/plans/2026-06-11-master-data-v2.md` | US-0090, US-0091, US-0092 | nothing |
+| 2 — Tournament Editor V2 | `docs/superpowers/plans/2026-06-11-tournament-editor-v2.md` | US-0093, US-0094 | Plan 1 merged |
+| 3 — Downstream Updates | `docs/superpowers/plans/2026-06-11-downstream-schema-updates.md` | US-0095 | Plans 1+2 merged |
+
+After all three: resume US-0017 (tournament lifecycle), US-0018 (activation), US-0021 (registration landing).
+
+## Known Patterns / Gotchas (additions from Session 4)
+
+- **New schema:** `venues` table is new; `courses` + `holes` are dropped and recreated (migration `20260611000001_master_data_v2.sql`); `tournaments` loses text `venue` column, gains `venue_id UUID` FK + `course_id UUID` FK
+- **JSONB shape for `holes.tees`:** `[{"colour":"Blue","yardage":385,"lat":43.65,"lng":-79.38}]` — up to 3 tees per hole, free-text colour, coords nullable
+- **`saveHolesAction` pattern:** delete-all-then-reinsert for courseId (not upsert) — UI always sends all 18 rows
+- **`saveTeeCoordAction` is in `lib/actions/pins.ts`** — added there in Plan 1; `saveHolesAction` is in `lib/actions/holes.ts`
+- **`savePinAction` signature changes in Plan 3** from `(courseId, holeId, mode, lat, lng)` to `(courseId, holeId, lat, lng)` — `mode` param dropped; tee saves now use `saveTeeCoordAction`
+- **`getCoursesForVenueAction` lives in `lib/actions/courses.ts`** — imported by `TournamentForm`; do NOT duplicate in tournaments.ts
+- **TournamentForm `venues` prop is now required** — existing tests that render `<TournamentForm />` without it will fail until they pass `venues={[]}`
+- **`updateTournamentAction` returns via `redirect()`** — the action fetches slug after update and redirects; tests must mock `.select('slug').single()`
+- **`course-holes-form.tsx` and its test are deleted in Plan 3** — `CourseHolesForm` is retired; hole editing moves to Venues admin
 
 ## Known Patterns / Gotchas (additions from Session 3)
 

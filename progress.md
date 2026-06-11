@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 4 — 2026-06-11
+
+### What Was Done
+
+- Wrote 3 full implementation plans for EPIC-0002 rebuild: Master Data V2 (venues/courses/holes), Tournament Editor V2, Downstream Schema Updates
+- Plans cover 19 tasks total with complete code, TDD steps, and commit checkpoints at every step
+- PlanVisualizer GitHub issues sync re-enabled; BUG-0001–0014 synced to GitHub issues #5–#18
+
+---
+
 ## Session 3 — 2026-06-11
 
 ### What Was Done
