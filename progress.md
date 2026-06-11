@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 5 — 2026-06-11
+
+### What Was Done
+
+- Executed all 19 tasks across 3 plans (Master Data V2, Tournament Editor V2, Downstream Schema Updates) via DM_AGENT subagent pipeline
+- PRs #19, #20, #21 squash-merged to develop; develop HEAD `63824dd`; 343 tests passing, 95%+ coverage
+- EPIC-0002 rebuild complete: venues/courses/holes CRUD, tournament list/edit/delete, PinPlacementMap JSONB tees, CourseHolesForm retired
+
+---
+
 ## Session 4 — 2026-06-11
 
 ### What Was Done

@@ -6,7 +6,7 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 4 — 2026-06-11
+Session 5 — 2026-06-11
 
 ---
 
@@ -16,9 +16,9 @@ Session 4 — 2026-06-11
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `e15d111` (after design specs + GitHub sync config commit)
-- **Stories done:** US-0001–US-0013, US-0015, US-0016, US-0020 (EPIC-0001 complete; EPIC-0002 setup + club picker + preset import + pin placement done)
-- **Stories planned (specs + implementation plans written, not yet coded):** US-0090–0095 (Master Data V2, Tournament Editor V2, Downstream Updates)
+- **Develop tip:** `63824dd` (Downstream Schema Updates merged, PR #21)
+- **Stories done:** US-0001–US-0013, US-0015, US-0016, US-0020, US-0090–US-0095 (EPIC-0001 complete; EPIC-0002 rebuild complete)
+- **Stories planned next:** US-0017 (tournament lifecycle), US-0018 (activation), US-0021 (registration landing)
 
 ---
 
@@ -69,15 +69,12 @@ Session 4 — 2026-06-11
 
 ## Next Priorities
 
-EPIC-0002 rebuild — execute these three implementation plans **in order** via DM_AGENT:
+EPIC-0002 rebuild **complete** (US-0090–0095, PRs #19–#21 merged 2026-06-11).
 
-| Plan | File | Stories | Depends on |
-|------|------|---------|------------|
-| 1 — Master Data V2 | `docs/superpowers/plans/2026-06-11-master-data-v2.md` | US-0090, US-0091, US-0092 | nothing |
-| 2 — Tournament Editor V2 | `docs/superpowers/plans/2026-06-11-tournament-editor-v2.md` | US-0093, US-0094 | Plan 1 merged |
-| 3 — Downstream Updates | `docs/superpowers/plans/2026-06-11-downstream-schema-updates.md` | US-0095 | Plans 1+2 merged |
-
-After all three: resume US-0017 (tournament lifecycle), US-0018 (activation), US-0021 (registration landing).
+Next up:
+- **US-0017** — tournament lifecycle (draft → active → completed state machine)
+- **US-0018** — tournament activation (admin triggers activation)
+- **US-0021** — registration landing page (player-facing)
 
 ## Known Patterns / Gotchas (additions from Session 4)
 
