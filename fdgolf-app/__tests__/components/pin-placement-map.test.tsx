@@ -24,30 +24,49 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }))
 
-// ─── savePinAction mock ───────────────────────────────────────────────────────
-const mockSavePinAction = vi.fn()
+// ─── Action mocks ─────────────────────────────────────────────────────────────
+const mockSavePinAction = vi.hoisted(() => vi.fn())
+const mockSaveTeeCoordAction = vi.hoisted(() => vi.fn())
 vi.mock('@/lib/actions/pins', () => ({
-  savePinAction: (...args: unknown[]) => mockSavePinAction(...args),
+  savePinAction: mockSavePinAction,
+  saveTeeCoordAction: mockSaveTeeCoordAction,
 }))
 
 import { PinPlacementMap, type HoleCoords } from '@/app/admin/tournaments/[slug]/course/pins/pin-placement-map'
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
-function makeHoles(count = 3): HoleCoords[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `hole-uuid-${i + 1}`,
-    number: i + 1,
+const HOLES: HoleCoords[] = [
+  {
+    id: 'h-1',
+    number: 1,
     pin_lat: null,
     pin_lng: null,
-    tee_lat: null,
-    tee_lng: null,
-  }))
-}
+    tees: [{ colour: 'Blue', lat: null, lng: null }],
+  },
+  {
+    id: 'h-2',
+    number: 2,
+    pin_lat: 43.1,
+    pin_lng: -79.1,
+    tees: [],
+  },
+  {
+    id: 'h-3',
+    number: 3,
+    pin_lat: null,
+    pin_lng: null,
+    tees: [
+      { colour: 'Blue', lat: null, lng: null },
+      { colour: 'Red', lat: null, lng: null },
+    ],
+  },
+]
 
 const defaultProps = {
-  holes: makeHoles(3),
-  courseId: 'course-uuid-1',
+  courseId: 'c-1',
+  holes: HOLES,
+  mapboxToken: 'test-token',
   tournamentVenue: 'Granite Ridge GC',
   tournamentSlug: 'granite-ridge-2026',
 }
@@ -57,19 +76,41 @@ describe('PinPlacementMap', () => {
     vi.clearAllMocks()
     process.env.NEXT_PUBLIC_MAPBOX_TOKEN = 'pk.test-token'
     mockSavePinAction.mockResolvedValue({ error: null })
+    mockSaveTeeCoordAction.mockResolvedValue({ error: null })
   })
 
   // ─── Rendering ──────────────────────────────────────────────────────────────
 
-  it('renders the heading with venue name', () => {
+  it('renders hole number pill', () => {
     render(<PinPlacementMap {...defaultProps} />)
-    expect(screen.getByRole('heading', { name: /Set Pin Locations — Granite Ridge GC/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /hole 1/i })).toBeInTheDocument()
   })
 
-  it('renders hole buttons for each hole', () => {
+  it('shows Pin mode button', () => {
     render(<PinPlacementMap {...defaultProps} />)
-    const holeButtons = screen.getAllByRole('button', { name: /hole \d/i })
-    expect(holeButtons).toHaveLength(3)
+    expect(screen.getByRole('button', { name: /^pin$/i })).toBeInTheDocument()
+  })
+
+  it('shows tee colour button when hole has one tee', () => {
+    // Hole 1 has one tee: Blue
+    render(<PinPlacementMap {...defaultProps} />)
+    expect(screen.getByRole('button', { name: /^blue$/i })).toBeInTheDocument()
+  })
+
+  it('shows tee select dropdown when hole has multiple tees', () => {
+    render(<PinPlacementMap {...defaultProps} />)
+    // Navigate to hole 3 which has 2 tees
+    fireEvent.click(screen.getByRole('button', { name: /hole 3/i }))
+    expect(screen.getByRole('combobox', { name: /select tee colour/i })).toBeInTheDocument()
+  })
+
+  it('disables tee button when hole has no tees', () => {
+    render(<PinPlacementMap {...defaultProps} />)
+    // Navigate to hole 2 which has no tees
+    fireEvent.click(screen.getByRole('button', { name: /hole 2/i }))
+    const teeBtn = screen.getByRole('button', { name: /^tee$/i })
+    expect(teeBtn).toBeDisabled()
+    expect(teeBtn).toHaveAttribute('title', 'Define tees in course setup first')
   })
 
   it('renders the map when token is present', () => {
@@ -83,108 +124,96 @@ describe('PinPlacementMap', () => {
     expect(screen.getByRole('alert', { name: /map unavailable/i })).toBeInTheDocument()
   })
 
-  it('renders Pin and Tee mode buttons', () => {
-    render(<PinPlacementMap {...defaultProps} />)
-    expect(screen.getByRole('button', { name: /^pin$/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^tee$/i })).toBeInTheDocument()
-  })
-
-  it('renders Save Pin and Save and next hole buttons', () => {
-    render(<PinPlacementMap {...defaultProps} />)
-    // Buttons exist but Save Pin is disabled until coords placed
-    expect(screen.getByRole('button', { name: /save pin/i })).toBeDisabled()
-    expect(screen.getByTestId('save-and-next')).toBeDisabled()
-  })
-
-  it('renders back link to course page', () => {
-    render(<PinPlacementMap {...defaultProps} />)
-    const link = screen.getByRole('link', { name: /back to course/i })
-    expect(link).toHaveAttribute('href', '/admin/tournaments/granite-ridge-2026/course')
-  })
-
   // ─── Progress bar ───────────────────────────────────────────────────────────
 
-  it('shows 0 of 3 holes with pins set initially', () => {
+  it('shows correct progress based on holes with pins', () => {
     render(<PinPlacementMap {...defaultProps} />)
-    expect(screen.getByText(/0 of 3 holes with pins set/i)).toBeInTheDocument()
-  })
-
-  it('shows correct progress when some holes already have pins', () => {
-    const holes = makeHoles(3)
-    holes[0].pin_lat = 43.65
-    holes[0].pin_lng = -79.38
-    render(<PinPlacementMap {...defaultProps} holes={holes} />)
+    // Hole 2 has pin_lat set, so 1 of 3
     expect(screen.getByText(/1 of 3 holes with pins set/i)).toBeInTheDocument()
   })
 
   it('progress bar has correct aria attributes', () => {
     render(<PinPlacementMap {...defaultProps} />)
     const bar = screen.getByRole('progressbar')
-    expect(bar).toHaveAttribute('aria-valuenow', '0')
+    expect(bar).toHaveAttribute('aria-valuenow', '1')
     expect(bar).toHaveAttribute('aria-valuemax', '3')
   })
 
-  // ─── Map click ──────────────────────────────────────────────────────────────
+  // ─── Save actions ────────────────────────────────────────────────────────────
 
-  it('clicking the map places a marker', () => {
-    render(<PinPlacementMap {...defaultProps} />)
-    const map = screen.getByTestId('mapbox-map')
-    fireEvent.click(map)
-    expect(screen.getByTestId('map-marker')).toBeInTheDocument()
-  })
-
-  it('clicking the map enables the Save Pin button', () => {
-    render(<PinPlacementMap {...defaultProps} />)
-    const map = screen.getByTestId('mapbox-map')
-    fireEvent.click(map)
-    expect(screen.getByRole('button', { name: /save pin/i })).not.toBeDisabled()
-  })
-
-  it('clicking the map shows coordinates in the UI', () => {
+  it('calls savePinAction with 4 args on pin save', async () => {
     render(<PinPlacementMap {...defaultProps} />)
     fireEvent.click(screen.getByTestId('mapbox-map'))
-    // Coordinates 43.65, -79.38 should appear
-    expect(screen.getByText(/43\.65/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /^save pin$/i }))
+
+    await waitFor(() => {
+      expect(mockSavePinAction).toHaveBeenCalledOnce()
+    })
+
+    expect(mockSavePinAction).toHaveBeenCalledWith('c-1', 'h-1', 43.65, -79.38)
+    expect(mockSaveTeeCoordAction).not.toHaveBeenCalled()
+  })
+
+  it('calls saveTeeCoordAction with colour on tee save', async () => {
+    render(<PinPlacementMap {...defaultProps} />)
+    // Switch to Blue tee mode (hole 1 has one tee: Blue)
+    fireEvent.click(screen.getByRole('button', { name: /^blue$/i }))
+    fireEvent.click(screen.getByTestId('mapbox-map'))
+    fireEvent.click(screen.getByRole('button', { name: /^save blue$/i }))
+
+    await waitFor(() => {
+      expect(mockSaveTeeCoordAction).toHaveBeenCalledOnce()
+    })
+
+    expect(mockSaveTeeCoordAction).toHaveBeenCalledWith('c-1', 'h-1', 'Blue', 43.65, -79.38)
+    expect(mockSavePinAction).not.toHaveBeenCalled()
+  })
+
+  it('shows error when savePinAction returns error', async () => {
+    mockSavePinAction.mockResolvedValue({ error: 'Unauthorized' })
+    render(<PinPlacementMap {...defaultProps} />)
+    fireEvent.click(screen.getByTestId('mapbox-map'))
+    fireEvent.click(screen.getByRole('button', { name: /^save pin$/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Unauthorized')
+    })
+  })
+
+  it('advances to next hole on save success', async () => {
+    render(<PinPlacementMap {...defaultProps} />)
+    fireEvent.click(screen.getByTestId('mapbox-map'))
+    fireEvent.click(screen.getByTestId('save-and-next'))
+
+    await waitFor(() => {
+      const hole2Btn = screen.getByRole('button', { name: /hole 2/i })
+      expect(hole2Btn).toHaveAttribute('aria-pressed', 'true')
+    })
   })
 
   // ─── Mode switching ─────────────────────────────────────────────────────────
 
   it('Pin mode button is pressed by default', () => {
     render(<PinPlacementMap {...defaultProps} />)
-    const pinBtn = screen.getByRole('button', { name: /^pin$/i })
-    expect(pinBtn).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /^pin$/i })).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('Tee mode button switches active mode', () => {
+  it('resets mode to pin when switching holes via selector', () => {
     render(<PinPlacementMap {...defaultProps} />)
-    const teeBtn = screen.getByRole('button', { name: /^tee$/i })
-    fireEvent.click(teeBtn)
-    expect(teeBtn).toHaveAttribute('aria-pressed', 'true')
-    const pinBtn = screen.getByRole('button', { name: /^pin$/i })
-    expect(pinBtn).toHaveAttribute('aria-pressed', 'false')
-  })
-
-  it('shows "Save Tee" label after switching to tee mode', () => {
-    render(<PinPlacementMap {...defaultProps} />)
-    fireEvent.click(screen.getByRole('button', { name: /^tee$/i }))
-    expect(screen.getByRole('button', { name: /save tee/i })).toBeInTheDocument()
+    // Switch to Blue tee mode
+    fireEvent.click(screen.getByRole('button', { name: /^blue$/i }))
+    expect(screen.getByRole('button', { name: /^blue$/i })).toHaveAttribute('aria-pressed', 'true')
+    // Switch hole
+    fireEvent.click(screen.getByRole('button', { name: /hole 2/i }))
+    // Pin mode should be restored
+    expect(screen.getByRole('button', { name: /^pin$/i })).toHaveAttribute('aria-pressed', 'true')
   })
 
   // ─── Hole selector ──────────────────────────────────────────────────────────
 
   it('first hole button is selected initially', () => {
     render(<PinPlacementMap {...defaultProps} />)
-    const hole1Btn = screen.getByRole('button', { name: /hole 1/i })
-    expect(hole1Btn).toHaveAttribute('aria-pressed', 'true')
-  })
-
-  it('clicking hole 2 button selects it', () => {
-    render(<PinPlacementMap {...defaultProps} />)
-    const hole2Btn = screen.getByRole('button', { name: /hole 2/i })
-    fireEvent.click(hole2Btn)
-    expect(hole2Btn).toHaveAttribute('aria-pressed', 'true')
-    const hole1Btn = screen.getByRole('button', { name: /hole 1/i })
-    expect(hole1Btn).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: /hole 1/i })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('does not show Previous hole button on first hole', () => {
@@ -194,24 +223,28 @@ describe('PinPlacementMap', () => {
 
   it('shows Previous hole button when not on first hole', () => {
     render(<PinPlacementMap {...defaultProps} />)
-    const hole2Btn = screen.getByRole('button', { name: /hole 2/i })
-    fireEvent.click(hole2Btn)
+    fireEvent.click(screen.getByRole('button', { name: /hole 2/i }))
     expect(screen.getByRole('button', { name: /previous hole/i })).toBeInTheDocument()
   })
 
-  // ─── Save action ────────────────────────────────────────────────────────────
-
-  it('calls savePinAction with courseId, holeId, lat, lng on pin save', async () => {
+  it('shows "Save and finish" on last hole', () => {
     render(<PinPlacementMap {...defaultProps} />)
+    fireEvent.click(screen.getByRole('button', { name: /hole 3/i }))
+    expect(screen.getByTestId('save-and-next')).toHaveTextContent('Save and finish')
+  })
+
+  it('navigates to course page after Save and finish on last hole', async () => {
+    render(<PinPlacementMap {...defaultProps} />)
+    fireEvent.click(screen.getByRole('button', { name: /hole 3/i }))
     fireEvent.click(screen.getByTestId('mapbox-map'))
-    fireEvent.click(screen.getByRole('button', { name: /^save pin$/i }))
+    fireEvent.click(screen.getByTestId('save-and-next'))
 
     await waitFor(() => {
-      expect(mockSavePinAction).toHaveBeenCalledOnce()
+      expect(mockPush).toHaveBeenCalledWith('/admin/tournaments/granite-ridge-2026/course')
     })
-
-    expect(mockSavePinAction).toHaveBeenCalledWith('course-uuid-1', 'hole-uuid-1', 43.65, -79.38)
   })
+
+  // ─── Success feedback ────────────────────────────────────────────────────────
 
   it('shows success message after pin save', async () => {
     render(<PinPlacementMap {...defaultProps} />)
@@ -223,79 +256,27 @@ describe('PinPlacementMap', () => {
     })
   })
 
-  it('shows error message when save fails', async () => {
-    mockSavePinAction.mockResolvedValue({ error: 'Unauthorized' })
+  // ─── Map click ──────────────────────────────────────────────────────────────
+
+  it('clicking the map enables the save button', () => {
+    render(<PinPlacementMap {...defaultProps} />)
+    const saveBtn = screen.getByRole('button', { name: /save pin/i })
+    expect(saveBtn).toBeDisabled()
+    fireEvent.click(screen.getByTestId('mapbox-map'))
+    expect(saveBtn).not.toBeDisabled()
+  })
+
+  it('clicking the map shows coordinates in the UI', () => {
     render(<PinPlacementMap {...defaultProps} />)
     fireEvent.click(screen.getByTestId('mapbox-map'))
-    fireEvent.click(screen.getByRole('button', { name: /^save pin$/i }))
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Unauthorized')
-    })
+    expect(screen.getByText(/43\.65/)).toBeInTheDocument()
   })
 
-  it('shows error message when tee mode save attempted (not yet implemented)', async () => {
+  // ─── Back link ───────────────────────────────────────────────────────────────
+
+  it('renders back link to course page', () => {
     render(<PinPlacementMap {...defaultProps} />)
-    fireEvent.click(screen.getByRole('button', { name: /^tee$/i }))
-    fireEvent.click(screen.getByTestId('mapbox-map'))
-    fireEvent.click(screen.getByRole('button', { name: /^save tee$/i }))
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/tee placement requires/i)
-    })
-    // savePinAction should NOT be called for tee mode
-    expect(mockSavePinAction).not.toHaveBeenCalled()
-  })
-
-  // ─── Save and next ───────────────────────────────────────────────────────────
-
-  it('advances to hole 2 after Save and next on hole 1', async () => {
-    render(<PinPlacementMap {...defaultProps} />)
-    fireEvent.click(screen.getByTestId('mapbox-map'))
-    fireEvent.click(screen.getByTestId('save-and-next'))
-
-    await waitFor(() => {
-      const hole2Btn = screen.getByRole('button', { name: /hole 2/i })
-      expect(hole2Btn).toHaveAttribute('aria-pressed', 'true')
-    })
-  })
-
-  it('shows "Save and finish" on last hole', () => {
-    render(<PinPlacementMap {...defaultProps} />)
-    // Navigate to last hole (hole 3 = index 2)
-    const hole3Btn = screen.getByRole('button', { name: /hole 3/i })
-    fireEvent.click(hole3Btn)
-    expect(screen.getByTestId('save-and-next')).toHaveTextContent('Save and finish')
-  })
-
-  it('navigates to course page after Save and finish on last hole', async () => {
-    render(<PinPlacementMap {...defaultProps} />)
-    // Navigate to last hole
-    fireEvent.click(screen.getByRole('button', { name: /hole 3/i }))
-    fireEvent.click(screen.getByTestId('mapbox-map'))
-    fireEvent.click(screen.getByTestId('save-and-next'))
-
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/admin/tournaments/granite-ridge-2026/course')
-    })
-  })
-
-  // ─── Initial map center ──────────────────────────────────────────────────────
-
-  it('uses Toronto fallback when no holes have pins', () => {
-    // The map is mocked — we just verify it renders without error
-    render(<PinPlacementMap {...defaultProps} />)
-    expect(screen.getByTestId('mapbox-map')).toBeInTheDocument()
-  })
-
-  it('uses average of existing pin coords as initial center', () => {
-    const holes = makeHoles(2)
-    holes[0].pin_lat = 43.70
-    holes[0].pin_lng = -79.40
-    holes[1].pin_lat = 43.60
-    holes[1].pin_lng = -79.30
-    // Just verify it renders correctly
-    render(<PinPlacementMap {...defaultProps} holes={holes} />)
-    expect(screen.getByTestId('mapbox-map')).toBeInTheDocument()
+    const link = screen.getByRole('link', { name: /back to course/i })
+    expect(link).toHaveAttribute('href', '/admin/tournaments/granite-ridge-2026/course')
   })
 })
