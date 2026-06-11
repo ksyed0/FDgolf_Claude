@@ -7,10 +7,12 @@ export default async function VenuesPage() {
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) redirect('/')
 
-  const { data: venues } = await supabase
+  const { data: venues, error: venuesError } = await supabase
     .from('venues')
     .select('id, name, city, state_province, courses(id)')
     .order('name')
+
+  if (venuesError) throw new Error(venuesError.message)
 
   const venueList = (venues ?? []).map(v => ({
     id: v.id,

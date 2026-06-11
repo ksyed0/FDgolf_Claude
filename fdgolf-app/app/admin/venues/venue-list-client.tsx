@@ -74,7 +74,8 @@ export function VenueListClient({ venues }: { venues: Venue[] }) {
                     </button>
                     <button
                       onClick={() => setConfirmingId(null)}
-                      className="text-xs px-3 py-1 border border-gray-300 rounded hover:bg-gray-50"
+                      disabled={isPending}
+                      className="text-xs px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
                     >
                       Cancel
                     </button>
@@ -93,7 +94,8 @@ export function VenueListClient({ venues }: { venues: Venue[] }) {
                     <Link href={`/admin/venues/${v.id}/edit`} className="text-gray-600 text-sm hover:underline">Edit</Link>
                     <button
                       onClick={() => { setConfirmingId(v.id); setDeleteError(null) }}
-                      className="text-red-600 text-sm hover:underline"
+                      disabled={isPending}
+                      className="text-red-600 text-sm hover:underline disabled:opacity-50"
                     >
                       Delete
                     </button>
