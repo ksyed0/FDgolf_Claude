@@ -81,12 +81,29 @@ ALTER TABLE venues  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE holes   ENABLE ROW LEVEL SECURITY;
 
--- Admins can do everything; public reads venues, courses, holes
-CREATE POLICY "admins_all_venues"   ON venues  FOR ALL  USING (fdgolf_is_admin());
-CREATE POLICY "public_read_venues"  ON venues  FOR SELECT USING (true);
+-- venues RLS policies
+CREATE POLICY "public_select_venues"  ON venues FOR SELECT USING (true);
+CREATE POLICY "admin_insert_venues"   ON venues FOR INSERT WITH CHECK (fdgolf_is_admin());
+CREATE POLICY "admin_update_venues"   ON venues FOR UPDATE USING (fdgolf_is_admin()) WITH CHECK (fdgolf_is_admin());
+CREATE POLICY "admin_delete_venues"   ON venues FOR DELETE USING (fdgolf_is_admin());
 
-CREATE POLICY "admins_all_courses"  ON courses FOR ALL  USING (fdgolf_is_admin());
-CREATE POLICY "public_read_courses" ON courses FOR SELECT USING (true);
+-- courses RLS policies
+CREATE POLICY "public_select_courses"  ON courses FOR SELECT USING (true);
+CREATE POLICY "admin_insert_courses"   ON courses FOR INSERT WITH CHECK (fdgolf_is_admin());
+CREATE POLICY "admin_update_courses"   ON courses FOR UPDATE USING (fdgolf_is_admin()) WITH CHECK (fdgolf_is_admin());
+CREATE POLICY "admin_delete_courses"   ON courses FOR DELETE USING (fdgolf_is_admin());
 
-CREATE POLICY "admins_all_holes"    ON holes   FOR ALL  USING (fdgolf_is_admin());
-CREATE POLICY "public_read_holes"   ON holes   FOR SELECT USING (true);
+-- holes RLS policies
+CREATE POLICY "public_select_holes"  ON holes FOR SELECT USING (true);
+CREATE POLICY "admin_insert_holes"   ON holes FOR INSERT WITH CHECK (fdgolf_is_admin());
+CREATE POLICY "admin_update_holes"   ON holes FOR UPDATE USING (fdgolf_is_admin()) WITH CHECK (fdgolf_is_admin());
+CREATE POLICY "admin_delete_holes"   ON holes FOR DELETE USING (fdgolf_is_admin());
+
+-- updated_at triggers
+CREATE TRIGGER set_venues_updated_at
+  BEFORE UPDATE ON venues
+  FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER set_courses_updated_at
+  BEFORE UPDATE ON courses
+  FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
