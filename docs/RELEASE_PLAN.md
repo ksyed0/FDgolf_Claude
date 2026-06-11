@@ -280,16 +280,16 @@ Acceptance Criteria:
 US-0013 (EPIC-0002): As an admin, I want to drop pin coordinates for each hole on a satellite map, so that the round tracking app can compute distance-to-pin.
 Priority: High
 Estimate: M
-Status: Planned
-Branch: feature/US-0013-pin-placement
+Status: Done
+Branch: fix/pins-page-schema-and-bugs
 Dependencies: US-0011, US-0007
 Acceptance Criteria:
-  - [ ] AC-0058: Satellite map renders for each hole at a sensible default zoom around the course
-  - [ ] AC-0059: Click on the map drops a pin; coordinates saved to holes.pin_lat / pin_lng
-  - [ ] AC-0060: Tee coordinates can also be dropped (separate mode)
-  - [ ] AC-0061: Progress bar shows N of 18 holes with pins set
-  - [ ] AC-0062: "Save and continue to next hole" button auto-advances
-  - [ ] AC-0063: Holes table shows pin status (Set or Missing) per hole
+  - [x] AC-0058: Satellite map renders for each hole at a sensible default zoom around the course
+  - [x] AC-0059: Click on the map drops a pin; coordinates saved to holes.pin_lat / pin_lng
+  - [x] AC-0060: Tee coordinates can also be dropped (separate mode)
+  - [x] AC-0061: Progress bar shows N of 18 holes with pins set
+  - [x] AC-0062: "Save and continue to next hole" button auto-advances
+  - [x] AC-0063: Holes table shows pin status (Set or Missing) per hole
 ```
 
 ```
