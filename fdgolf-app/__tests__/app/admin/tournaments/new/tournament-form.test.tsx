@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { TournamentForm } from '@/app/admin/tournaments/new/tournament-form'
 
 // Mock the server actions — include checkSlugAvailableAction for US-0010
@@ -100,5 +100,71 @@ describe('TournamentForm', () => {
     const slugInput = screen.getByLabelText(/url slug/i)
     fireEvent.change(slugInput, { target: { value: 'CAPS!' } })
     expect(screen.getByRole('alert')).toHaveTextContent(/only lowercase letters/i)
+  })
+
+  it('clears slug error when valid characters entered', () => {
+    render(<TournamentForm />)
+    const slugInput = screen.getByLabelText(/url slug/i)
+    fireEvent.change(slugInput, { target: { value: 'CAPS!' } })
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    fireEvent.change(slugInput, { target: { value: 'valid-slug' } })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('handleSlugBlur: no-ops when slug is empty', async () => {
+    const { checkSlugAvailableAction } = await import('@/lib/actions/tournaments')
+    render(<TournamentForm />)
+    const slugInput = screen.getByLabelText(/url slug/i)
+    await act(async () => {
+      fireEvent.blur(slugInput)
+    })
+    expect(checkSlugAvailableAction).not.toHaveBeenCalled()
+  })
+
+  it('handleSlugBlur: no-ops when slug has invalid characters', async () => {
+    const { checkSlugAvailableAction } = await import('@/lib/actions/tournaments')
+    render(<TournamentForm />)
+    const slugInput = screen.getByLabelText(/url slug/i)
+    fireEvent.change(slugInput, { target: { value: 'CAPS!' } })
+    await act(async () => {
+      fireEvent.blur(slugInput)
+    })
+    expect(checkSlugAvailableAction).not.toHaveBeenCalled()
+  })
+
+  it('handleSlugBlur: calls checkSlugAvailableAction for valid slug', async () => {
+    const { checkSlugAvailableAction } = await import('@/lib/actions/tournaments')
+    render(<TournamentForm />)
+    const slugInput = screen.getByLabelText(/url slug/i)
+    fireEvent.change(slugInput, { target: { value: 'my-tourney' } })
+    await act(async () => {
+      fireEvent.blur(slugInput)
+    })
+    expect(checkSlugAvailableAction).toHaveBeenCalledWith('my-tourney')
+  })
+
+  it('handleSlugBlur: shows taken error when slug unavailable', async () => {
+    const { checkSlugAvailableAction } = await import('@/lib/actions/tournaments')
+    vi.mocked(checkSlugAvailableAction).mockResolvedValueOnce({ available: false })
+    render(<TournamentForm />)
+    const slugInput = screen.getByLabelText(/url slug/i)
+    fireEvent.change(slugInput, { target: { value: 'taken-slug' } })
+    await act(async () => {
+      fireEvent.blur(slugInput)
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent(/already taken/i)
+  })
+
+  it('handleNameChange: updates slug via debounce', async () => {
+    vi.useFakeTimers()
+    render(<TournamentForm />)
+    const nameInput = screen.getByLabelText(/^name$/i)
+    fireEvent.change(nameInput, { target: { value: 'My Great Tournament' } })
+    await act(async () => {
+      vi.advanceTimersByTime(400)
+    })
+    const slugInput = screen.getByLabelText(/url slug/i) as HTMLInputElement
+    expect(slugInput.value).toBe('my-great-tournament')
+    vi.useRealTimers()
   })
 })

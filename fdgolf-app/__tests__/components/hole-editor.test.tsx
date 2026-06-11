@@ -113,4 +113,40 @@ describe('HoleEditor', () => {
     fireEvent.click(screen.getByText('Granite Ridge GC'))
     expect(screen.getAllByDisplayValue('Blue').length).toBeGreaterThan(0)
   })
+
+  it('hides preset dropdown after selecting a preset', () => {
+    render(<HoleEditor courseId="c-1" holesCount={2} initialHoles={[]} />)
+    fireEvent.click(screen.getByRole('button', { name: /import preset/i }))
+    expect(screen.getByText('Granite Ridge GC')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('Granite Ridge GC'))
+    expect(screen.queryByText('Granite Ridge GC')).not.toBeInTheDocument()
+  })
+
+  it('updateRow: changing par input updates the row value', () => {
+    render(<HoleEditor courseId="c-1" holesCount={2} initialHoles={INITIAL_HOLES} />)
+    const parInputs = screen.getAllByRole('spinbutton')
+    fireEvent.change(parInputs[0], { target: { value: '5' } })
+    expect((parInputs[0] as HTMLInputElement).value).toBe('5')
+  })
+
+  it('updateRow: changing handicap input updates the row value', () => {
+    render(<HoleEditor courseId="c-1" holesCount={2} initialHoles={INITIAL_HOLES} />)
+    const parInputs = screen.getAllByRole('spinbutton')
+    fireEvent.change(parInputs[1], { target: { value: '9' } })
+    expect((parInputs[1] as HTMLInputElement).value).toBe('9')
+  })
+
+  it('updateTee: changing tee colour input updates the value', () => {
+    render(<HoleEditor courseId="c-1" holesCount={2} initialHoles={INITIAL_HOLES} />)
+    const colourInputs = screen.getAllByPlaceholderText(/e\.g\. Blue/i)
+    fireEvent.change(colourInputs[0], { target: { value: 'White' } })
+    expect((colourInputs[0] as HTMLInputElement).value).toBe('White')
+  })
+
+  it('updateTee: changing tee yardage input updates the value', () => {
+    render(<HoleEditor courseId="c-1" holesCount={2} initialHoles={INITIAL_HOLES} />)
+    const yardageInput = screen.getByDisplayValue('385')
+    fireEvent.change(yardageInput, { target: { value: '400' } })
+    expect((yardageInput as HTMLInputElement).value).toBe('400')
+  })
 })

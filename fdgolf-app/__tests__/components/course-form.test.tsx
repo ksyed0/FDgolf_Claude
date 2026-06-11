@@ -106,3 +106,33 @@ describe('CourseForm — edit mode', () => {
     expect(screen.getByDisplayValue('6540')).toBeInTheDocument()
   })
 })
+
+describe('CourseForm — tee row interactions', () => {
+  it('can add up to 3 tee rows', () => {
+    render(<CourseForm venueId="v-1" />)
+    fireEvent.click(screen.getByRole('button', { name: /add tee/i }))
+    fireEvent.click(screen.getByRole('button', { name: /add tee/i }))
+    fireEvent.click(screen.getByRole('button', { name: /add tee/i }))
+    // After 3 rows, "+ Add tee" button should be hidden
+    expect(screen.queryByRole('button', { name: /add tee/i })).not.toBeInTheDocument()
+  })
+
+  it('can remove a tee row', () => {
+    render(<CourseForm venueId="v-1" />)
+    fireEvent.click(screen.getByRole('button', { name: /add tee/i }))
+    expect(screen.getAllByPlaceholderText(/colour/i)).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: /remove tee row 1/i }))
+    expect(screen.queryAllByPlaceholderText(/colour/i)).toHaveLength(0)
+  })
+
+  it('can update tee colour and yardage fields', () => {
+    render(<CourseForm venueId="v-1" />)
+    fireEvent.click(screen.getByRole('button', { name: /add tee/i }))
+    const colourInput = screen.getByPlaceholderText(/colour/i)
+    fireEvent.change(colourInput, { target: { value: 'Red' } })
+    expect((colourInput as HTMLInputElement).value).toBe('Red')
+    const yardsInput = screen.getByPlaceholderText(/total yds/i)
+    fireEvent.change(yardsInput, { target: { value: '5800' } })
+    expect((yardsInput as HTMLInputElement).value).toBe('5800')
+  })
+})
