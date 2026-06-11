@@ -37,6 +37,12 @@ export async function AppChrome() {
               Tournaments
             </Link>
             <Link
+              href="/admin/venues"
+              className="text-sm text-white/70 hover:text-white transition-colors"
+            >
+              Venues
+            </Link>
+            <Link
               href="/admin/organizers"
               className="text-sm text-white/70 hover:text-white transition-colors"
             >

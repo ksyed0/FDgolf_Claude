@@ -1,8 +1,8 @@
 /**
  * Course presets — static data module (US-0012).
  *
- * Each preset describes a known golf course with 18 holes (par, yardage, strokeIndex).
- * Admins can import a preset to pre-populate the CourseHolesForm rather than hand-keying
+ * Each preset describes a known golf course with 18 holes (par, handicap, tees).
+ * Admins can import a preset to pre-populate the HoleEditor rather than hand-keying
  * 18 rows.
  */
 
@@ -11,10 +11,10 @@ export interface CourseHolePreset {
   number: number
   /** Par value: 3, 4, or 5 */
   par: 3 | 4 | 5
-  /** Yardage from the primary tee */
-  yardage: number
-  /** Stroke index (1–18, unique within the course) */
-  strokeIndex: number
+  /** Handicap / stroke index (1–18, unique within the course) */
+  handicap: number
+  /** Tee boxes for this hole */
+  tees: ReadonlyArray<{ colour: string; yardage: number }>
 }
 
 export interface CoursePreset {
@@ -34,24 +34,24 @@ export const GRANITE_RIDGE_GC: CoursePreset = {
   id: 'granite-ridge-gc',
   name: 'Granite Ridge GC',
   holes: [
-    { number: 1,  par: 4, yardage: 385, strokeIndex: 7  },
-    { number: 2,  par: 3, yardage: 165, strokeIndex: 15 },
-    { number: 3,  par: 5, yardage: 530, strokeIndex: 3  },
-    { number: 4,  par: 4, yardage: 410, strokeIndex: 1  },
-    { number: 5,  par: 4, yardage: 370, strokeIndex: 11 },
-    { number: 6,  par: 3, yardage: 180, strokeIndex: 17 },
-    { number: 7,  par: 5, yardage: 545, strokeIndex: 5  },
-    { number: 8,  par: 4, yardage: 395, strokeIndex: 9  },
-    { number: 9,  par: 4, yardage: 360, strokeIndex: 13 },
-    { number: 10, par: 4, yardage: 400, strokeIndex: 2  },
-    { number: 11, par: 5, yardage: 520, strokeIndex: 6  },
-    { number: 12, par: 3, yardage: 155, strokeIndex: 16 },
-    { number: 13, par: 4, yardage: 430, strokeIndex: 4  },
-    { number: 14, par: 4, yardage: 375, strokeIndex: 10 },
-    { number: 15, par: 5, yardage: 555, strokeIndex: 8  },
-    { number: 16, par: 3, yardage: 175, strokeIndex: 18 },
-    { number: 17, par: 4, yardage: 415, strokeIndex: 14 },
-    { number: 18, par: 4, yardage: 445, strokeIndex: 12 },
+    { number: 1,  par: 4, handicap: 7,  tees: [{ colour: 'Blue', yardage: 385 }] },
+    { number: 2,  par: 3, handicap: 15, tees: [{ colour: 'Blue', yardage: 165 }] },
+    { number: 3,  par: 5, handicap: 3,  tees: [{ colour: 'Blue', yardage: 530 }] },
+    { number: 4,  par: 4, handicap: 1,  tees: [{ colour: 'Blue', yardage: 410 }] },
+    { number: 5,  par: 4, handicap: 11, tees: [{ colour: 'Blue', yardage: 370 }] },
+    { number: 6,  par: 3, handicap: 17, tees: [{ colour: 'Blue', yardage: 180 }] },
+    { number: 7,  par: 5, handicap: 5,  tees: [{ colour: 'Blue', yardage: 545 }] },
+    { number: 8,  par: 4, handicap: 9,  tees: [{ colour: 'Blue', yardage: 395 }] },
+    { number: 9,  par: 4, handicap: 13, tees: [{ colour: 'Blue', yardage: 360 }] },
+    { number: 10, par: 4, handicap: 2,  tees: [{ colour: 'Blue', yardage: 400 }] },
+    { number: 11, par: 5, handicap: 6,  tees: [{ colour: 'Blue', yardage: 520 }] },
+    { number: 12, par: 3, handicap: 16, tees: [{ colour: 'Blue', yardage: 155 }] },
+    { number: 13, par: 4, handicap: 4,  tees: [{ colour: 'Blue', yardage: 430 }] },
+    { number: 14, par: 4, handicap: 10, tees: [{ colour: 'Blue', yardage: 375 }] },
+    { number: 15, par: 5, handicap: 8,  tees: [{ colour: 'Blue', yardage: 555 }] },
+    { number: 16, par: 3, handicap: 18, tees: [{ colour: 'Blue', yardage: 175 }] },
+    { number: 17, par: 4, handicap: 14, tees: [{ colour: 'Blue', yardage: 415 }] },
+    { number: 18, par: 4, handicap: 12, tees: [{ colour: 'Blue', yardage: 445 }] },
   ],
 }
 
