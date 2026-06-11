@@ -12,6 +12,7 @@ interface ExistingHole {
   par: number
   yardage: number | null
   stroke_index: number | null
+  pin_lat?: number | null
 }
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
   venue: string
   holesCount: number
   existingHoles: ExistingHole[]
+  tournamentSlug: string
 }
 
 interface HoleState {
@@ -54,6 +56,7 @@ export function CourseHolesForm({
   venue,
   holesCount,
   existingHoles,
+  tournamentSlug,
 }: Props) {
   // Build initial state from existingHoles or defaults
   const initialHoles: HoleState[] = Array.from({ length: holesCount }, (_, i) => {
@@ -217,6 +220,19 @@ export function CourseHolesForm({
         <input type="hidden" name="name" value={tournamentName} />
         <input type="hidden" name="venue" value={venue} />
 
+        {/* AC-0063: Set Pins link */}
+        {courseId && (
+          <div className="mb-4">
+            <a
+              href={`/admin/tournaments/${tournamentSlug}/course/pins`}
+              className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline"
+              data-testid="set-pins-link"
+            >
+              Set Pins →
+            </a>
+          </div>
+        )}
+
         {/* AC-0055: Import preset dropdown */}
         <div className="mb-4 flex items-center gap-2" ref={presetDropdownRef}>
           <div className="relative">
@@ -267,11 +283,14 @@ export function CourseHolesForm({
                 <th className="text-left px-3 py-2 font-medium text-gray-600 w-28">Par</th>
                 <th className="text-left px-3 py-2 font-medium text-gray-600 w-36">Yardage (opt.)</th>
                 <th className="text-left px-3 py-2 font-medium text-gray-600 w-36">Stroke Index</th>
+                <th className="text-left px-3 py-2 font-medium text-gray-600 w-16">Pins</th>
               </tr>
             </thead>
             <tbody>
               {holes.map((hole, index) => {
                 const n = index + 1
+                const existingHole = existingHoles.find((h) => h.number === n)
+                const hasPin = existingHole?.pin_lat != null
                 return (
                   <tr key={n} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-3 py-2 font-medium text-gray-700">{n}</td>
@@ -312,6 +331,13 @@ export function CourseHolesForm({
                         aria-label={`Hole ${n} stroke index`}
                       />
                     </td>
+                    <td className="px-3 py-2 text-center" aria-label={`Hole ${n} pin status`}>
+                      {hasPin ? (
+                        <span className="text-green-600 font-semibold" title="Pin set">✓</span>
+                      ) : (
+                        <span className="text-gray-400" title="No pin">–</span>
+                      )}
+                    </td>
                   </tr>
                 )
               })}
@@ -322,7 +348,7 @@ export function CourseHolesForm({
                 <td className="px-3 py-2 text-gray-900" data-testid="total-par">
                   Par: {totalPar}
                 </td>
-                <td colSpan={2} />
+                <td colSpan={3} />
               </tr>
             </tfoot>
           </table>

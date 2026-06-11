@@ -11,6 +11,7 @@ type HoleRow = {
   par: number
   yardage: number | null
   stroke_index: number | null
+  pin_lat: number | null
 }
 
 /**
@@ -46,7 +47,7 @@ export default async function CoursePage({ params }: PageProps) {
   if (tournament.course_id) {
     const { data: holesData } = await supabase
       .from('holes')
-      .select('number,par,yardage,stroke_index')
+      .select('number,par,yardage,stroke_index,pin_lat')
       .eq('course_id', tournament.course_id)
       .order('number')
 
@@ -61,6 +62,7 @@ export default async function CoursePage({ params }: PageProps) {
       venue={tournament.venue}
       holesCount={tournament.holes_count ?? 18}
       existingHoles={existingHoles}
+      tournamentSlug={params.slug}
     />
   )
 }

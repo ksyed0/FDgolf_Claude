@@ -28,6 +28,7 @@ const defaultProps = {
   venue: 'Pine Valley Golf Club',
   holesCount: 18,
   existingHoles: [],
+  tournamentSlug: 'test-slug',
 }
 
 describe('CourseHolesForm', () => {
@@ -330,5 +331,56 @@ describe('preset dropdown keyboard navigation', () => {
     // Only one preset, so ArrowUp stays at 0
     fireEvent.keyDown(option, { key: 'ArrowUp' })
     expect(screen.getByRole('listbox')).toBeInTheDocument()
+  })
+})
+
+describe('pin status column (US-0013)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockState = { error: null }
+  })
+
+  it('renders a Pins column header', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    expect(screen.getByRole('columnheader', { name: /pins/i })).toBeInTheDocument()
+  })
+
+  it('shows "–" (no pin) for holes without pin_lat', () => {
+    const existingHoles = [{ number: 1, par: 4, yardage: null, stroke_index: null, pin_lat: null }]
+    render(<CourseHolesForm {...defaultProps} existingHoles={existingHoles} />)
+    // At least one "–" indicator should be present
+    const noPinCells = document.querySelectorAll('[title="No pin"]')
+    expect(noPinCells.length).toBeGreaterThan(0)
+  })
+
+  it('shows "✓" (green) for holes with pin_lat set', () => {
+    const existingHoles = [{ number: 1, par: 4, yardage: null, stroke_index: null, pin_lat: 43.65 }]
+    render(<CourseHolesForm {...defaultProps} existingHoles={existingHoles} />)
+    const pinSetCells = document.querySelectorAll('[title="Pin set"]')
+    expect(pinSetCells.length).toBe(1)
+  })
+
+  it('does not show Set Pins link when courseId is null', () => {
+    render(<CourseHolesForm {...defaultProps} courseId={null} />)
+    expect(screen.queryByTestId('set-pins-link')).not.toBeInTheDocument()
+  })
+
+  it('shows Set Pins link when courseId is provided', () => {
+    render(<CourseHolesForm {...defaultProps} courseId="course-uuid-1" />)
+    const link = screen.getByTestId('set-pins-link')
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute('href', '/admin/tournaments/test-slug/course/pins')
+  })
+
+  it('Set Pins link includes tournamentSlug in the URL', () => {
+    render(
+      <CourseHolesForm
+        {...defaultProps}
+        courseId="course-uuid-abc"
+        tournamentSlug="granite-ridge-2026"
+      />
+    )
+    const link = screen.getByTestId('set-pins-link')
+    expect(link).toHaveAttribute('href', '/admin/tournaments/granite-ridge-2026/course/pins')
   })
 })
