@@ -293,3 +293,117 @@ React re-renders the listbox:
       presetOptionRefs.current[focusedPresetIndex]?.focus()
     }
   }, [presetDropdownOpen, focusedPresetIndex])
+
+---
+
+BUG-0011: PinPlacementMap crashes with TypeError when holes array is empty
+Severity: High
+Related Story: US-0013
+Related Task: TASK-0059
+Status: Open
+Fix Branch: bugfix/BUG-0011-empty-holes-guard
+Lesson Encoded: No
+
+`fdgolf-app/app/admin/tournaments/[slug]/course/pins/page.tsx` (line 66) passes
+`(holesData ?? [])` directly to `<PinPlacementMap holes={holes} ...>` without guarding
+against an empty array. `PinPlacementMap` (line 59) immediately computes:
+  const currentHole = localHoles[currentHoleIndex]   // → undefined when holes is empty
+Every subsequent property access — `currentHole.pin_lat`, `currentHole.id`,
+`currentHole.number` — throws `TypeError: Cannot read properties of undefined`.
+
+This can occur in production when a course record exists (`course_id` is set on the
+tournament) but the `holes` table has no rows for that `course_id`. This is a valid
+database state for a course that was just linked but not yet populated, or if a migration
+that seeds hole rows failed to run.
+
+Fix: In `page.tsx`, add a guard after fetching holes:
+  if (!holes.length) {
+    redirect(`/admin/tournaments/${params.slug}/course`)
+  }
+Alternatively, add a guard in `PinPlacementMap` that renders an empty-state message and
+returns early when `holes.length === 0`, rather than proceeding to access `localHoles[0]`.
+
+---
+
+BUG-0012: Map initial zoom is 15 but AC-0058 requires zoom 16
+Severity: Low
+Related Story: US-0013
+Related Task: TASK-0059
+Status: Open
+Fix Branch: bugfix/BUG-0012-zoom-level
+Lesson Encoded: No
+
+`fdgolf-app/app/admin/tournaments/[slug]/course/pins/pin-placement-map.tsx` (line 274):
+  zoom: 15,
+AC-0058 states: "Satellite map renders for each hole at zoom 16; centers on venue or
+existing pins." The implementation uses zoom 15, which provides slightly less detail than
+required. Zoom 16 on Mapbox satellite gives enough resolution to distinguish individual
+flag positions and tee boxes; zoom 15 is one level coarser.
+
+Fix: Change `zoom: 15` to `zoom: 16`.
+
+---
+
+BUG-0013: savePinAction updates any hole by ID — no course-scoping check
+Severity: Medium
+Related Story: US-0013
+Related Task: TASK-0061
+Status: Open
+Fix Branch: bugfix/BUG-0013-hole-ownership-check
+Lesson Encoded: No
+
+`fdgolf-app/lib/actions/pins.ts` (lines 64-67) runs:
+  await supabase.from('holes').update(updateData).eq('id', hole_id)
+The action accepts an arbitrary `hole_id` from `FormData` and updates that hole's
+coordinates without verifying that the hole belongs to the tournament identified by
+`tournament_slug`. An admin who crafts a request with a `hole_id` from a different
+course/tournament can silently overwrite that course's pin/tee coordinates.
+
+While only admins can reach this action (the admin guard is correctly in place and RLS
+restricts UPDATE on holes to `fdgolf_is_admin()`), the lack of ownership verification
+means a single admin account can corrupt coordinate data for any tournament in the system
+— not just the one they are working on. In a multi-tournament environment, this is a
+data integrity risk.
+
+Fix: After the admin guard, verify that the supplied `hole_id` belongs to the course
+linked to `tournament_slug`:
+  const { data: hole } = await supabase
+    .from('holes')
+    .select('id, courses!inner(tournaments!inner(slug))')
+    .eq('id', hole_id)
+    .eq('courses.tournaments.slug', tournament_slug)
+    .single()
+  if (!hole) return { error: 'Hole not found for this tournament.' }
+Alternatively, pass `course_id` in the FormData (the page already has it) and add
+`.eq('course_id', course_id)` to the update filter.
+
+---
+
+BUG-0014: useEffect dependency suppression hides localHoles staleness risk
+Severity: Low
+Related Story: US-0013
+Related Task: TASK-0059
+Status: Open
+Fix Branch: (none yet)
+Lesson Encoded: No
+
+`fdgolf-app/app/admin/tournaments/[slug]/course/pins/pin-placement-map.tsx` (line 94):
+  }, [currentHoleIndex, mode]) // eslint-disable-line react-hooks/exhaustive-deps
+The effect reads `localHoles[currentHoleIndex]` (line 78) but `localHoles` is intentionally
+excluded from the dependency array and the ESLint rule is blanket-suppressed for the entire
+line. The intent is correct (reset pendingCoords only on hole/mode change, not on every
+local save), but the blanket `eslint-disable-line` is too broad — it silences exhaustive-deps
+for ALL deps on this hook, not just `localHoles`. If a future developer adds another
+dependency to the effect body and forgets to add it to the array, ESLint will silently ignore
+the problem.
+
+Fix: Replace the blanket suppression with a `useRef` pattern that keeps `localHoles`
+accessible inside the effect without declaring it as a dependency:
+  const localHolesRef = useRef(localHoles)
+  useEffect(() => { localHolesRef.current = localHoles }, [localHoles])
+
+  useEffect(() => {
+    const hole = localHolesRef.current[currentHoleIndex]
+    // ...
+  }, [currentHoleIndex, mode])
+This satisfies exhaustive-deps without a suppression comment.

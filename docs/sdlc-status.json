@@ -119,7 +119,7 @@
       "status": "active",
       "currentTask": "code review feature/US-0012-course-preset",
       "tasksCompleted": 2,
-      "reviewsCompleted": 5,
+      "reviewsCompleted": 6,
       "blockers": 0,
       "model": "sonnet"
     },
@@ -432,6 +432,11 @@
       "time": "2026-06-11T18:08:04.612Z",
       "agent": "Lens",
       "message": "approve review of US-0012"
+    },
+    {
+      "time": "2026-06-11T18:29:49.519Z",
+      "agent": "Lens",
+      "message": "request-changes review of US-0013"
     }
   ],
   "tasks": {

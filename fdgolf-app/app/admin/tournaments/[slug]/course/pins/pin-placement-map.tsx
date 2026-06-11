@@ -17,7 +17,6 @@ export interface HoleCoords {
 }
 
 interface Props {
-  courseId: string
   holes: HoleCoords[]
   tournamentVenue: string
   tournamentSlug: string
@@ -34,7 +33,7 @@ type Mode = 'pin' | 'tee'
  * AC-0061: Progress bar shows N of holes_count with pins set.
  * AC-0062: "Save and next hole" auto-advances to next hole.
  */
-export function PinPlacementMap({ courseId, holes, tournamentVenue, tournamentSlug }: Props) {
+export function PinPlacementMap({ holes, tournamentVenue, tournamentSlug }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -92,10 +91,7 @@ export function PinPlacementMap({ courseId, holes, tournamentVenue, tournamentSl
     }
     setSaveSuccess(false)
     setActionState({ error: null })
-  // localHoles is intentionally excluded: we only want to reset pendingCoords when the
-  // selected hole index or mode changes, not on every optimistic update to localHoles.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentHoleIndex, mode])
+  }, [currentHoleIndex, mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMapClick = useCallback(
     (e: { lngLat: { lat: number; lng: number } }) => {
@@ -117,7 +113,7 @@ export function PinPlacementMap({ courseId, holes, tournamentVenue, tournamentSl
     formData.set('hole_number', String(currentHole.number))
 
     startTransition(async () => {
-      const result = await savePinAction(courseId, { error: null }, formData)
+      const result = await savePinAction({ error: null }, formData)
       setActionState(result)
 
       if (!result.error) {
@@ -275,7 +271,7 @@ export function PinPlacementMap({ courseId, holes, tournamentVenue, tournamentSl
             initialViewState={{
               longitude: initialCenter.lng,
               latitude: initialCenter.lat,
-              zoom: 16,
+              zoom: 15,
             }}
             mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
             style={{ width: '100%', height: '100%' }}

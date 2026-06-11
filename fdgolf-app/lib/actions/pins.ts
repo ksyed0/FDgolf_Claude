@@ -16,7 +16,6 @@ export type PinActionState = {
  * AC-0063: Revalidates the course page so pin status column updates.
  */
 export async function savePinAction(
-  courseId: string,
   _prevState: PinActionState,
   formData: FormData
 ): Promise<PinActionState> {
@@ -66,7 +65,6 @@ export async function savePinAction(
     .from('holes')
     .update(updateData)
     .eq('id', hole_id)
-    .eq('course_id', courseId)
 
   if (updateError) {
     return { error: updateError.message }
