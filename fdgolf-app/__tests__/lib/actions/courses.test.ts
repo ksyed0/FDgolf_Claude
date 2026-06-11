@@ -80,6 +80,17 @@ describe('createCourseAction', () => {
     expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ tee_yardages: [] }))
   })
 
+  it('defaults to empty array when tee_yardages is not an array', async () => {
+    await createCourseAction('v-1', { error: null }, makeForm({ tee_yardages: '"not-an-array"' }))
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ tee_yardages: [] }))
+  })
+
+  it('returns error when holes_count is not 9 or 18', async () => {
+    const result = await createCourseAction('v-1', { error: null }, makeForm({ holes_count: '12' }))
+    expect(result.error).toMatch(/holes count must be 9 or 18/i)
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
   it('returns id on success', async () => {
     const result = await createCourseAction('v-1', { error: null }, makeForm())
     expect(result.error).toBeNull()
@@ -118,6 +129,12 @@ describe('updateCourseAction', () => {
   it('returns error when name is blank', async () => {
     const result = await updateCourseAction('c-1', { error: null }, makeForm({ name: '' }))
     expect(result.error).toMatch(/name/i)
+  })
+
+  it('returns error when holes_count is not 9 or 18', async () => {
+    const result = await updateCourseAction('c-1', { error: null }, makeForm({ holes_count: '36' }))
+    expect(result.error).toMatch(/holes count must be 9 or 18/i)
+    expect(mockUpdate).not.toHaveBeenCalled()
   })
 
   it('updates correct id', async () => {

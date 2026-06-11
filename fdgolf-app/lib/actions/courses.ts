@@ -7,14 +7,17 @@ type CourseState = { error: string | null; id?: string }
 function extractCourseFields(formData: FormData) {
   return {
     name:          (formData.get('name') as string | null)?.trim() ?? '',
-    holes_count:   parseInt(formData.get('holes_count') as string ?? '18', 10),
+    holes_count:   parseInt((formData.get('holes_count') as string | null) ?? '18', 10) || 18,
     par_total:     formData.get('par_total')     ? parseInt(formData.get('par_total') as string, 10)    : null,
     course_rating: formData.get('course_rating') ? parseFloat(formData.get('course_rating') as string)  : null,
     slope_rating:  formData.get('slope_rating')  ? parseInt(formData.get('slope_rating') as string, 10) : null,
     tee_yardages:  (() => {
       const raw = (formData.get('tee_yardages') as string | null)?.trim()
       if (!raw) return []
-      try { return JSON.parse(raw) } catch { return [] }
+      try {
+        const parsed = JSON.parse(raw)
+        return Array.isArray(parsed) ? parsed : []
+      } catch { return [] }
     })(),
   }
 }
@@ -30,6 +33,7 @@ export async function createCourseAction(
 
   const { name, holes_count, par_total, course_rating, slope_rating, tee_yardages } = extractCourseFields(formData)
   if (!name) return { error: 'Course name is required.' }
+  if (![9, 18].includes(holes_count)) return { error: 'Holes count must be 9 or 18.' }
 
   const { data, error } = await supabase
     .from('courses')
@@ -52,6 +56,7 @@ export async function updateCourseAction(
 
   const { name, holes_count, par_total, course_rating, slope_rating, tee_yardages } = extractCourseFields(formData)
   if (!name) return { error: 'Course name is required.' }
+  if (![9, 18].includes(holes_count)) return { error: 'Holes count must be 9 or 18.' }
 
   const { error } = await supabase
     .from('courses')
