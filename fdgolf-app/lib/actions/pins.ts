@@ -41,6 +41,9 @@ export async function savePinAction(
     return { error: updateError.message }
   }
 
+  // Best-effort: generate and store a static map snapshot (US-0014)
+  await captureStaticSnapshot(supabase, courseId, holeId, lat, lng)
+
   return { error: null }
 }
 
@@ -68,11 +71,11 @@ export async function saveTeeCoordAction(
   if (!hole) return { error: 'Hole not found.' }
 
   const tees = (hole.tees ?? []) as TeeCoord[]
-  if (!tees.some(t => t.colour === teeColour)) {
+  if (!tees.some((t) => t.colour === teeColour)) {
     return { error: `No tee with colour "${teeColour}" found on this hole.` }
   }
 
-  const updated = tees.map(t => t.colour === teeColour ? { ...t, lat, lng } : t)
+  const updated = tees.map((t) => (t.colour === teeColour ? { ...t, lat, lng } : t))
 
   const { error: updateError } = await supabase
     .from('holes')
@@ -81,4 +84,51 @@ export async function saveTeeCoordAction(
     .eq('course_id', courseId)
 
   return { error: updateError?.message ?? null }
+}
+
+async function captureStaticSnapshot(
+  supabase: ReturnType<typeof createClient>,
+  courseId: string,
+  holeId: string,
+  lat: number,
+  lng: number
+): Promise<void> {
+  try {
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+    if (!token) return
+
+    // Fetch hole number for the filename
+    const { data: hole } = await supabase
+      .from('holes')
+      .select('number')
+      .eq('id', holeId)
+      .eq('course_id', courseId)
+      .single()
+    if (!hole) return
+
+    // Call Mapbox Static Images API
+    const url =
+      `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/static/` +
+      `${lng},${lat},16/600x400@2x?access_token=${token}`
+    const response = await fetch(url)
+    if (!response.ok) return
+
+    const buffer = await response.arrayBuffer()
+    const path = `${courseId}/hole-${hole.number}.png`
+
+    const { error: uploadError } = await supabase.storage
+      .from('course-maps')
+      .upload(path, buffer, { contentType: 'image/png', upsert: true })
+    if (uploadError) return
+
+    const { data: urlData } = supabase.storage.from('course-maps').getPublicUrl(path)
+
+    await supabase
+      .from('holes')
+      .update({ static_map_url: urlData.publicUrl })
+      .eq('id', holeId)
+      .eq('course_id', courseId)
+  } catch (err) {
+    console.error('[US-0014] Static snapshot failed:', err)
+  }
 }
