@@ -309,12 +309,12 @@ Acceptance Criteria:
 US-0015 (EPIC-0002): As an admin, I want to pick which clubs from the master list are available in this tournament, so that I can enforce sponsor-supplied bags or simplified club lists.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0015-tournament-clubs
 Dependencies: US-0008, US-0009
 Acceptance Criteria:
-  - [ ] AC-0067: All master clubs listed with toggle controls; defaults to all-active
-  - [ ] AC-0068: Disabled clubs are excluded from the player's bag picker in pre-round setup
+  - [x] AC-0067: All master clubs listed with toggle controls; defaults to all-active
+  - [x] AC-0068: Disabled clubs are excluded from the player's bag picker in pre-round setup
 ```
 
 ```
@@ -1935,27 +1935,27 @@ Notes: Integration test or manual verification.
 TASK-0067 (US-0015): Create tournament clubs config page
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0015-tournament-clubs
-Notes: app/admin/tournaments/[id]/clubs/page.tsx; lists master clubs with toggle.
+Notes: app/admin/tournaments/[slug]/clubs/page.tsx + club-picker-form.tsx; lists master clubs with toggle.
 ```
 
 ```
 TASK-0068 (US-0015): Implement upsert into tournament_clubs on toggle change
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0015-tournament-clubs
-Notes: Server action setTournamentClubActive(tournamentId, clubId, isActive).
+Notes: lib/actions/clubs.ts saveClubsAction: delete-then-insert pattern; no-rows=all-active invariant documented.
 ```
 
 ```
 TASK-0069 (US-0015): Test default: all master clubs active for new tournament
 Type: Test
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0015-tournament-clubs
-Notes: Inspect tournament_clubs after tournament creation.
+Notes: 8 action tests + 16 component tests covering default all-active, partial sets, toggles, FormData hidden inputs.
 ```
 
 ```
