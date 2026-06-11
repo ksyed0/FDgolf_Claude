@@ -144,3 +144,191 @@ describe('CourseHolesForm', () => {
     expect(cidInput?.value).toBe('cid-456')
   })
 })
+
+describe('preset import', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockState = { error: null }
+  })
+
+  it('renders an Import preset button', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    expect(screen.getByRole('button', { name: /import preset/i })).toBeInTheDocument()
+  })
+
+  it('opens dropdown when button clicked — shows Granite Ridge GC', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    expect(screen.getByRole('option', { name: /granite ridge gc/i })).toBeInTheDocument()
+  })
+
+  it('clicking Granite Ridge GC closes dropdown', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const graniteRidgeOption = screen.getByRole('option', { name: /granite ridge gc/i })
+    fireEvent.click(graniteRidgeOption)
+    // After selection, the dropdown listbox should be gone
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
+  it('after import, hole 1 par is 4', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const graniteRidgeOption = screen.getByRole('option', { name: /granite ridge gc/i })
+    fireEvent.click(graniteRidgeOption)
+
+    // Hole 1 par select should be 4 (Granite Ridge GC hole 1 is par 4)
+    const parSelects = screen.getAllByRole('combobox')
+    expect((parSelects[0] as HTMLSelectElement).value).toBe('4')
+  })
+
+  it('after import, all 18 yardage inputs are populated', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const graniteRidgeOption = screen.getByRole('option', { name: /granite ridge gc/i })
+    fireEvent.click(graniteRidgeOption)
+
+    const yardageInputs = screen.getAllByLabelText(/yardage/i)
+    expect(yardageInputs).toHaveLength(18)
+    // Every yardage input should be non-empty after import
+    for (const input of yardageInputs) {
+      expect((input as HTMLInputElement).value).not.toBe('')
+    }
+    // Verify hole 1 yardage specifically (Granite Ridge GC hole 1 = 385 yards)
+    expect((yardageInputs[0] as HTMLInputElement).value).toBe('385')
+  })
+
+  it('total par updates to 72 after import', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const graniteRidgeOption = screen.getByRole('option', { name: /granite ridge gc/i })
+    fireEvent.click(graniteRidgeOption)
+
+    const totalPar = screen.getByTestId('total-par')
+    expect(totalPar).toHaveTextContent('Par: 72')
+  })
+
+  it('after import, aria-selected is true for the imported preset', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const graniteRidgeOption = screen.getByRole('option', { name: /granite ridge gc/i })
+    fireEvent.click(graniteRidgeOption)
+
+    // Reopen dropdown to check aria-selected
+    fireEvent.click(importButton)
+    const option = screen.getByRole('option', { name: /granite ridge gc/i })
+    expect(option).toHaveAttribute('aria-selected', 'true')
+  })
+})
+
+describe('preset dropdown keyboard navigation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockState = { error: null }
+  })
+
+  it('Escape key closes the dropdown when open', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+
+    fireEvent.keyDown(importButton, { key: 'Escape' })
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
+  it('Escape key on trigger when dropdown already closed does nothing harmful', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    // Dropdown is closed — pressing Escape should not throw
+    fireEvent.keyDown(importButton, { key: 'Escape' })
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
+  it('ArrowDown key on trigger opens the dropdown', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.keyDown(importButton, { key: 'ArrowDown' })
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+  })
+
+  it('ArrowDown key on trigger when dropdown open moves focus to next option', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    // ArrowDown when already open should navigate within the list
+    fireEvent.keyDown(importButton, { key: 'ArrowDown' })
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+  })
+
+  it('ArrowUp key on trigger when dropdown is open navigates up', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    fireEvent.keyDown(importButton, { key: 'ArrowUp' })
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+  })
+
+  it('ArrowUp key on trigger when dropdown is closed does nothing', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.keyDown(importButton, { key: 'ArrowUp' })
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
+  it('Escape key on option closes the dropdown', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const option = screen.getByRole('option', { name: /granite ridge gc/i })
+    fireEvent.keyDown(option, { key: 'Escape' })
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
+  it('Enter key on option imports preset and closes dropdown', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const option = screen.getByRole('option', { name: /granite ridge gc/i })
+    fireEvent.keyDown(option, { key: 'Enter' })
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    // Verify import happened
+    const totalPar = screen.getByTestId('total-par')
+    expect(totalPar).toHaveTextContent('Par: 72')
+  })
+
+  it('Space key on option imports preset and closes dropdown', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const option = screen.getByRole('option', { name: /granite ridge gc/i })
+    fireEvent.keyDown(option, { key: ' ' })
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
+  it('ArrowDown key on option navigates to next option (clamped at end)', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const option = screen.getByRole('option', { name: /granite ridge gc/i })
+    // Only one preset, so ArrowDown stays at 0
+    fireEvent.keyDown(option, { key: 'ArrowDown' })
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+  })
+
+  it('ArrowUp key on option navigates to previous option (clamped at start)', () => {
+    render(<CourseHolesForm {...defaultProps} />)
+    const importButton = screen.getByRole('button', { name: /import preset/i })
+    fireEvent.click(importButton)
+    const option = screen.getByRole('option', { name: /granite ridge gc/i })
+    // Only one preset, so ArrowUp stays at 0
+    fireEvent.keyDown(option, { key: 'ArrowUp' })
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+  })
+})
