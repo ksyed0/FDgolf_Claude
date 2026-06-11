@@ -267,7 +267,7 @@ Acceptance Criteria:
 US-0012 (EPIC-0002): As an admin, I want a Granite Ridge GC preset to one-tap import, so that I don't hand-key 18 rows for the first tournament.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0012-course-preset
 Dependencies: US-0011
 Acceptance Criteria:
