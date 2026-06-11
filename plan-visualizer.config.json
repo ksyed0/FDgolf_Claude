@@ -28,8 +28,8 @@
     }
   },
   "github": {
-    "enabled": false,
-    "repo": "owner/repo",
+    "enabled": true,
+    "repo": "ksyed0/FDgolf_Claude",
     "syncBugs": true,
     "syncStories": false,
     "labelMap": {

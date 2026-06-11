@@ -20,6 +20,7 @@ Severity: High
 Related Story: US-0015
 Related Task: TASK-0067
 Status: Open
+GH Issue: #5
 Fix Branch: bugfix/BUG-0001-success-banner
 Lesson Encoded: No
 
@@ -48,6 +49,7 @@ Severity: Medium
 Related Story: US-0015
 Related Task: TASK-0068
 Status: Open
+GH Issue: #6
 Fix Branch: bugfix/BUG-0002-invariant-comment
 Lesson Encoded: No
 
@@ -75,6 +77,7 @@ Severity: Low
 Related Story: US-0015
 Related Task: TASK-0067
 Status: Open
+GH Issue: #7
 Fix Branch: bugfix/BUG-0003-vitest-comment
 Lesson Encoded: No
 
@@ -96,6 +99,7 @@ Severity: Medium
 Related Story: US-0015
 Related Task: TASK-0067
 Status: Open
+GH Issue: #8
 Fix Branch: bugfix/BUG-0004-clubs-fetch-error-handling
 Lesson Encoded: No
 
@@ -122,6 +126,7 @@ Severity: Medium
 Related Story: US-0012
 Related Task: TASK-0056
 Status: Verified
+GH Issue: #9
 Fix Branch: bugfix/BUG-0005-course-presets-readonly
 Lesson Encoded: No
 
@@ -152,6 +157,7 @@ Severity: High
 Related Story: US-0012
 Related Task: TASK-0058
 Status: Verified
+GH Issue: #10
 Fix Branch: bugfix/BUG-0006-coverage-branch-threshold
 Lesson Encoded: No
 
@@ -184,6 +190,7 @@ Severity: Medium
 Related Story: US-0012
 Related Task: TASK-0057
 Status: Verified
+GH Issue: #11
 Fix Branch: bugfix/BUG-0007-preset-dropdown-keyboard-nav
 Lesson Encoded: No
 
@@ -217,6 +224,7 @@ Severity: Low
 Related Story: US-0012
 Related Task: TASK-0057
 Status: Verified
+GH Issue: #12
 Fix Branch: bugfix/BUG-0008-aria-selected-state
 Lesson Encoded: No
 
@@ -241,6 +249,7 @@ Severity: Low
 Related Story: US-0012
 Related Task: TASK-0058
 Status: Verified
+GH Issue: #13
 Fix Branch: bugfix/BUG-0009-unused-act-import
 Lesson Encoded: No
 
@@ -266,6 +275,7 @@ Severity: Low
 Related Story: US-0012
 Related Task: TASK-0057
 Status: Open
+GH Issue: #14
 Fix Branch: (none yet)
 Lesson Encoded: No
 
@@ -301,6 +311,7 @@ Severity: High
 Related Story: US-0013
 Related Task: TASK-0059
 Status: Open
+GH Issue: #15
 Fix Branch: bugfix/BUG-0011-empty-holes-guard
 Lesson Encoded: No
 
@@ -330,6 +341,7 @@ Severity: Low
 Related Story: US-0013
 Related Task: TASK-0059
 Status: Open
+GH Issue: #16
 Fix Branch: bugfix/BUG-0012-zoom-level
 Lesson Encoded: No
 
@@ -349,6 +361,7 @@ Severity: Medium
 Related Story: US-0013
 Related Task: TASK-0061
 Status: Open
+GH Issue: #17
 Fix Branch: bugfix/BUG-0013-hole-ownership-check
 Lesson Encoded: No
 
