@@ -65,8 +65,14 @@ export default async function PinsPage({ params }: PageProps) {
 
   const holes: HoleCoords[] = (holesData ?? []) as HoleRow[]
 
+  // Guard: holes must be seeded before placing pins
+  if (!holes.length) {
+    redirect(`/admin/tournaments/${params.slug}/course`)
+  }
+
   return (
     <PinPlacementMap
+      courseId={tournament.course_id}
       holes={holes}
       tournamentVenue={tournament.venue}
       tournamentSlug={params.slug}

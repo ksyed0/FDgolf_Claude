@@ -46,6 +46,7 @@ function makeHoles(count = 3): HoleCoords[] {
 }
 
 const defaultProps = {
+  courseId: 'c1',
   holes: makeHoles(3),
   tournamentVenue: 'Granite Ridge GC',
   tournamentSlug: 'granite-ridge-2026',
@@ -209,7 +210,8 @@ describe('PinPlacementMap', () => {
       expect(mockSavePinAction).toHaveBeenCalledOnce()
     })
 
-    const [, formData] = mockSavePinAction.mock.calls[0] as [unknown, FormData]
+    const [courseId, , formData] = mockSavePinAction.mock.calls[0] as [string, unknown, FormData]
+    expect(courseId).toBe('c1')
     expect(formData.get('hole_id')).toBe('hole-uuid-1')
     expect(formData.get('mode')).toBe('pin')
     expect(formData.get('tournament_slug')).toBe('granite-ridge-2026')
@@ -245,7 +247,7 @@ describe('PinPlacementMap', () => {
     fireEvent.click(screen.getByRole('button', { name: /^save tee$/i }))
 
     await waitFor(() => expect(mockSavePinAction).toHaveBeenCalledOnce())
-    const [, fd] = mockSavePinAction.mock.calls[0] as [unknown, FormData]
+    const [, , fd] = mockSavePinAction.mock.calls[0] as [string, unknown, FormData]
     expect(fd.get('mode')).toBe('tee')
   })
 
