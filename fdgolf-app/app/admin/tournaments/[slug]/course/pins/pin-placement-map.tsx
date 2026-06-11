@@ -74,22 +74,24 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
         : null
     }
     const tee = hole.tees.find((t) => t.colour === m)
-    return tee && tee.lat !== null && tee.lng !== null
-      ? { lat: tee.lat, lng: tee.lng }
-      : null
+    return tee && tee.lat !== null && tee.lng !== null ? { lat: tee.lat, lng: tee.lng } : null
   }
 
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(
     getSavedCoords(currentHole, mode)
   )
 
-  // When hole or mode changes, reset pending coords and status messages
+  // When hole or mode changes, reset pending coords and status messages.
+  // getSavedCoords is a pure function of localHoles — including it would cause
+  // spurious resets on optimistic updates, so we read localHoles via the index directly.
   useEffect(() => {
     const hole = localHoles[currentHoleIndex]
+    if (!hole) return
     setPendingCoords(getSavedCoords(hole, mode))
     setSaveSuccess(false)
     setActionState({ error: null })
-  }, [currentHoleIndex, mode]) // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentHoleIndex, mode])
 
   // When switching holes, reset mode to 'pin'
   const handleSelectHole = useCallback((index: number) => {
@@ -97,13 +99,10 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
     setMode('pin')
   }, [])
 
-  const handleMapClick = useCallback(
-    (e: { lngLat: { lat: number; lng: number } }) => {
-      setPendingCoords({ lat: e.lngLat.lat, lng: e.lngLat.lng })
-      setSaveSuccess(false)
-    },
-    []
-  )
+  const handleMapClick = useCallback((e: { lngLat: { lat: number; lng: number } }) => {
+    setPendingCoords({ lat: e.lngLat.lat, lng: e.lngLat.lng })
+    setSaveSuccess(false)
+  }, [])
 
   async function handleSave(advance: boolean) {
     if (!pendingCoords) return
@@ -137,9 +136,7 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
               return {
                 ...h,
                 tees: h.tees.map((t) =>
-                  t.colour === mode
-                    ? { ...t, lat: pendingCoords.lat, lng: pendingCoords.lng }
-                    : t
+                  t.colour === mode ? { ...t, lat: pendingCoords.lat, lng: pendingCoords.lng } : t
                 ),
               }
             }
@@ -152,8 +149,7 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
           setCurrentHoleIndex((prev) => prev + 1)
           setMode('pin')
         } else if (advance) {
-          // On last hole, navigate back to course page
-          router.push(`/admin/tournaments/${tournamentSlug}/course`)
+          router.push(`/admin/tournaments/${tournamentSlug}`)
         }
       }
     })
@@ -273,10 +269,10 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Set Pin Locations — {tournamentVenue}</h1>
         <a
-          href={`/admin/tournaments/${tournamentSlug}/course`}
+          href={`/admin/tournaments/${tournamentSlug}`}
           className="text-sm text-blue-600 hover:underline"
         >
-          ← Back to Course
+          ← Back to Tournament
         </a>
       </div>
 
@@ -311,8 +307,8 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
               i === currentHoleIndex
                 ? 'bg-blue-600 text-white border-blue-600'
                 : hole.pin_lat !== null
-                ? 'bg-green-100 text-green-800 border-green-300'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
+                  ? 'bg-green-100 text-green-800 border-green-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
             ].join(' ')}
           >
             {hole.number}
@@ -331,8 +327,7 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
         <strong>Hole {currentHole.number}</strong>
         {pendingCoords ? (
           <span className="ml-2">
-            — {modeLabel}: {pendingCoords.lat.toFixed(5)},{' '}
-            {pendingCoords.lng.toFixed(5)}
+            — {modeLabel}: {pendingCoords.lat.toFixed(5)}, {pendingCoords.lng.toFixed(5)}
           </span>
         ) : (
           <span className="ml-2 text-gray-400">
@@ -343,18 +338,27 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
 
       {/* Status messages */}
       {actionState.error && (
-        <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+        <p
+          role="alert"
+          className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3"
+        >
           {actionState.error}
         </p>
       )}
       {saveSuccess && !actionState.error && (
-        <p role="status" className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-4 py-3">
+        <p
+          role="status"
+          className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-4 py-3"
+        >
           {modeLabel} saved for hole {currentHole.number}!
         </p>
       )}
 
       {/* Map */}
-      <div className="rounded-lg overflow-hidden border border-gray-200" style={{ height: '400px' }}>
+      <div
+        className="rounded-lg overflow-hidden border border-gray-200"
+        style={{ height: '400px' }}
+      >
         {!token ? (
           <div
             className="flex items-center justify-center h-full bg-gray-50 text-sm text-gray-500"
@@ -369,7 +373,7 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
             initialViewState={{
               longitude: initialCenter.lng,
               latitude: initialCenter.lat,
-              zoom: 15,
+              zoom: 16,
             }}
             mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
             style={{ width: '100%', height: '100%' }}
@@ -400,7 +404,9 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
 
             {/* Saved tee markers for all tees with coords */}
             {currentHole.tees
-              .filter((t) => t.lat !== null && t.lng !== null && !(mode !== 'pin' && t.colour === mode))
+              .filter(
+                (t) => t.lat !== null && t.lng !== null && !(mode !== 'pin' && t.colour === mode)
+              )
               .map((t) => (
                 <Marker key={t.colour} longitude={t.lng!} latitude={t.lat!}>
                   <div
@@ -434,8 +440,8 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
           {isPending
             ? 'Saving…'
             : currentHoleIndex < localHoles.length - 1
-            ? 'Save and next hole →'
-            : 'Save and finish'}
+              ? 'Save and next hole →'
+              : 'Save and finish'}
         </Button>
         {currentHoleIndex > 0 && (
           <Button

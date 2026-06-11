@@ -280,16 +280,16 @@ Acceptance Criteria:
 US-0013 (EPIC-0002): As an admin, I want to drop pin coordinates for each hole on a satellite map, so that the round tracking app can compute distance-to-pin.
 Priority: High
 Estimate: M
-Status: Planned
-Branch: feature/US-0013-pin-placement
+Status: Done
+Branch: fix/pins-page-schema-and-bugs
 Dependencies: US-0011, US-0007
 Acceptance Criteria:
-  - [ ] AC-0058: Satellite map renders for each hole at a sensible default zoom around the course
-  - [ ] AC-0059: Click on the map drops a pin; coordinates saved to holes.pin_lat / pin_lng
-  - [ ] AC-0060: Tee coordinates can also be dropped (separate mode)
-  - [ ] AC-0061: Progress bar shows N of 18 holes with pins set
-  - [ ] AC-0062: "Save and continue to next hole" button auto-advances
-  - [ ] AC-0063: Holes table shows pin status (Set or Missing) per hole
+  - [x] AC-0058: Satellite map renders for each hole at a sensible default zoom around the course
+  - [x] AC-0059: Click on the map drops a pin; coordinates saved to holes.pin_lat / pin_lng
+  - [x] AC-0060: Tee coordinates can also be dropped (separate mode)
+  - [x] AC-0061: Progress bar shows N of 18 holes with pins set
+  - [x] AC-0062: "Save and continue to next hole" button auto-advances
+  - [x] AC-0063: Holes table shows pin status (Set or Missing) per hole
 ```
 
 ```
@@ -334,29 +334,29 @@ Acceptance Criteria:
 US-0017 (EPIC-0002): As an admin, I want a pre-flight checklist before activation, so that I don't open registration on a misconfigured tournament.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0017-preflight-checklist
+Status: Done
+Branch: feature/US-0017-0018-tournament-lifecycle
 Dependencies: US-0013, US-0015
 Acceptance Criteria:
-  - [ ] AC-0072: Checklist shows green checks for: basics complete, all holes configured (par 72 or expected), all 18 pin coordinates set, slug verified unique
-  - [ ] AC-0073: Checklist shows amber reminders for: clubs configured, teams unassigned
-  - [ ] AC-0074: Activate button disabled until all green checks pass
-  - [ ] AC-0075: Live preview card shows what the public leaderboard banner will look like
+  - [x] AC-0072: Checklist shows green checks for: basics complete, all holes configured (par 72 or expected), all 18 pin coordinates set, slug verified unique
+  - [x] AC-0073: Checklist shows amber reminders for: clubs configured, teams unassigned
+  - [x] AC-0074: Activate button disabled until all green checks pass
+  - [x] AC-0075: Live preview card shows what the public leaderboard banner will look like
 ```
 
 ```
 US-0018 (EPIC-0002): As an admin, I want buttons to move the tournament between statuses, so that I can open registration, start play, and close the tournament cleanly.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0018-status-workflow
+Status: Done
+Branch: feature/US-0017-0018-tournament-lifecycle
 Dependencies: US-0017
 Acceptance Criteria:
-  - [ ] AC-0076: From draft, "Open registration" moves status to registration_open
-  - [ ] AC-0077: From registration_open, "Start tournament" moves status to active
-  - [ ] AC-0078: From active, "Complete tournament" moves status to completed
-  - [ ] AC-0079: Paused status reachable via DB direct update; no UI in Phase 1
-  - [ ] AC-0080: Transitions are logged with timestamp and admin actor
+  - [x] AC-0076: From draft, "Open registration" moves status to registration_open
+  - [x] AC-0077: From registration_open, "Start tournament" moves status to active
+  - [x] AC-0078: From active, "Complete tournament" moves status to completed
+  - [x] AC-0079: Paused status reachable via DB direct update; no UI in Phase 1
+  - [x] AC-0080: Transitions are logged with timestamp and admin actor
 ```
 
 ```

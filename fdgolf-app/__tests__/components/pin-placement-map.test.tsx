@@ -4,14 +4,22 @@ import React from 'react'
 
 // ─── Mapbox mock (same pattern as map-view.test.tsx) ──────────────────────────
 vi.mock('react-map-gl/mapbox', () => ({
-  default: vi.fn(({ onClick, children }: { onClick?: (e: { lngLat: { lat: number; lng: number } }) => void; children?: React.ReactNode }) => (
-    <div
-      data-testid="mapbox-map"
-      onClick={() => onClick?.({ lngLat: { lat: 43.65, lng: -79.38 } })}
-    >
-      {children}
-    </div>
-  )),
+  default: vi.fn(
+    ({
+      onClick,
+      children,
+    }: {
+      onClick?: (e: { lngLat: { lat: number; lng: number } }) => void
+      children?: React.ReactNode
+    }) => (
+      <div
+        data-testid="mapbox-map"
+        onClick={() => onClick?.({ lngLat: { lat: 43.65, lng: -79.38 } })}
+      >
+        {children}
+      </div>
+    )
+  ),
   Marker: vi.fn(({ children }: { children?: React.ReactNode }) => (
     <div data-testid="map-marker">{children}</div>
   )),
@@ -32,7 +40,10 @@ vi.mock('@/lib/actions/pins', () => ({
   saveTeeCoordAction: mockSaveTeeCoordAction,
 }))
 
-import { PinPlacementMap, type HoleCoords } from '@/app/admin/tournaments/[slug]/course/pins/pin-placement-map'
+import {
+  PinPlacementMap,
+  type HoleCoords,
+} from '@/app/admin/tournaments/[slug]/course/pins/pin-placement-map'
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -240,7 +251,7 @@ describe('PinPlacementMap', () => {
     fireEvent.click(screen.getByTestId('save-and-next'))
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/admin/tournaments/granite-ridge-2026/course')
+      expect(mockPush).toHaveBeenCalledWith('/admin/tournaments/granite-ridge-2026')
     })
   })
 
@@ -276,7 +287,7 @@ describe('PinPlacementMap', () => {
 
   it('renders back link to course page', () => {
     render(<PinPlacementMap {...defaultProps} />)
-    const link = screen.getByRole('link', { name: /back to course/i })
-    expect(link).toHaveAttribute('href', '/admin/tournaments/granite-ridge-2026/course')
+    const link = screen.getByRole('link', { name: /back to tournament/i })
+    expect(link).toHaveAttribute('href', '/admin/tournaments/granite-ridge-2026')
   })
 })

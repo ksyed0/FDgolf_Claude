@@ -35,10 +35,10 @@ export default async function PinsPage({ params }: PageProps) {
     redirect('/')
   }
 
-  // Fetch tournament
+  // Fetch tournament — join venues for display name
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
-    .select('id,name,slug,venue,course_id,holes_count')
+    .select('id,name,slug,course_id,venues(name)')
     .eq('slug', params.slug)
     .single()
 
@@ -48,7 +48,7 @@ export default async function PinsPage({ params }: PageProps) {
 
   // Must have a course linked to place pins
   if (!tournament.course_id) {
-    redirect(`/admin/tournaments/${params.slug}/course`)
+    redirect(`/admin/tournaments/${params.slug}`)
   }
 
   // Fetch holes with coordinates (tees JSONB replaces flat tee_lat/tee_lng)
@@ -62,17 +62,25 @@ export default async function PinsPage({ params }: PageProps) {
     notFound()
   }
 
+  // BUG-0011: Guard against empty holes array (course created but no holes saved yet)
+  if (!holesData || holesData.length === 0) {
+    redirect(`/admin/tournaments/${params.slug}`)
+  }
+
   // Normalise: ensure tees is always an array (DB may return null for holes with no tees defined)
   const holes: HoleCoords[] = (holesData ?? []).map((row: HoleRow) => ({
     ...row,
     tees: Array.isArray(row.tees) ? row.tees : [],
   }))
 
+  const venueRaw = tournament.venues as { name: string } | { name: string }[] | null
+  const venueName = Array.isArray(venueRaw) ? (venueRaw[0]?.name ?? '') : (venueRaw?.name ?? '')
+
   return (
     <PinPlacementMap
       holes={holes}
       courseId={tournament.course_id}
-      tournamentVenue={tournament.venue}
+      tournamentVenue={venueName}
       tournamentSlug={params.slug}
     />
   )
