@@ -23,10 +23,12 @@ export default async function TournamentDetailPage({ params }: PageProps) {
     redirect('/')
   }
 
-  // Fetch tournament by slug
+  // Fetch tournament by slug — join venues and courses via course_id FK
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
-    .select('id,name,slug,status,starts_at,venue')
+    .select(
+      'id,name,slug,status,starts_at,venue_id,course_id,venues(id,name),courses:course_id(id,name,venue_id)',
+    )
     .eq('slug', params.slug)
     .single()
 
@@ -34,15 +36,14 @@ export default async function TournamentDetailPage({ params }: PageProps) {
     notFound()
   }
 
+  // Supabase may return the joined relation as an array — normalise to object | null
+  const course = Array.isArray(tournament.courses)
+    ? (tournament.courses[0] ?? null)
+    : tournament.courses
+
   const base = `/admin/tournaments/${tournament.slug}`
 
   const navCards = [
-    {
-      href: `${base}/course`,
-      title: 'Course Setup',
-      description: 'Configure hole-by-hole par, yardage, and stroke index.',
-      icon: '⛳',
-    },
     {
       href: `${base}/clubs`,
       title: 'Available Clubs',
@@ -67,18 +68,46 @@ export default async function TournamentDetailPage({ params }: PageProps) {
       })
     : null
 
+  // Venue name from joined relation (may also be array — normalise)
+  const venue = Array.isArray(tournament.venues)
+    ? (tournament.venues[0] ?? null)
+    : tournament.venues
+
   return (
     <main className="max-w-3xl mx-auto py-10 px-4 space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">{tournament.name}</h1>
         <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
-          {tournament.venue && <span>{tournament.venue}</span>}
+          {venue && <span>{venue.name}</span>}
           {formattedDate && <span>{formattedDate}</span>}
           <span className="capitalize px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
             {tournament.status ?? 'draft'}
           </span>
         </div>
+      </div>
+
+      {/* Course card — read-only */}
+      <div className="border rounded p-4">
+        <h2 className="font-semibold text-sm text-gray-500 mb-2">Course</h2>
+        {course ? (
+          <Link
+            href={`/admin/venues/${course.venue_id}/courses/${course.id}`}
+            className="text-green-800 hover:underline font-medium"
+          >
+            {course.name}
+          </Link>
+        ) : (
+          <p className="text-sm text-gray-500">
+            No course linked.{' '}
+            <Link
+              href={`/admin/tournaments/${tournament.slug}/edit`}
+              className="text-green-800 hover:underline"
+            >
+              Edit tournament to add one
+            </Link>
+          </p>
+        )}
       </div>
 
       {/* Nav cards */}
