@@ -18,7 +18,8 @@ export default defineConfig({
         'app/layout.tsx',
         'app/admin/tournaments/new/page.tsx',      // Server Component, integration-tested
         'app/admin/tournaments/[slug]/page.tsx',        // Stub Server Component
-        'app/admin/tournaments/[slug]/course/page.tsx', // Server Component, integration-tested
+        'app/admin/tournaments/[slug]/course/page.tsx',  // Server Component, integration-tested
+        'app/admin/tournaments/[slug]/clubs/page.tsx',   // Server Component, integration-tested
         'app/login/page.tsx',                          // Server Component, integration-tested
         '**/*.config.*',
         '**/node_modules/**',
