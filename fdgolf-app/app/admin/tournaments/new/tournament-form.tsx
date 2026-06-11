@@ -1,8 +1,9 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
-import { createTournamentAction, checkSlugAvailableAction } from '@/lib/actions/tournaments'
+import { createTournamentAction, updateTournamentAction, checkSlugAvailableAction } from '@/lib/actions/tournaments'
+import { getCoursesForVenueAction } from '@/lib/actions/courses'
 import { generateSlug } from '@/lib/utils/slug'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,35 +11,68 @@ import { Label } from '@/components/ui/label'
 
 const initialState = { error: null as string | null }
 
-function SubmitButton() {
+function SubmitButton({ editMode }: { editMode: boolean }) {
   const { pending } = useFormStatus()
   return (
     <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? 'Creating…' : 'Create Tournament'}
+      {pending
+        ? editMode ? 'Saving…' : 'Creating…'
+        : editMode ? 'Save changes' : 'Create tournament'}
     </Button>
   )
 }
 
+interface TournamentFormProps {
+  venues: { id: string; name: string }[]
+  tournament?: {
+    id: string
+    name: string
+    slug: string
+    venue_id: string | null
+    course_id: string | null
+    starts_at: string | null
+    format: string
+    start_style: string
+    holes_count: number
+  }
+}
+
 /**
- * TournamentForm — Client Component for tournament creation (US-0009, US-0010).
+ * TournamentForm — Client Component for tournament creation and editing.
  *
- * Fields (AC-0044):
- *   - name (required)
- *   - slug_override (editable, auto-populated from name) — AC-0047, AC-0048, AC-0049
- *   - venue (required)
- *   - starts_at datetime-local (required)
- *   - format select, default best_ball
- *   - start_style select, default shotgun
- *   - holes_count select, default 18
+ * Create mode (tournament undefined): uses createTournamentAction; shows editable slug.
+ * Edit mode (tournament provided):    uses updateTournamentAction; hides slug field.
+ *
+ * Venue → Course cascade: selecting a venue fetches courses via getCoursesForVenueAction.
  */
-export function TournamentForm() {
-  const [state, formAction] = useFormState(createTournamentAction, initialState)
+export function TournamentForm({ venues, tournament }: TournamentFormProps) {
+  const editMode = tournament !== undefined
+  const boundAction = editMode
+    ? updateTournamentAction.bind(null, tournament!.id)
+    : createTournamentAction
+
+  const [state, formAction] = useFormState(boundAction, initialState)
+
+  // Slug state (create mode only)
   const [slugValue, setSlugValue] = useState('')
   const [slugError, setSlugError] = useState('')
   const [slugChecking, setSlugChecking] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Venue / Course cascade
+  const [selectedVenueId, setSelectedVenueId] = useState(tournament?.venue_id ?? '')
+  const [courseOptions, setCourseOptions] = useState<{ id: string; name: string }[]>([])
+
+  useEffect(() => {
+    if (!selectedVenueId) {
+      setCourseOptions([])
+      return
+    }
+    getCoursesForVenueAction(selectedVenueId).then(setCourseOptions)
+  }, [selectedVenueId])
+
   function handleNameChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (editMode) return
     const value = e.target.value
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
@@ -71,6 +105,11 @@ export function TournamentForm() {
     }
   }
 
+  // Derive datetime-local value from ISO string for pre-population
+  const startsAtLocal = tournament?.starts_at
+    ? tournament.starts_at.slice(0, 16) // "YYYY-MM-DDTHH:mm"
+    : undefined
+
   return (
     <form action={formAction} className="space-y-5">
       {/* Name */}
@@ -82,45 +121,74 @@ export function TournamentForm() {
           type="text"
           required
           placeholder="e.g. Summer Classic 2026"
+          defaultValue={tournament?.name ?? ''}
           onChange={handleNameChange}
         />
       </div>
 
-      {/* URL Slug */}
-      <div className="space-y-1">
-        <Label htmlFor="slug_override">URL Slug</Label>
-        <Input
-          id="slug_override"
-          name="slug_override"
-          type="text"
-          value={slugValue}
-          onChange={handleSlugChange}
-          onBlur={handleSlugBlur}
-          placeholder="e.g. summer-classic-2026"
-          aria-describedby={slugError ? 'slug-error' : 'slug-hint'}
-          disabled={slugChecking}
-        />
-        {slugError ? (
-          <p id="slug-error" role="alert" className="text-sm text-red-600">
-            {slugError}
-          </p>
-        ) : (
-          <p id="slug-hint" className="text-xs text-muted-foreground">
-            e.g. summer-classic-2026
-          </p>
-        )}
-      </div>
+      {/* URL Slug — create mode only */}
+      {!editMode ? (
+        <div className="space-y-1">
+          <Label htmlFor="slug_override">URL Slug</Label>
+          <Input
+            id="slug_override"
+            name="slug_override"
+            type="text"
+            value={slugValue}
+            onChange={handleSlugChange}
+            onBlur={handleSlugBlur}
+            placeholder="e.g. summer-classic-2026"
+            aria-describedby={slugError ? 'slug-error' : 'slug-hint'}
+            disabled={slugChecking}
+          />
+          {slugError ? (
+            <p id="slug-error" role="alert" className="text-sm text-red-600">
+              {slugError}
+            </p>
+          ) : (
+            <p id="slug-hint" className="text-xs text-muted-foreground">
+              e.g. summer-classic-2026
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          URL slug cannot be changed after creation: <strong>{tournament!.slug}</strong>
+        </p>
+      )}
 
       {/* Venue */}
       <div className="space-y-1">
-        <Label htmlFor="venue">Venue</Label>
-        <Input
-          id="venue"
-          name="venue"
-          type="text"
-          required
-          placeholder="e.g. Pine Valley Golf Club"
-        />
+        <Label htmlFor="venue_id">Venue</Label>
+        <select
+          id="venue_id"
+          name="venue_id"
+          value={selectedVenueId}
+          onChange={e => setSelectedVenueId(e.target.value)}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <option value="">Select a venue</option>
+          {venues.map(v => (
+            <option key={v.id} value={v.id}>{v.name}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Course */}
+      <div className="space-y-1">
+        <Label htmlFor="course_id">Course</Label>
+        <select
+          id="course_id"
+          name="course_id"
+          defaultValue={tournament?.course_id ?? ''}
+          disabled={!selectedVenueId}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <option value="">Select a course (optional)</option>
+          {courseOptions.map(c => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
       </div>
 
       {/* Start Date & Time */}
@@ -131,6 +199,7 @@ export function TournamentForm() {
           name="starts_at"
           type="datetime-local"
           required
+          defaultValue={startsAtLocal}
         />
       </div>
 
@@ -140,7 +209,7 @@ export function TournamentForm() {
         <select
           id="format"
           name="format"
-          defaultValue="best_ball"
+          defaultValue={tournament?.format ?? 'best_ball'}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="best_ball">Best Ball</option>
@@ -156,7 +225,7 @@ export function TournamentForm() {
         <select
           id="start_style"
           name="start_style"
-          defaultValue="shotgun"
+          defaultValue={tournament?.start_style ?? 'shotgun'}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="shotgun">Shotgun</option>
@@ -170,7 +239,7 @@ export function TournamentForm() {
         <select
           id="holes_count"
           name="holes_count"
-          defaultValue="18"
+          defaultValue={tournament?.holes_count ?? 18}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="9">9</option>
@@ -185,7 +254,7 @@ export function TournamentForm() {
         </p>
       )}
 
-      <SubmitButton />
+      <SubmitButton editMode={editMode} />
     </form>
   )
 }
