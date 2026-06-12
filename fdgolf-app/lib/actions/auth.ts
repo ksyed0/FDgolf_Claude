@@ -18,7 +18,7 @@ export async function loginAction(
   const password = formData.get('password') as string
   const next = (formData.get('next') as string) || '/'
 
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
@@ -38,7 +38,7 @@ export async function loginAction(
  * Satisfies AC-0020.
  */
 export async function logoutAction(): Promise<void> {
-  const supabase = createClient()
+  const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/login')
 }

@@ -13,7 +13,7 @@ type ActionState = { error: string | null }
  */
 export async function checkSlugAvailableAction(slug: string): Promise<{ available: boolean }> {
   if (!slug) return { available: false }
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data } = await supabase.from('tournaments').select('id').eq('slug', slug).maybeSingle()
   return { available: data === null }
 }
@@ -50,7 +50,7 @@ export async function createTournamentAction(
   }
 
   const slug = slugOverride || generateSlug(name)
-  const supabase = createClient()
+  const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -90,7 +90,7 @@ export async function updateTournamentAction(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 
@@ -141,7 +141,7 @@ export async function updateTournamentAction(
 export async function deleteTournamentAction(
   tournamentId: string
 ): Promise<{ error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 

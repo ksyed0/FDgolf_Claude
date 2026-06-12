@@ -21,7 +21,7 @@ export async function assignOrganizerAction(
     return { error: 'tournamentId and playerId are required' }
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Check the calling user is authenticated
   const {
@@ -70,7 +70,7 @@ export async function searchPlayersAction(query: string): Promise<{
     return { players: [], error: null }
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('players')

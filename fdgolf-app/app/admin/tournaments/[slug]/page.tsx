@@ -17,7 +17,7 @@ interface PageProps {
  * Guard: requires admin role (fdgolf_is_admin RPC). Redirects to / if false.
  */
 export default async function TournamentDetailPage({ params }: PageProps) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Guard: must be admin
   const { data: isAdmin, error: adminError } = await supabase.rpc('fdgolf_is_admin')

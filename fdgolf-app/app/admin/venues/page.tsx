@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { VenueListClient } from './venue-list-client'
 
 export default async function VenuesPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) redirect('/')
 

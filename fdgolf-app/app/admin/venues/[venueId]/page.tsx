@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CourseListClient } from './course-list-client'
 
 export default async function VenueDetailPage({ params }: { params: { venueId: string } }) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) redirect('/')
 
