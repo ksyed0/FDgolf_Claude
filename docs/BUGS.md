@@ -506,6 +506,40 @@ from the terminal, which is not part of any project workflow).
 
 Fix: Same path as BUG-0015 — upgrade to `eslint-config-next@16.x` which requires `next@16.x`.
 
+---
+
+BUG-0017: supabase db reset fails — epic0003 migration conflicts with initial schema (merge divergence)
+Severity: High
+Related Story: (none — migration chain / 9c053ef merge divergence)
+Related Task: (none)
+Status: Open
+Fix Branch: (none — needs schema reconciliation decision)
+Lesson Encoded: No
+
+`supabase db reset` fails at `20260612000001_epic0003_registration.sql` with
+`ERROR: type "registration_status" already exists`. The `9c053ef` merge ("merge main into develop")
+combined two divergent schema histories that define the same entities incompatibly:
+- `20260609000000_initial_schema.sql` + `20260611000001_master_data_v2.sql` define
+  `players`(id = auth.uid), `teams`(team_size, team_number), `tournament_registrations`(team_id),
+  and a `rounds` table — and `CREATE TYPE registration_status`.
+- `20260612000001_epic0003_registration.sql` redefines `players`(user_id), `teams`(name; no
+  team_size/team_number), a `team_members` join table, no `rounds`, and re-runs
+  `CREATE TYPE registration_status` (already created above).
+
+The two definitions are mutually incompatible, so a clean from-scratch replay cannot succeed.
+
+Impact: blocks `supabase db reset` and therefore CI for the WHOLE branch/develop, not just EPIC-0006.
+EPIC-0006 scoring (`feature/epic0006-scoring`) is functionally complete and passes 32/32 pgTAP
+against the running local stack (which holds the pre-merge v2 schema), but its functions join
+`tournament_registrations.team_id` and the `rounds` table — both of which the epic0003 definition
+removes. Any reconciliation MUST preserve `teams.team_size`/`team_number`,
+`tournament_registrations.team_id`, and `rounds`, or EPIC-0006 breaks.
+
+Discovered: EPIC-0006 implementation (Forge) + code review (Lens), 2026-06-12.
+Fix: Architectural decision on which schema shape is canonical, then a reconciliation migration (or a
+rewrite of the epic0003 migration). Out of scope for EPIC-0006; likely owned by the session that
+authored the `9c053ef` merge.
+
 Verified fix (feature/nextjs-16-upgrade): `eslint-config-next@16.2.9` installed alongside
 `next@16.2.9` — the vulnerable `glob@10.x` dep is replaced. ESLint config migrated to flat
 config format (`eslint.config.mjs`) to satisfy ESLint 9.x requirements.
