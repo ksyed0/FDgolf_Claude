@@ -451,8 +451,8 @@ BUG-0015: Next.js 14.2.35 — multiple security CVEs (14 advisories)
 Severity: High
 Related Story: (none — dependency)
 Related Task: (none)
-Status: Open
-Fix Branch: (none — requires Next.js 15/16 migration, tracked separately)
+Status: Verified
+Fix Branch: feature/nextjs-16-upgrade
 Lesson Encoded: No
 
 `npm audit` reports 14 CVEs against `next@14.2.35` including:
@@ -479,14 +479,22 @@ and custom rewrites/middleware redirects are not in use.
 Fix: Plan a dedicated Next.js 15 migration story covering the async API migration, config changes,
 and re-validation of all Server Actions. Do not run `npm audit fix --force` without that plan.
 
+Verified fix (feature/nextjs-16-upgrade): Upgraded to `next@16.2.9` + `react@19.2.7`. All 14 CVEs
+resolved. Migration changes: `createClient()` made async (awaits `cookies()`), all callers updated
+to `await createClient()`, `captureStaticSnapshot` param typed as `Awaited<ReturnType<typeof
+createClient>>`, ESLint migrated to flat config (`eslint.config.mjs`, ESLint 9.x), tournament-form
+useEffect refactored to async IIFE to satisfy `react-hooks/set-state-in-effect`. Two residual
+moderate advisories remain: `postcss` bundled inside Next.js itself — not fixable without
+downgrading Next.js; risk is zero (used only during build-time CSS processing, not in output HTML).
+
 ---
 
 BUG-0016: glob CLI command injection in eslint-config-next (dev-only)
 Severity: High (dev dependency only — no production impact)
 Related Story: (none — dependency)
 Related Task: (none)
-Status: Open
-Fix Branch: (none — same root as BUG-0015)
+Status: Verified
+Fix Branch: feature/nextjs-16-upgrade
 Lesson Encoded: No
 
 `glob@10.2.0–10.4.5` (GHSA-5j98-mcp5-4vw2) has a CLI command injection via `-c/--cmd` that
@@ -497,3 +505,7 @@ exclusively a developer workstation risk (if someone runs `glob --cmd` with untr
 from the terminal, which is not part of any project workflow).
 
 Fix: Same path as BUG-0015 — upgrade to `eslint-config-next@16.x` which requires `next@16.x`.
+
+Verified fix (feature/nextjs-16-upgrade): `eslint-config-next@16.2.9` installed alongside
+`next@16.2.9` — the vulnerable `glob@10.x` dep is replaced. ESLint config migrated to flat
+config format (`eslint.config.mjs`) to satisfy ESLint 9.x requirements.

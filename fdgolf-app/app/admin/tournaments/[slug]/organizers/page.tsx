@@ -7,7 +7,7 @@ interface PageProps {
 }
 
 export default async function TournamentOrganizersPage({ params }: PageProps) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Fetch the tournament by slug
   const { data: tournament, error: tournamentError } = await supabase

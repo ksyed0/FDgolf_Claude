@@ -31,7 +31,7 @@ type TournamentClubRow = {
  *   defaults all toggles to on.
  */
 export default async function TournamentClubsPage({ params }: PageProps) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Guard: must be admin
   const { data: isAdmin, error: adminError } = await supabase.rpc('fdgolf_is_admin')

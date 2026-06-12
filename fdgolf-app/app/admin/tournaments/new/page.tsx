@@ -10,7 +10,7 @@ import { TournamentForm } from './tournament-form'
  * Renders TournamentForm on success.
  */
 export default async function NewTournamentPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: isAdmin, error } = await supabase.rpc('fdgolf_is_admin')
 

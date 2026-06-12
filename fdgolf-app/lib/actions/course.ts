@@ -79,7 +79,7 @@ export async function saveCourseHolesAction(
 
   const par_total = holes.reduce((sum, h) => sum + h.par, 0)
 
-  const supabase = createClient()
+  const supabase = await createClient()
 
   let courseId = course_id_raw !== '' ? course_id_raw : null
 

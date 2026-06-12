@@ -13,7 +13,7 @@ export async function saveHolesAction(
   courseId: string,
   holes: HoleInput[]
 ): Promise<{ error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 
