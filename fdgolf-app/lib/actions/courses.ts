@@ -33,7 +33,7 @@ export async function createCourseAction(
   _prev: CourseState,
   formData: FormData
 ): Promise<CourseState> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 
@@ -65,7 +65,7 @@ export async function updateCourseAction(
   _prev: CourseState,
   formData: FormData
 ): Promise<CourseState> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 
@@ -83,7 +83,7 @@ export async function updateCourseAction(
 }
 
 export async function deleteCourseAction(courseId: string): Promise<{ error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 
@@ -104,7 +104,7 @@ export async function deleteCourseAction(courseId: string): Promise<{ error: str
 export async function getCoursesForVenueAction(
   venueId: string
 ): Promise<{ id: string; name: string }[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data } = await supabase
     .from('courses')
     .select('id, name')

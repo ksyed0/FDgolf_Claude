@@ -33,7 +33,7 @@ export async function saveClubsAction(
     return { error: 'Tournament ID is required.', success: false }
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Guard: must be admin
   const { data: isAdmin, error: adminError } = await supabase.rpc('fdgolf_is_admin')

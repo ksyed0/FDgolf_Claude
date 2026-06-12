@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { TournamentListClient } from './tournament-list-client'
 
 export default async function TournamentsPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) redirect('/')
 

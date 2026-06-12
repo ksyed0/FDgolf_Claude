@@ -19,7 +19,7 @@ export async function createVenueAction(
   _prev: VenueState,
   formData: FormData
 ): Promise<VenueState> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 
@@ -42,7 +42,7 @@ export async function updateVenueAction(
   _prev: VenueState,
   formData: FormData
 ): Promise<VenueState> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 
@@ -59,7 +59,7 @@ export async function updateVenueAction(
 }
 
 export async function deleteVenueAction(venueId: string): Promise<{ error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 
