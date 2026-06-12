@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 6 — 2026-06-12
+
+### What Was Done
+
+- Implemented EPIC-0003 Registration & Profile (US-0021–0029): 5 DB tables, 5 Server Actions, 12 pages/components, 428 tests passing
+- Created DB reset script + dev seed (admin + player users) + test import CSV for manual testing
+- Fixed lint/type errors and confirmed production build passes
+
+---
+
 ## Session 5 — 2026-06-11
 
 ### What Was Done
