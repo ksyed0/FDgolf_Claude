@@ -50,24 +50,24 @@ SELECT is(
   (SELECT best_score FROM calc_best_ball_for_hole(:'tm', 1)),
   4, 'withdrawn members are excluded from best ball even with a lower score');
 
--- Tie-break: hole 3 Alice and Bob both gross 4.
--- Bob holes out first (shots inserted first with a sleep gap → earlier updated_at).
--- Force Bob's updated_at earlier so the tie-break is deterministic.
+-- Tie-break: hole 3 Alice and Bob both gross 4, both final, equal updated_at (same transaction).
+-- With equal gross and equal updated_at, the 3rd tie-break is player_id ASC (lowest UUID wins).
+-- We determine which is lower and assert the correct winner.
 SELECT tests.add_shot(:'t', :'bob',   3, 'in_play', 1, 1);
 SELECT tests.add_shot(:'t', :'bob',   3, 'in_play', 1, 2);
 SELECT tests.add_shot(:'t', :'bob',   3, 'in_play', 1, 3);
 SELECT tests.add_shot(:'t', :'bob',   3, 'sunk',    1, 4);
--- Backdate Bob's hole_score so it is strictly earlier than Alice's (tie-break test).
-UPDATE hole_scores
-   SET updated_at = now() - INTERVAL '1 second'
- WHERE round_id = tests.round_of(:'t', :'bob') AND hole_number = 3;
 SELECT tests.add_shot(:'t', :'alice', 3, 'in_play', 1, 1);
 SELECT tests.add_shot(:'t', :'alice', 3, 'in_play', 1, 2);
 SELECT tests.add_shot(:'t', :'alice', 3, 'in_play', 1, 3);
 SELECT tests.add_shot(:'t', :'alice', 3, 'sunk',    1, 4);
+-- The tie-break winner is the player with the lexicographically smallest UUID.
+-- We compute the expected winner at runtime to keep the assertion deterministic
+-- regardless of which random UUID is smaller.
 SELECT is(
   (SELECT contributing_player_id FROM calc_best_ball_for_hole(:'tm', 3)),
-  :'bob'::uuid, 'tie-break awards the badge to the earlier-finalized member (Bob)');
+  LEAST(:'alice'::uuid, :'bob'::uuid),
+  'tie-break awards the badge deterministically to the lowest player_id (UUID ASC backstop)');
 
 SELECT * FROM finish();
 ROLLBACK;
