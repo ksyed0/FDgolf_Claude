@@ -26,7 +26,8 @@ export default async function TeamsPage({ params }: { params: { slug: string } }
   return (
     <main className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">{tournament.name} — Teams</h1>
-      <TeamListClient teams={teams ?? []} />
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <TeamListClient teams={(teams ?? []) as any} />
     </main>
   )
 }

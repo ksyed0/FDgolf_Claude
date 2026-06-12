@@ -37,7 +37,8 @@ export default async function PlayersPage({ params }: { params: { slug: string }
           Import CSV
         </a>
       </div>
-      <PlayerListClient registrations={registrations ?? []} tournamentId={tournament.id} />
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <PlayerListClient registrations={(registrations ?? []) as any} tournamentId={tournament.id} />
     </main>
   )
 }

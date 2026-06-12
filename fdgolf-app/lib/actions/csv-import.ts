@@ -97,7 +97,7 @@ export async function importPlayersFromCSV(
       const entry = teamMap.get(teamName)!
       try {
         await supabase.from('team_members').insert({ team_id: entry.id, player_id: player.id })
-      } catch (_) {
+      } catch {
         /* ignore duplicate */
       }
       if (!entry.captainSet) {
@@ -110,7 +110,7 @@ export async function importPlayersFromCSV(
       await supabase
         .from('tournament_registrations')
         .insert({ tournament_id: tournamentId, player_id: player.id, status: 'invited' })
-    } catch (_) {
+    } catch {
       /* ignore duplicate */
     }
 

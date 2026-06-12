@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { StepTeam } from './step-team'
 import { getPlayerByEmail, createPlayer } from '@/lib/actions/players'
-import { createRegistration, markRegistered } from '@/lib/actions/registrations'
+import { createRegistration } from '@/lib/actions/registrations'
 import { claimInvitation } from '@/lib/actions/invitations'
 
 type Step = 'profile' | 'password' | 'team' | 'confirm'
@@ -70,7 +70,7 @@ export function RegistrationWizard({ tournament, prefill }: Props) {
     setError(null)
     setLoading(true)
     const effectiveEmail = prefill ? email : emailInput
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const { error: authError } = await supabase.auth.signUp({
       email: effectiveEmail,
       password,
     })
@@ -236,7 +236,7 @@ export function RegistrationWizard({ tournament, prefill }: Props) {
         {step === 'confirm' && (
           <div className="space-y-4 text-center">
             <div className="text-4xl">🎉</div>
-            <h2 className="font-bold text-xl text-gray-900">You're registered!</h2>
+            <h2 className="font-bold text-xl text-gray-900">You&apos;re registered!</h2>
             <p className="text-gray-600">{tournament.name}</p>
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-left space-y-1">
               <p className="text-sm font-medium text-green-800">Team: {confirmedTeamName}</p>
