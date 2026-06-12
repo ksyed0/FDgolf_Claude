@@ -1,23 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Hoist mocks so factories can reference them
-const {
-  mockRpc,
-  mockInsert,
-  mockUpdate,
-  mockUpsert,
-  mockSelect,
-  mockSingle,
-  mockEq,
-} = vi.hoisted(() => ({
-  mockRpc:    vi.fn(),
-  mockInsert: vi.fn(),
-  mockUpdate: vi.fn(),
-  mockUpsert: vi.fn(),
-  mockSelect: vi.fn(),
-  mockSingle: vi.fn(),
-  mockEq:     vi.fn(),
-}))
+const { mockRpc, mockInsert, mockUpdate, mockUpsert, mockSelect, mockSingle, mockEq } = vi.hoisted(
+  () => ({
+    mockRpc: vi.fn(),
+    mockInsert: vi.fn(),
+    mockUpdate: vi.fn(),
+    mockUpsert: vi.fn(),
+    mockSelect: vi.fn(),
+    mockSingle: vi.fn(),
+    mockEq: vi.fn(),
+  })
+)
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: () => ({
@@ -140,9 +134,7 @@ describe('saveCourseHolesAction', () => {
     // insert should NOT have been called for existing course
     expect(mockInsert).not.toHaveBeenCalled()
     expect(mockUpsert).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ course_id: existingCourseId, number: 1 }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ course_id: existingCourseId, number: 1 })]),
       { onConflict: 'course_id,number' }
     )
   })

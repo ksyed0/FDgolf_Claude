@@ -5,17 +5,19 @@ import React from 'react'
 // ---------------------------------------------------------------------------
 // Hoisted mocks
 // ---------------------------------------------------------------------------
-const { mockCreateAction, mockUpdateAction, mockCheckSlugAction, mockGetCourses } = vi.hoisted(() => ({
-  mockCreateAction:    vi.fn(),
-  mockUpdateAction:    vi.fn(),
-  mockCheckSlugAction: vi.fn(),
-  mockGetCourses:      vi.fn(),
-}))
+const { mockCreateAction, mockUpdateAction, mockCheckSlugAction, mockGetCourses } = vi.hoisted(
+  () => ({
+    mockCreateAction: vi.fn(),
+    mockUpdateAction: vi.fn(),
+    mockCheckSlugAction: vi.fn(),
+    mockGetCourses: vi.fn(),
+  })
+)
 
 vi.mock('@/lib/actions/tournaments', () => ({
-  createTournamentAction:    mockCreateAction,
-  updateTournamentAction:    mockUpdateAction,
-  checkSlugAvailableAction:  mockCheckSlugAction,
+  createTournamentAction: mockCreateAction,
+  updateTournamentAction: mockUpdateAction,
+  checkSlugAvailableAction: mockCheckSlugAction,
 }))
 
 vi.mock('@/lib/actions/courses', () => ({
@@ -225,7 +227,9 @@ describe('TournamentForm — venue/course cascade', () => {
 
   it('fetches courses for pre-selected venue in edit mode', async () => {
     mockGetCourses.mockResolvedValue([{ id: 'c-1', name: 'Championship Course' }])
-    render(<TournamentForm venues={[{ id: 'v-1', name: 'Granite Ridge' }]} tournament={tournament} />)
+    render(
+      <TournamentForm venues={[{ id: 'v-1', name: 'Granite Ridge' }]} tournament={tournament} />
+    )
     await waitFor(() => {
       expect(mockGetCourses).toHaveBeenCalledWith('v-1')
     })

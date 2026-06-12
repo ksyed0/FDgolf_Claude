@@ -19,8 +19,22 @@ import { CourseListClient } from '@/app/admin/venues/[venueId]/course-list-clien
 
 const venueId = 'v-1'
 const courses = [
-  { id: 'c-1', name: 'Main Course', holes_count: 18, par_total: 72, course_rating: 71.5, slope_rating: 128 },
-  { id: 'c-2', name: 'Executive 9', holes_count: 9, par_total: null, course_rating: null, slope_rating: null },
+  {
+    id: 'c-1',
+    name: 'Main Course',
+    holes_count: 18,
+    par_total: 72,
+    course_rating: 71.5,
+    slope_rating: 128,
+  },
+  {
+    id: 'c-2',
+    name: 'Executive 9',
+    holes_count: 9,
+    par_total: null,
+    course_rating: null,
+    slope_rating: null,
+  },
 ]
 
 beforeEach(() => {
@@ -83,7 +97,9 @@ describe('CourseListClient', () => {
   })
 
   it('shows error when delete fails', async () => {
-    mockDeleteAction.mockResolvedValue({ error: 'Cannot delete: 1 tournament(s) reference this course.' })
+    mockDeleteAction.mockResolvedValue({
+      error: 'Cannot delete: 1 tournament(s) reference this course.',
+    })
     render(<CourseListClient venueId={venueId} courses={courses} />)
     fireEvent.click(screen.getAllByRole('button', { name: /delete/i })[0])
     fireEvent.click(screen.getByRole('button', { name: /confirm/i }))
@@ -94,7 +110,10 @@ describe('CourseListClient', () => {
 
   it('renders + Add course link', () => {
     render(<CourseListClient venueId={venueId} courses={courses} />)
-    expect(screen.getByRole('link', { name: /add course/i })).toHaveAttribute('href', '/admin/venues/v-1/courses/new')
+    expect(screen.getByRole('link', { name: /add course/i })).toHaveAttribute(
+      'href',
+      '/admin/venues/v-1/courses/new'
+    )
   })
 
   it('shows empty state when no courses', () => {

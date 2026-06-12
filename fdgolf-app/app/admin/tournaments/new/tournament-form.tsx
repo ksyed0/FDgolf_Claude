@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
-import { createTournamentAction, updateTournamentAction, checkSlugAvailableAction } from '@/lib/actions/tournaments'
+import {
+  createTournamentAction,
+  updateTournamentAction,
+  checkSlugAvailableAction,
+} from '@/lib/actions/tournaments'
 import { getCoursesForVenueAction } from '@/lib/actions/courses'
 import { generateSlug } from '@/lib/utils/slug'
 import { Button } from '@/components/ui/button'
@@ -16,8 +20,12 @@ function SubmitButton({ editMode }: { editMode: boolean }) {
   return (
     <Button type="submit" className="w-full" disabled={pending}>
       {pending
-        ? editMode ? 'Saving…' : 'Creating…'
-        : editMode ? 'Save changes' : 'Create tournament'}
+        ? editMode
+          ? 'Saving…'
+          : 'Creating…'
+        : editMode
+          ? 'Save changes'
+          : 'Create tournament'}
     </Button>
   )
 }
@@ -164,12 +172,14 @@ export function TournamentForm({ venues, tournament }: TournamentFormProps) {
           id="venue_id"
           name="venue_id"
           value={selectedVenueId}
-          onChange={e => setSelectedVenueId(e.target.value)}
+          onChange={(e) => setSelectedVenueId(e.target.value)}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Select a venue</option>
-          {venues.map(v => (
-            <option key={v.id} value={v.id}>{v.name}</option>
+          {venues.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.name}
+            </option>
           ))}
         </select>
       </div>
@@ -185,8 +195,10 @@ export function TournamentForm({ venues, tournament }: TournamentFormProps) {
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <option value="">Select a course (optional)</option>
-          {courseOptions.map(c => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+          {courseOptions.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
           ))}
         </select>
       </div>

@@ -48,7 +48,10 @@ export function CourseListClient({ venueId, courses }: { venueId: string; course
       </div>
 
       {deleteError && (
-        <p role="alert" className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
+        <p
+          role="alert"
+          className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2"
+        >
           {deleteError}
         </p>
       )}
@@ -57,12 +60,14 @@ export function CourseListClient({ venueId, courses }: { venueId: string; course
         <p className="text-gray-500 text-sm">No courses yet.</p>
       ) : (
         <ul className="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
-          {courses.map(c => (
+          {courses.map((c) => (
             <li key={c.id}>
               {confirmingId === c.id ? (
                 <div className="flex items-center justify-between px-4 py-3 bg-red-50 border-l-4 border-red-400">
                   <div>
-                    <p className="text-sm font-medium text-red-800">Delete &ldquo;{c.name}&rdquo;? This cannot be undone.</p>
+                    <p className="text-sm font-medium text-red-800">
+                      Delete &ldquo;{c.name}&rdquo;? This cannot be undone.
+                    </p>
                     <p className="text-xs text-red-600">All holes will also be deleted.</p>
                   </div>
                   <div className="flex gap-3">
@@ -94,14 +99,23 @@ export function CourseListClient({ venueId, courses }: { venueId: string; course
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <Link href={`/admin/venues/${venueId}/courses/${c.id}`} className="text-green-800 text-sm hover:underline">
+                    <Link
+                      href={`/admin/venues/${venueId}/courses/${c.id}`}
+                      className="text-green-800 text-sm hover:underline"
+                    >
                       Setup holes →
                     </Link>
-                    <Link href={`/admin/venues/${venueId}/courses/${c.id}/edit`} className="text-gray-600 text-sm hover:underline">
+                    <Link
+                      href={`/admin/venues/${venueId}/courses/${c.id}/edit`}
+                      className="text-gray-600 text-sm hover:underline"
+                    >
                       Edit
                     </Link>
                     <button
-                      onClick={() => { setConfirmingId(c.id); setDeleteError(null) }}
+                      onClick={() => {
+                        setConfirmingId(c.id)
+                        setDeleteError(null)
+                      }}
                       disabled={isPending}
                       className="text-red-600 text-sm hover:underline disabled:opacity-50"
                     >

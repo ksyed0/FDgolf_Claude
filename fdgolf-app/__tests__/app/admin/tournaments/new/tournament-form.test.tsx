@@ -4,7 +4,7 @@ import { TournamentForm } from '@/app/admin/tournaments/new/tournament-form'
 
 // Mock the server actions — include checkSlugAvailableAction for US-0010
 vi.mock('@/lib/actions/tournaments', async (importOriginal) => {
-  const actual = await importOriginal() as object
+  const actual = (await importOriginal()) as object
   return {
     ...actual,
     createTournamentAction: vi.fn(),

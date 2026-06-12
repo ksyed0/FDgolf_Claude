@@ -26,9 +26,7 @@ describe('OrganizerSearch', () => {
   it('renders the search input and button', () => {
     render(<OrganizerSearch {...DEFAULT_PROPS} />)
 
-    expect(
-      screen.getByPlaceholderText('Search players by name…')
-    ).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Search players by name…')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /search/i })).toBeInTheDocument()
   })
 
@@ -40,18 +38,15 @@ describe('OrganizerSearch', () => {
 
   it('shows player results after a successful search', async () => {
     mockSearchPlayers.mockResolvedValue({
-      players: [
-        { id: 'p1', name: 'Alice Smith', email: 'alice@example.com' },
-      ],
+      players: [{ id: 'p1', name: 'Alice Smith', email: 'alice@example.com' }],
       error: null,
     })
 
     render(<OrganizerSearch {...DEFAULT_PROPS} />)
 
-    fireEvent.change(
-      screen.getByPlaceholderText('Search players by name…'),
-      { target: { value: 'Alice' } }
-    )
+    fireEvent.change(screen.getByPlaceholderText('Search players by name…'), {
+      target: { value: 'Alice' },
+    })
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
 
     await waitFor(() => {
@@ -59,9 +54,7 @@ describe('OrganizerSearch', () => {
       expect(screen.getByText('alice@example.com')).toBeInTheDocument()
     })
 
-    expect(
-      screen.getByRole('button', { name: /make organizer/i })
-    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /make organizer/i })).toBeInTheDocument()
   })
 
   it('shows "No players found." when search returns empty', async () => {
@@ -69,10 +62,9 @@ describe('OrganizerSearch', () => {
 
     render(<OrganizerSearch {...DEFAULT_PROPS} />)
 
-    fireEvent.change(
-      screen.getByPlaceholderText('Search players by name…'),
-      { target: { value: 'zzz' } }
-    )
+    fireEvent.change(screen.getByPlaceholderText('Search players by name…'), {
+      target: { value: 'zzz' },
+    })
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
 
     await waitFor(() => {
@@ -89,10 +81,9 @@ describe('OrganizerSearch', () => {
 
     render(<OrganizerSearch {...DEFAULT_PROPS} />)
 
-    fireEvent.change(
-      screen.getByPlaceholderText('Search players by name…'),
-      { target: { value: 'Bob' } }
-    )
+    fireEvent.change(screen.getByPlaceholderText('Search players by name…'), {
+      target: { value: 'Bob' },
+    })
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
 
     await waitFor(() =>
@@ -102,14 +93,10 @@ describe('OrganizerSearch', () => {
     fireEvent.click(screen.getByRole('button', { name: /make organizer/i }))
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Assigned as organizer for Spring Open 2026/i)
-      ).toBeInTheDocument()
+      expect(screen.getByText(/Assigned as organizer for Spring Open 2026/i)).toBeInTheDocument()
     })
 
-    expect(
-      screen.getByRole('button', { name: /organizer assigned/i })
-    ).toBeDisabled()
+    expect(screen.getByRole('button', { name: /organizer assigned/i })).toBeDisabled()
   })
 
   it('shows error message when assignment fails', async () => {
@@ -123,10 +110,9 @@ describe('OrganizerSearch', () => {
 
     render(<OrganizerSearch {...DEFAULT_PROPS} />)
 
-    fireEvent.change(
-      screen.getByPlaceholderText('Search players by name…'),
-      { target: { value: 'Bob' } }
-    )
+    fireEvent.change(screen.getByPlaceholderText('Search players by name…'), {
+      target: { value: 'Bob' },
+    })
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
 
     await waitFor(() =>
@@ -136,9 +122,7 @@ describe('OrganizerSearch', () => {
     fireEvent.click(screen.getByRole('button', { name: /make organizer/i }))
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Unauthorized: admin role required')
-      ).toBeInTheDocument()
+      expect(screen.getByText('Unauthorized: admin role required')).toBeInTheDocument()
     })
   })
 
@@ -150,10 +134,9 @@ describe('OrganizerSearch', () => {
 
     render(<OrganizerSearch {...DEFAULT_PROPS} />)
 
-    fireEvent.change(
-      screen.getByPlaceholderText('Search players by name…'),
-      { target: { value: 'Alice' } }
-    )
+    fireEvent.change(screen.getByPlaceholderText('Search players by name…'), {
+      target: { value: 'Alice' },
+    })
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
 
     await waitFor(() => {

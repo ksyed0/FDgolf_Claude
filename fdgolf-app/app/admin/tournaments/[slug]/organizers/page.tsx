@@ -42,25 +42,18 @@ export default async function TournamentOrganizersPage({ params }: PageProps) {
   return (
     <main className="max-w-2xl mx-auto py-8 px-4 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">
-          Organizers — {tournament.name}
-        </h1>
+        <h1 className="text-2xl font-bold">Organizers — {tournament.name}</h1>
         <p className="text-muted-foreground text-sm mt-1">
           Tournament slug: <code>{tournament.slug}</code>
         </p>
       </div>
 
       <section aria-labelledby="current-organizers-heading">
-        <h2
-          id="current-organizers-heading"
-          className="text-lg font-semibold mb-3"
-        >
+        <h2 id="current-organizers-heading" className="text-lg font-semibold mb-3">
           Current organizers
         </h2>
         {organizers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No organizers assigned yet.
-          </p>
+          <p className="text-sm text-muted-foreground">No organizers assigned yet.</p>
         ) : (
           <ul className="space-y-1" aria-label="Current organizers list">
             {organizers.map((org) => (
@@ -74,16 +67,10 @@ export default async function TournamentOrganizersPage({ params }: PageProps) {
       </section>
 
       <section aria-labelledby="add-organizer-heading">
-        <h2
-          id="add-organizer-heading"
-          className="text-lg font-semibold mb-3"
-        >
+        <h2 id="add-organizer-heading" className="text-lg font-semibold mb-3">
           Add organizer
         </h2>
-        <OrganizerSearch
-          tournamentId={tournament.id}
-          tournamentName={tournament.name}
-        />
+        <OrganizerSearch tournamentId={tournament.id} tournamentName={tournament.name} />
       </section>
     </main>
   )

@@ -44,7 +44,7 @@ export function CourseForm({ venueId, course }: CourseFormProps) {
   const [state, formAction] = useFormState(action, initialState)
 
   const [teeRows, setTeeRows] = useState<TeeYardage[]>(() =>
-    (course?.tee_yardages ?? []).map(t => ({
+    (course?.tee_yardages ?? []).map((t) => ({
       colour: t.colour,
       total_yardage: String(t.total_yardage),
     }))
@@ -52,21 +52,21 @@ export function CourseForm({ venueId, course }: CourseFormProps) {
 
   function addTeeRow() {
     if (teeRows.length >= 3) return
-    setTeeRows(prev => [...prev, { colour: '', total_yardage: '' }])
+    setTeeRows((prev) => [...prev, { colour: '', total_yardage: '' }])
   }
 
   function removeTeeRow(index: number) {
-    setTeeRows(prev => prev.filter((_, i) => i !== index))
+    setTeeRows((prev) => prev.filter((_, i) => i !== index))
   }
 
   function updateTeeRow(index: number, field: keyof TeeYardage, value: string) {
-    setTeeRows(prev => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)))
+    setTeeRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)))
   }
 
   const teeYardagesJson = JSON.stringify(
     teeRows
-      .filter(r => r.colour.trim())
-      .map(r => ({
+      .filter((r) => r.colour.trim())
+      .map((r) => ({
         colour: r.colour.trim(),
         total_yardage: parseInt(r.total_yardage, 10) || 0,
       }))
@@ -142,14 +142,14 @@ export function CourseForm({ venueId, course }: CourseFormProps) {
             <Input
               placeholder="Colour"
               value={row.colour}
-              onChange={e => updateTeeRow(i, 'colour', e.target.value)}
+              onChange={(e) => updateTeeRow(i, 'colour', e.target.value)}
               className="w-28"
             />
             <Input
               placeholder="Total yds"
               type="number"
               value={row.total_yardage}
-              onChange={e => updateTeeRow(i, 'total_yardage', e.target.value)}
+              onChange={(e) => updateTeeRow(i, 'total_yardage', e.target.value)}
               className="w-28"
             />
             <button

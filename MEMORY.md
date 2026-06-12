@@ -6,19 +6,19 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 5 — 2026-06-11
+Session 6 — 2026-06-12
 
 ---
 
 ## Repo State
 
-- **Branch:** `develop` (default)
+- **Branch:** `feature/epic0003-registration-profile` (EPIC-0003 implementation, PR pending)
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `63824dd` (Downstream Schema Updates merged, PR #21)
-- **Stories done:** US-0001–US-0013, US-0015, US-0016, US-0020, US-0090–US-0095 (EPIC-0001 complete; EPIC-0002 rebuild complete)
-- **Stories planned next:** US-0017 (tournament lifecycle), US-0018 (activation), US-0021 (registration landing)
+- **Develop tip:** `2368334` (EPIC-0002 completion, PR #25)
+- **Stories done:** US-0001–US-0013, US-0015, US-0016, US-0020, US-0021–US-0029, US-0090–US-0095 (EPIC-0001, EPIC-0002, EPIC-0003 all complete)
+- **Stories planned next:** US-0017 (tournament lifecycle), US-0018 (activation)
 
 ---
 

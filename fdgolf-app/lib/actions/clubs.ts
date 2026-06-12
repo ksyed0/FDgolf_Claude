@@ -64,9 +64,7 @@ export async function saveClubsAction(
       is_active: true,
     }))
 
-    const { error: insertError } = await supabase
-      .from('tournament_clubs')
-      .insert(rows)
+    const { error: insertError } = await supabase.from('tournament_clubs').insert(rows)
 
     if (insertError) {
       return { error: insertError.message, success: false }

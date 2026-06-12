@@ -10,15 +10,14 @@ export default async function EditTournamentPage({ params }: { params: { slug: s
 
   const { data: tournament } = await supabase
     .from('tournaments')
-    .select('id, name, slug, venue_id, course_id, starts_at, format, start_style, holes_count, status')
+    .select(
+      'id, name, slug, venue_id, course_id, starts_at, format, start_style, holes_count, status'
+    )
     .eq('slug', params.slug)
     .single()
   if (!tournament) notFound()
 
-  const { data: venues } = await supabase
-    .from('venues')
-    .select('id, name')
-    .order('name')
+  const { data: venues } = await supabase.from('venues').select('id, name').order('name')
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

@@ -71,15 +71,13 @@ export default async function TournamentClubsPage({ params }: PageProps) {
     .eq('tournament_id', tournament.id)
     .eq('is_active', true)
 
-  const activeClubIds = ((tournamentClubs ?? []) as TournamentClubRow[]).map(
-    (row) => row.club_id
-  )
+  const activeClubIds = ((tournamentClubs ?? []) as TournamentClubRow[]).map((row) => row.club_id)
 
   return (
     <ClubPickerForm
       tournamentId={tournament.id}
       tournamentName={tournament.name}
-      allClubs={((allClubs ?? []) as ClubRow[])}
+      allClubs={(allClubs ?? []) as ClubRow[]}
       activeClubIds={activeClubIds}
     />
   )

@@ -14,7 +14,7 @@ export default async function VenuesPage() {
 
   if (venuesError) throw new Error(venuesError.message)
 
-  const venueList = (venues ?? []).map(v => ({
+  const venueList = (venues ?? []).map((v) => ({
     id: v.id,
     name: v.name,
     city: v.city,

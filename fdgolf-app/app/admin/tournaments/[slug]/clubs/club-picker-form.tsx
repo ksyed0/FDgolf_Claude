@@ -40,12 +40,7 @@ function SubmitButton() {
  *   rows in tournament_clubs. If some are toggled off, only the active IDs
  *   are submitted.
  */
-export function ClubPickerForm({
-  tournamentId,
-  tournamentName,
-  allClubs,
-  activeClubIds,
-}: Props) {
+export function ClubPickerForm({ tournamentId, tournamentName, allClubs, activeClubIds }: Props) {
   // "no rows = all clubs active" — if activeClubIds is empty, default to all clubs on
   const initialActive = new Set<string>(
     activeClubIds.length === 0 ? allClubs.map((c) => c.id) : activeClubIds
@@ -72,18 +67,24 @@ export function ClubPickerForm({
       <h1 className="text-2xl font-bold">Available Clubs — {tournamentName}</h1>
 
       <p className="text-sm text-gray-600">
-        Toggle clubs to enable or disable them for this tournament.
-        Disabled clubs will not appear in the player&apos;s bag picker.
+        Toggle clubs to enable or disable them for this tournament. Disabled clubs will not appear
+        in the player&apos;s bag picker.
       </p>
 
       {state.success === true && (
-        <p role="status" className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-4 py-3">
+        <p
+          role="status"
+          className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-4 py-3"
+        >
           Club selection saved!
         </p>
       )}
 
       {state.error !== null && (
-        <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+        <p
+          role="alert"
+          className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3"
+        >
           {state.error}
         </p>
       )}
@@ -95,12 +96,7 @@ export function ClubPickerForm({
         {allClubs
           .filter((club) => activeSet.has(club.id))
           .map((club) => (
-            <input
-              key={`hidden-${club.id}`}
-              type="hidden"
-              name="active_club_id"
-              value={club.id}
-            />
+            <input key={`hidden-${club.id}`} type="hidden" name="active_club_id" value={club.id} />
           ))}
 
         <div className="space-y-2">
@@ -116,12 +112,8 @@ export function ClubPickerForm({
                 }`}
               >
                 <div>
-                  <span className="font-medium text-sm text-gray-900">
-                    {club.display_name}
-                  </span>
-                  <span className="ml-2 text-xs text-gray-500 capitalize">
-                    {club.club_type}
-                  </span>
+                  <span className="font-medium text-sm text-gray-900">{club.display_name}</span>
+                  <span className="ml-2 text-xs text-gray-500 capitalize">{club.club_type}</span>
                 </div>
 
                 <button

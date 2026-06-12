@@ -75,7 +75,9 @@ describe('ClubPickerForm', () => {
 
   it('shows correct active count when all clubs are default-active', () => {
     render(<ClubPickerForm {...defaultProps} activeClubIds={[]} />)
-    expect(screen.getByText(`${sampleClubs.length} of ${sampleClubs.length} clubs active`)).toBeInTheDocument()
+    expect(
+      screen.getByText(`${sampleClubs.length} of ${sampleClubs.length} clubs active`)
+    ).toBeInTheDocument()
   })
 
   // ── Partial active set from existing tournament_clubs rows ───────────────────

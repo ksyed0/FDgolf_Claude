@@ -8,10 +8,12 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function AppChrome() {
   const supabase = createClient()
-  const [{ data: isAdmin }, { data: { user } }] = await Promise.all([
-    supabase.rpc('fdgolf_is_admin'),
-    supabase.auth.getUser(),
-  ])
+  const [
+    { data: isAdmin },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([supabase.rpc('fdgolf_is_admin'), supabase.auth.getUser()])
 
   return (
     <header
@@ -65,9 +67,7 @@ export async function AppChrome() {
           </form>
         )}
 
-        <span className="text-white text-xs opacity-70 hidden sm:inline">
-          built with
-        </span>
+        <span className="text-white text-xs opacity-70 hidden sm:inline">built with</span>
         <span
           className="text-xs font-semibold tracking-widest uppercase px-2 py-0.5 rounded border border-white/30 text-white"
           aria-label="AI/RUN"

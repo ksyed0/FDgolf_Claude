@@ -1,18 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Hoist mocks so factories can reference them
-const {
-  mockRpc,
-  mockDelete,
-  mockInsert,
-  mockFrom,
-  mockEq,
-} = vi.hoisted(() => ({
-  mockRpc:    vi.fn(),
+const { mockRpc, mockDelete, mockInsert, mockFrom, mockEq } = vi.hoisted(() => ({
+  mockRpc: vi.fn(),
   mockDelete: vi.fn(),
   mockInsert: vi.fn(),
-  mockFrom:   vi.fn(),
-  mockEq:     vi.fn(),
+  mockFrom: vi.fn(),
+  mockEq: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -133,7 +127,10 @@ describe('saveClubsAction', () => {
 
     mockFrom.mockReturnValue({ delete: mockDelete })
 
-    const result = await saveClubsAction({ error: null, success: false }, makeFormData('t-uuid', ['club-1']))
+    const result = await saveClubsAction(
+      { error: null, success: false },
+      makeFormData('t-uuid', ['club-1'])
+    )
     expect(result.error).toBe('delete constraint error')
     expect(mockInsert).not.toHaveBeenCalled()
   })

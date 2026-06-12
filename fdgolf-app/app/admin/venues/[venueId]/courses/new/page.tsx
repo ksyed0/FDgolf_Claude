@@ -3,11 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { CourseForm } from './course-form'
 
-export default async function NewCoursePage({
-  params,
-}: {
-  params: { venueId: string }
-}) {
+export default async function NewCoursePage({ params }: { params: { venueId: string } }) {
   const supabase = createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) redirect('/')

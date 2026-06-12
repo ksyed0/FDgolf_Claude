@@ -3,7 +3,9 @@ import { render, screen } from '@testing-library/react'
 
 const { mockFrom, mockNotFound } = vi.hoisted(() => ({
   mockFrom: vi.fn(),
-  mockNotFound: vi.fn(() => { throw new Error('NEXT_NOT_FOUND') }),
+  mockNotFound: vi.fn(() => {
+    throw new Error('NEXT_NOT_FOUND')
+  }),
 }))
 
 vi.mock('next/navigation', () => ({ notFound: mockNotFound }))
@@ -40,7 +42,7 @@ describe('TournamentOrganizersPage', () => {
       // user_roles
       const eqMock = vi.fn()
       eqMock
-        .mockReturnValueOnce({ eq: eqMock })  // first .eq('role', ...)
+        .mockReturnValueOnce({ eq: eqMock }) // first .eq('role', ...)
         .mockResolvedValue({ data: orgRoles, error: null }) // second .eq('tournament_id', ...) resolves
       return {
         select: vi.fn().mockReturnThis(),
@@ -66,9 +68,9 @@ describe('TournamentOrganizersPage', () => {
       }),
     }))
 
-    await expect(
-      TournamentOrganizersPage({ params: { slug: 'nonexistent' } })
-    ).rejects.toThrow('NEXT_NOT_FOUND')
+    await expect(TournamentOrganizersPage({ params: { slug: 'nonexistent' } })).rejects.toThrow(
+      'NEXT_NOT_FOUND'
+    )
 
     expect(mockNotFound).toHaveBeenCalledOnce()
   })
@@ -85,17 +87,13 @@ describe('TournamentOrganizersPage', () => {
         }
       }
       const eqMock = vi.fn()
-      eqMock
-        .mockReturnValueOnce({ eq: eqMock })
-        .mockResolvedValue({ data: [], error: null })
+      eqMock.mockReturnValueOnce({ eq: eqMock }).mockResolvedValue({ data: [], error: null })
       return { select: vi.fn().mockReturnThis(), eq: eqMock }
     })
 
     const page = await TournamentOrganizersPage({ params: { slug: 'spring-open' } })
     render(page)
 
-    expect(
-      screen.getByText('No organizers assigned yet.')
-    ).toBeInTheDocument()
+    expect(screen.getByText('No organizers assigned yet.')).toBeInTheDocument()
   })
 })

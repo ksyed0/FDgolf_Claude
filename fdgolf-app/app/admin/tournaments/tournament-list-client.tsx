@@ -57,19 +57,22 @@ export function TournamentListClient({ tournaments }: TournamentListClientProps)
         </Button>
       </div>
 
-      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-
-      {tournaments.length === 0 && (
-        <p className="text-gray-500 text-sm">No tournaments yet.</p>
+      {error && (
+        <p role="alert" className="text-sm text-red-600">
+          {error}
+        </p>
       )}
 
+      {tournaments.length === 0 && <p className="text-gray-500 text-sm">No tournaments yet.</p>}
+
       <ul className="space-y-2">
-        {tournaments.map(t => (
+        {tournaments.map((t) => (
           <li key={t.id}>
             <div className="flex items-center justify-between border rounded px-4 py-3">
               <div>
-                <Link href={`/admin/tournaments/${t.slug}`}
-                  className="font-medium hover:underline">{t.name}</Link>
+                <Link href={`/admin/tournaments/${t.slug}`} className="font-medium hover:underline">
+                  {t.name}
+                </Link>
                 <div className="text-sm text-gray-500 space-x-2">
                   {t.venues?.name && <span>{t.venues.name}</span>}
                   {t.starts_at && <span>· {new Date(t.starts_at).toLocaleDateString()}</span>}
@@ -77,15 +80,18 @@ export function TournamentListClient({ tournaments }: TournamentListClientProps)
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Link href={`/admin/tournaments/${t.slug}/edit`}
-                  className="text-sm text-gray-600 hover:text-gray-800">
+                <Link
+                  href={`/admin/tournaments/${t.slug}/edit`}
+                  className="text-sm text-gray-600 hover:text-gray-800"
+                >
                   Edit
                 </Link>
                 <button
                   type="button"
                   disabled={isPending}
                   onClick={() => handleDeleteClick(t.id)}
-                  className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50">
+                  className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
+                >
                   Delete
                 </button>
               </div>
@@ -99,14 +105,20 @@ export function TournamentListClient({ tournaments }: TournamentListClientProps)
                       Delete &ldquo;{t.name}&rdquo;? This cannot be undone.
                     </span>
                     <div className="flex gap-2">
-                      <button type="button" onClick={handleCancel}
+                      <button
+                        type="button"
+                        onClick={handleCancel}
                         disabled={isPending}
-                        className="text-sm text-gray-600 hover:text-gray-800 disabled:opacity-50">
+                        className="text-sm text-gray-600 hover:text-gray-800 disabled:opacity-50"
+                      >
                         Cancel
                       </button>
-                      <button type="button" onClick={() => handleConfirm(t.id)}
+                      <button
+                        type="button"
+                        onClick={() => handleConfirm(t.id)}
                         disabled={isPending}
-                        className="text-sm text-red-700 font-medium hover:text-red-900 disabled:opacity-50">
+                        className="text-sm text-red-700 font-medium hover:text-red-900 disabled:opacity-50"
+                      >
                         {isPending ? 'Deleting…' : 'Confirm delete'}
                       </button>
                     </div>
@@ -116,8 +128,11 @@ export function TournamentListClient({ tournaments }: TournamentListClientProps)
                     <span className="text-sm text-red-800">
                       Only draft tournaments can be deleted.
                     </span>
-                    <button type="button" onClick={handleCancel}
-                      className="text-sm text-gray-600 hover:text-gray-800">
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="text-sm text-gray-600 hover:text-gray-800"
+                    >
                       Cancel
                     </button>
                   </>

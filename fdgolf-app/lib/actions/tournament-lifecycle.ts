@@ -76,7 +76,7 @@ export async function getPreflightChecks(
 
     return {
       checks,
-      allBlockingPassed: checks.filter(c => !c.advisory).every(c => c.passed),
+      allBlockingPassed: checks.filter((c) => !c.advisory).every((c) => c.passed),
     }
   }
 
@@ -140,7 +140,7 @@ export async function getPreflightChecks(
 
   return {
     checks,
-    allBlockingPassed: checks.filter(c => !c.advisory).every(c => c.passed),
+    allBlockingPassed: checks.filter((c) => !c.advisory).every((c) => c.passed),
   }
 }
 
@@ -168,9 +168,9 @@ export async function transitionTournamentAction(
   // Re-run blocking checks server-side for transitions that require them
   if (targetStatus === 'registration_open' || targetStatus === 'active') {
     const result = await getPreflightChecks(tournamentId, targetStatus)
-    const failed = result.checks.filter(c => !c.advisory && !c.passed)
+    const failed = result.checks.filter((c) => !c.advisory && !c.passed)
     if (failed.length > 0) {
-      return { error: `Pre-flight checks failed: ${failed.map(c => c.label).join(', ')}.` }
+      return { error: `Pre-flight checks failed: ${failed.map((c) => c.label).join(', ')}.` }
     }
   }
 
@@ -181,7 +181,9 @@ export async function transitionTournamentAction(
 
   if (updateError) return { error: updateError.message }
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   await supabase.from('tournament_transitions').insert({
     tournament_id: tournamentId,
     from_status: tournament.status,

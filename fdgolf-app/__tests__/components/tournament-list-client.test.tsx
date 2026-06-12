@@ -15,13 +15,19 @@ vi.mock('next/navigation', () => ({
 import { TournamentListClient } from '@/app/admin/tournaments/tournament-list-client'
 
 const DRAFT_TOURNAMENT = {
-  id: 't-1', slug: 'spring-open', name: 'Spring Open',
-  status: 'draft', starts_at: '2026-07-01T10:00:00Z',
+  id: 't-1',
+  slug: 'spring-open',
+  name: 'Spring Open',
+  status: 'draft',
+  starts_at: '2026-07-01T10:00:00Z',
   venues: { name: 'Granite Ridge GC' },
 }
 const ACTIVE_TOURNAMENT = {
-  id: 't-2', slug: 'summer-cup', name: 'Summer Cup',
-  status: 'active', starts_at: '2026-08-01T10:00:00Z',
+  id: 't-2',
+  slug: 'summer-cup',
+  name: 'Summer Cup',
+  status: 'active',
+  starts_at: '2026-08-01T10:00:00Z',
   venues: null,
 }
 

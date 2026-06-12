@@ -12,10 +12,7 @@ vi.mock('@/lib/supabase/server', () => ({
   }),
 }))
 
-import {
-  transitionTournamentAction,
-  getPreflightChecks,
-} from '@/lib/actions/tournament-lifecycle'
+import { transitionTournamentAction, getPreflightChecks } from '@/lib/actions/tournament-lifecycle'
 
 // Helper: build a chainable Supabase select mock that resolves to data
 function selectChain(data: unknown, error: unknown = null) {
@@ -101,7 +98,11 @@ describe('transitionTournamentAction', () => {
     expect(result.error).toBeNull()
     expect(mockUpdate).toHaveBeenCalledWith({ status: 'completed' })
     expect(mockInsert).toHaveBeenCalledWith(
-      expect.objectContaining({ from_status: 'active', to_status: 'completed', changed_by: 'user-1' })
+      expect.objectContaining({
+        from_status: 'active',
+        to_status: 'completed',
+        changed_by: 'user-1',
+      })
     )
   })
 
@@ -121,7 +122,14 @@ describe('transitionTournamentAction', () => {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({
-            data: { id: 't-1', name: 'Test', slug: 'test', starts_at: '2026-07-01', venue_id: null, course_id: null },
+            data: {
+              id: 't-1',
+              name: 'Test',
+              slug: 'test',
+              starts_at: '2026-07-01',
+              venue_id: null,
+              course_id: null,
+            },
             error: null,
           }),
         }),
@@ -156,7 +164,14 @@ describe('getPreflightChecks — registration_open', () => {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({
-            data: { id: 't-1', name, slug: 'spring-open', starts_at: startsAt, venue_id: venueId, course_id: courseId },
+            data: {
+              id: 't-1',
+              name,
+              slug: 'spring-open',
+              starts_at: startsAt,
+              venue_id: venueId,
+              course_id: courseId,
+            },
             error: null,
           }),
         }),
@@ -182,7 +197,7 @@ describe('getPreflightChecks — registration_open', () => {
     setupRegistrationChecks({ venueId: null as unknown as string })
     const result = await getPreflightChecks('t-1', 'registration_open')
     expect(result.allBlockingPassed).toBe(false)
-    const venueCheck = result.checks.find(c => c.key === 'venue_linked')
+    const venueCheck = result.checks.find((c) => c.key === 'venue_linked')
     expect(venueCheck?.passed).toBe(false)
   })
 
@@ -190,7 +205,7 @@ describe('getPreflightChecks — registration_open', () => {
     setupRegistrationChecks({ orgCount: 0 })
     const result = await getPreflightChecks('t-1', 'registration_open')
     expect(result.allBlockingPassed).toBe(true)
-    const orgCheck = result.checks.find(c => c.key === 'organizer')
+    const orgCheck = result.checks.find((c) => c.key === 'organizer')
     expect(orgCheck?.advisory).toBe(true)
     expect(orgCheck?.passed).toBe(false)
   })
@@ -199,8 +214,8 @@ describe('getPreflightChecks — registration_open', () => {
     setupRegistrationChecks()
     const result = await getPreflightChecks('t-1', 'registration_open')
     expect(result.checks).toHaveLength(5)
-    expect(result.checks.filter(c => !c.advisory)).toHaveLength(4)
-    expect(result.checks.filter(c => c.advisory)).toHaveLength(1)
+    expect(result.checks.filter((c) => !c.advisory)).toHaveLength(4)
+    expect(result.checks.filter((c) => c.advisory)).toHaveLength(1)
   })
 })
 
@@ -217,7 +232,14 @@ describe('getPreflightChecks — active', () => {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({
-            data: { id: 't-1', name: 'X', slug: 'x', starts_at: '2026-07-01', venue_id: 'v-1', course_id: 'c-1' },
+            data: {
+              id: 't-1',
+              name: 'X',
+              slug: 'x',
+              starts_at: '2026-07-01',
+              venue_id: 'v-1',
+              course_id: 'c-1',
+            },
             error: null,
           }),
         }),
@@ -271,14 +293,14 @@ describe('getPreflightChecks — active', () => {
     setupActiveChecks({ configuredHoles: 16 })
     const result = await getPreflightChecks('t-1', 'active')
     expect(result.allBlockingPassed).toBe(false)
-    expect(result.checks.find(c => c.key === 'holes_configured')?.passed).toBe(false)
+    expect(result.checks.find((c) => c.key === 'holes_configured')?.passed).toBe(false)
   })
 
   it('returns allBlockingPassed=false when pins not all placed', async () => {
     setupActiveChecks({ pinnedHoles: 14 })
     const result = await getPreflightChecks('t-1', 'active')
     expect(result.allBlockingPassed).toBe(false)
-    expect(result.checks.find(c => c.key === 'pins_placed')?.passed).toBe(false)
+    expect(result.checks.find((c) => c.key === 'pins_placed')?.passed).toBe(false)
   })
 
   it('advisory checks (teams, registrants) do not affect allBlockingPassed', async () => {
@@ -291,7 +313,7 @@ describe('getPreflightChecks — active', () => {
     setupActiveChecks()
     const result = await getPreflightChecks('t-1', 'active')
     expect(result.checks).toHaveLength(4)
-    expect(result.checks.filter(c => !c.advisory)).toHaveLength(2)
-    expect(result.checks.filter(c => c.advisory)).toHaveLength(2)
+    expect(result.checks.filter((c) => !c.advisory)).toHaveLength(2)
+    expect(result.checks.filter((c) => c.advisory)).toHaveLength(2)
   })
 })

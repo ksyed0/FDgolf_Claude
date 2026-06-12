@@ -14,11 +14,7 @@ type ActionState = { error: string | null }
 export async function checkSlugAvailableAction(slug: string): Promise<{ available: boolean }> {
   if (!slug) return { available: false }
   const supabase = createClient()
-  const { data } = await supabase
-    .from('tournaments')
-    .select('id')
-    .eq('slug', slug)
-    .maybeSingle()
+  const { data } = await supabase.from('tournaments').select('id').eq('slug', slug).maybeSingle()
   return { available: data === null }
 }
 
@@ -37,16 +33,16 @@ export async function createTournamentAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const name       = (formData.get('name')        as string | null)?.trim() ?? ''
-  const venue      = (formData.get('venue')       as string | null)?.trim() ?? ''
-  const starts_at  = (formData.get('starts_at')   as string | null)?.trim() ?? ''
-  const format     = (formData.get('format')      as string | null) ?? 'best_ball'
+  const name = (formData.get('name') as string | null)?.trim() ?? ''
+  const venue = (formData.get('venue') as string | null)?.trim() ?? ''
+  const starts_at = (formData.get('starts_at') as string | null)?.trim() ?? ''
+  const format = (formData.get('format') as string | null) ?? 'best_ball'
   const start_style = (formData.get('start_style') as string | null) ?? 'shotgun'
-  const holes_count = parseInt(formData.get('holes_count') as string ?? '18', 10)
+  const holes_count = parseInt((formData.get('holes_count') as string) ?? '18', 10)
   const slugOverride = (formData.get('slug_override') as string | null)?.trim() ?? ''
 
-  if (!name)      return { error: 'Tournament name is required.' }
-  if (!venue)     return { error: 'Venue is required.' }
+  if (!name) return { error: 'Tournament name is required.' }
+  if (!venue) return { error: 'Venue is required.' }
   if (!starts_at) return { error: 'Start date and time are required.' }
 
   if (slugOverride && !/^[a-z0-9-]+$/.test(slugOverride)) {
@@ -55,7 +51,9 @@ export async function createTournamentAction(
 
   const slug = slugOverride || generateSlug(name)
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   const { data, error } = await supabase
     .from('tournaments')
@@ -99,11 +97,11 @@ export async function updateTournamentAction(
   const name = (formData.get('name') as string | null)?.trim() ?? ''
   if (!name) return { error: 'Tournament name is required.' }
 
-  const venueId    = (formData.get('venue_id')     as string | null)?.trim() || null
-  const courseId   = (formData.get('course_id')    as string | null)?.trim() || null
-  const startsAt   = (formData.get('starts_at')    as string | null)?.trim() || null
-  const format     = (formData.get('format')       as string | null)?.trim() || null
-  const startStyle = (formData.get('start_style')  as string | null)?.trim() || null
+  const venueId = (formData.get('venue_id') as string | null)?.trim() || null
+  const courseId = (formData.get('course_id') as string | null)?.trim() || null
+  const startsAt = (formData.get('starts_at') as string | null)?.trim() || null
+  const format = (formData.get('format') as string | null)?.trim() || null
+  const startStyle = (formData.get('start_style') as string | null)?.trim() || null
   const holesCount = formData.get('holes_count')
     ? parseInt(formData.get('holes_count') as string, 10)
     : null
