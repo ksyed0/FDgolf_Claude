@@ -19,7 +19,7 @@ BUG-0001: Success banner never appears after a successful save
 Severity: High
 Related Story: US-0015
 Related Task: TASK-0067
-Status: Open
+Status: Verified
 GH Issue: #5
 Fix Branch: bugfix/BUG-0001-success-banner
 Lesson Encoded: No
@@ -70,13 +70,16 @@ Fix: Update the JSDoc comment to accurately describe the two cases: (1) zero row
 tournament, all clubs active by convention; (2) rows present, all `is_active = true` = explicitly
 all active after a save. The bag picker query for US-0031 must handle both.
 
+Verified fix: `lib/actions/clubs.ts` JSDoc now accurately describes the two-state invariant and
+explicitly notes that US-0031 bag picker must handle both zero-rows and all-active-rows cases.
+
 ---
 
 BUG-0003: vitest.config.ts still marks [slug]/page.tsx as "Stub Server Component" after replacement
 Severity: Low
 Related Story: US-0015
 Related Task: TASK-0067
-Status: Open
+Status: Verified
 GH Issue: #7
 Fix Branch: bugfix/BUG-0003-vitest-comment
 Lesson Encoded: No
@@ -92,13 +95,16 @@ to match the pattern used for the other excluded pages.
 Fix: Update the comment to:
   'app/admin/tournaments/[slug]/page.tsx',  // Server Component, integration-tested
 
+Verified fix: `vitest.config.ts` line now reads `// Server Component nav page` — stale "Stub"
+comment removed during EPIC-0002 rebuild.
+
 ---
 
 BUG-0004: clubs/page.tsx silently continues with empty club list on DB error
 Severity: Medium
 Related Story: US-0015
 Related Task: TASK-0067
-Status: Open
+Status: Verified
 GH Issue: #8
 Fix Branch: bugfix/BUG-0004-clubs-fetch-error-handling
 Lesson Encoded: No
@@ -118,6 +124,9 @@ Next.js error boundary.
 
 Fix: Either `throw clubsError` (or a new Error) to let the Next.js error boundary handle it, or
 render an explicit error UI. Do not silently continue with an empty list for a critical data fetch.
+
+Verified fix: `clubs/page.tsx` now returns an explicit error UI (`<p className="text-red-600">Failed
+to load clubs. Please refresh the page.</p>`) when `clubsError` is truthy, preventing silent fallback.
 
 ---
 
@@ -274,9 +283,9 @@ BUG-0010: ArrowDown on trigger opens dropdown but does not move keyboard focus t
 Severity: Low
 Related Story: US-0012
 Related Task: TASK-0057
-Status: Open
+Status: Closed
 GH Issue: #14
-Fix Branch: (none yet)
+Fix Branch: (none — component retired)
 Lesson Encoded: No
 
 In `course-holes-form.tsx` (lines 137-139), when ArrowDown is pressed on the trigger button while
@@ -304,13 +313,16 @@ React re-renders the listbox:
     }
   }, [presetDropdownOpen, focusedPresetIndex])
 
+Closed — `course-holes-form.tsx` (US-0012 preset dropdown) was deleted in the EPIC-0002 rebuild
+(Session 5). Hole editing moved to the Venues admin section. This bug no longer applies.
+
 ---
 
 BUG-0011: PinPlacementMap crashes with TypeError when holes array is empty
 Severity: High
 Related Story: US-0013
 Related Task: TASK-0059
-Status: Open
+Status: Verified
 GH Issue: #15
 Fix Branch: bugfix/BUG-0011-empty-holes-guard
 Lesson Encoded: No
@@ -334,13 +346,15 @@ Fix: In `page.tsx`, add a guard after fetching holes:
 Alternatively, add a guard in `PinPlacementMap` that renders an empty-state message and
 returns early when `holes.length === 0`, rather than proceeding to access `localHoles[0]`.
 
+Verified fix: `pins/page.tsx` lines 65-68 redirect to the tournament page when `holesData` is empty.
+
 ---
 
 BUG-0012: Map initial zoom is 15 but AC-0058 requires zoom 16
 Severity: Low
 Related Story: US-0013
 Related Task: TASK-0059
-Status: Open
+Status: Verified
 GH Issue: #16
 Fix Branch: bugfix/BUG-0012-zoom-level
 Lesson Encoded: No
@@ -354,13 +368,15 @@ flag positions and tee boxes; zoom 15 is one level coarser.
 
 Fix: Change `zoom: 15` to `zoom: 16`.
 
+Verified fix: `pin-placement-map.tsx` `initialViewState` already has `zoom: 16`.
+
 ---
 
 BUG-0013: savePinAction updates any hole by ID — no course-scoping check
 Severity: Medium
 Related Story: US-0013
 Related Task: TASK-0061
-Status: Open
+Status: Verified
 GH Issue: #17
 Fix Branch: bugfix/BUG-0013-hole-ownership-check
 Lesson Encoded: No
@@ -390,14 +406,17 @@ linked to `tournament_slug`:
 Alternatively, pass `course_id` in the FormData (the page already has it) and add
 `.eq('course_id', course_id)` to the update filter.
 
+Verified fix: `savePinAction` and `saveTeeCoordAction` both scope their updates with
+`.eq('id', holeId).eq('course_id', courseId)`, preventing cross-tournament writes.
+
 ---
 
 BUG-0014: useEffect dependency suppression hides localHoles staleness risk
 Severity: Low
 Related Story: US-0013
 Related Task: TASK-0059
-Status: Open
-Fix Branch: (none yet)
+Status: Verified
+Fix Branch: bugfix/open-bugs-resolution
 Lesson Encoded: No
 
 `fdgolf-app/app/admin/tournaments/[slug]/course/pins/pin-placement-map.tsx` (line 94):
@@ -420,3 +439,61 @@ accessible inside the effect without declaring it as a dependency:
     // ...
   }, [currentHoleIndex, mode])
 This satisfies exhaustive-deps without a suppression comment.
+
+Verified fix (bugfix/open-bugs-resolution): `getSavedCoords` extracted to module level (no closure
+deps). `localHolesRef` added with a sync effect. Hole-change effect now reads
+`localHolesRef.current[currentHoleIndex]` — `eslint-disable-next-line` comment removed.
+Type-check and lint pass cleanly.
+
+---
+
+BUG-0015: Next.js 14.2.35 — multiple security CVEs (14 advisories)
+Severity: High
+Related Story: (none — dependency)
+Related Task: (none)
+Status: Open
+Fix Branch: (none — requires Next.js 15/16 migration, tracked separately)
+Lesson Encoded: No
+
+`npm audit` reports 14 CVEs against `next@14.2.35` including:
+- GHSA-9g9p-9gw9-jx7f: DoS via Image Optimizer remotePatterns
+- GHSA-h25m-26qc-wcjf: HTTP request deserialization DoS via RSC
+- GHSA-ggv3-7p47-pfv8: HTTP request smuggling in rewrites
+- GHSA-3x4c-7xq6-9pq8: Unbounded next/image disk cache growth
+- GHSA-q4gf-8mx6-v5v3 / GHSA-8h8q-6873-q5fj: DoS with Server Components
+- GHSA-3g8h-86w9-wvmq: Middleware/proxy redirect cache poisoning
+- GHSA-ffhc-5mcf-pf4q: XSS in App Router apps using CSP nonces
+- GHSA-vfv6-92ff-j949: Cache poisoning via RSC cache-busting collisions
+- GHSA-gx5p-jg67-6x7h: XSS in beforeInteractive scripts with untrusted input
+- GHSA-h64f-5h5j-jqjh: DoS in Image Optimization API
+- GHSA-c4j6-fc7j-m34r: SSRF in WebSocket upgrade apps
+- GHSA-wfc6-r584-vfw7: RSC response cache poisoning
+- GHSA-36qx-fr4f-26g5: Middleware/proxy bypass in Pages Router i18n apps
+- postcss GHSA-qx2v-qp2m-jg93: XSS via unescaped </style> (bundled with Next.js)
+
+`npm audit fix --force` would upgrade to `next@16.2.9` — a breaking change. Next.js 15/16
+introduces async `cookies()` / `headers()` APIs that break every Server Action in this codebase
+(a known constraint, noted in MEMORY.md). The risk is low: the app is not yet live, `remotePatterns`
+and custom rewrites/middleware redirects are not in use.
+
+Fix: Plan a dedicated Next.js 15 migration story covering the async API migration, config changes,
+and re-validation of all Server Actions. Do not run `npm audit fix --force` without that plan.
+
+---
+
+BUG-0016: glob CLI command injection in eslint-config-next (dev-only)
+Severity: High (dev dependency only — no production impact)
+Related Story: (none — dependency)
+Related Task: (none)
+Status: Open
+Fix Branch: (none — same root as BUG-0015)
+Lesson Encoded: No
+
+`glob@10.2.0–10.4.5` (GHSA-5j98-mcp5-4vw2) has a CLI command injection via `-c/--cmd` that
+executes matched files with `shell: true`. The vulnerable package is a transitive dep of
+`eslint-config-next@14.x → @next/eslint-plugin-next → glob`. It only affects the `glob` CLI
+tool, which is not invoked during the Next.js build, tests, or production runtime. This is
+exclusively a developer workstation risk (if someone runs `glob --cmd` with untrusted input
+from the terminal, which is not part of any project workflow).
+
+Fix: Same path as BUG-0015 — upgrade to `eslint-config-next@16.x` which requires `next@16.x`.
