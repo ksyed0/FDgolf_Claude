@@ -43,11 +43,11 @@ shot write ripples automatically to team standings.
 | D2 | **Chained DB triggers** drive recompute (not app-side RPC calls). | Welds scoring to the data change — every write path (initial, offline sync replay, admin edit) scores automatically. Serves the offline-first constraint and the "leaderboard never disagrees with the round" invariant. |
 | D3 | **All functions `SECURITY DEFINER` with `SET search_path = public, pg_temp`.** | A player can write own shots (RLS) but the cascade writes team-wide rows that player RLS would block. Definer rights confine the privileged write to controlled, tested functions. Locked search_path prevents the classic privilege-escalation footgun. |
 | D4 | **Withdrawn source of truth = `tournament_registrations.status <> 'withdrawn'`.** | Reconciles AC-0195 ("all team_size members") with AC-0199 ("withdrawn excluded"): `team_size` is the default expected count; non-withdrawn registrations are the live roster. |
-| D5 | **Standard competition ranking** (`RANK()`, "T2"). | Golf-leaderboard convention. Tied totals share rank; next rank skips. |
+| D5 | **Standard competition ranking** (`RANK()`, "T2") keyed on **to-par** (`total_vs_par`), not raw strokes. | Golf-leaderboard convention. Tied to-par share rank; next rank skips. To-par is the only key comparable across teams thru different hole counts (a team −2 thru 9 correctly leads −1 thru 18); raw stroke total would rank a team thru 3 ahead of a team thru 18. |
 | D6 | **3-tier contributing-player tie-break:** final-over-provisional → earliest `updated_at` → lowest `player_id`. | Stable "BEST" badge across recomputes; awards credit to the player who actually holed out first. |
 | D7 | **`>8` shots auto-finalizes the hole** (AC-0194). | Pace-of-play safety valve, enforced in the DB, not as a UI prompt. |
 | D8 | **No PII in EPIC-0006 views.** | Scoring layer exposes scores/ranks/status only. EPIC-0007 joins privacy-filtered identity separately. |
-| D9 | **`team_standings` LEFT JOINs from `teams`.** | All registered teams appear (total=0, thru=0, sorted last) so a freshly-started tournament doesn't render an empty leaderboard (serves US-0057). |
+| D9 | **`team_standings` LEFT JOINs from `teams`.** | All registered teams appear (total=0, thru=0). With to-par ranking (D5) a not-yet-started team sits at even par (E) mid-pack — the normal pre-tee-off leaderboard state — so a freshly-started tournament doesn't render an empty leaderboard (serves US-0057). |
 | D10 | **pgTAP** is the test harness, run via `supabase test db`. | Tests the functions/triggers in the DB where they live; no JS mocking layer. |
 
 ---
@@ -152,7 +152,9 @@ Thin wrapper: call `calc_best_ball_for_hole`; if it returns a score, upsert `tea
 ### 4.5 `team_hole_vs_par` view — US-0051
 
 Per-hole and cumulative team score-vs-par. Joins par via
-`team_hole_scores → rounds → tournaments → courses → holes ON (course_id, number)`.
+`team_hole_scores → teams → tournaments → courses → holes ON (course_id, number)`
+(`team_hole_scores` keys on `team_id`, so the course is reached through `teams`/`tournaments`, not
+through `rounds`).
 
 ```
 SELECT team_id, tournament_id, hole_number,
@@ -173,22 +175,28 @@ teams appear (D9).
 
 ```
 SELECT t.id AS team_id, t.tournament_id, t.team_number,
-       COALESCE(SUM(ths.best_ball_score), 0)            AS total_score,
-       COALESCE(SUM(ths.best_ball_score - h.par), 0)    AS total_vs_par,
+       COALESCE(SUM(ths.best_ball_score), 0)            AS total_score,    -- AC-0191 (raw, display)
+       COALESCE(SUM(ths.best_ball_score - h.par), 0)    AS total_vs_par,   -- the ranking key
        COUNT(DISTINCT ths.hole_number)                  AS thru,
        COALESCE(bool_or(ths.status = 'provisional'), false) AS has_provisional,   -- AC-0200
        RANK() OVER (
          PARTITION BY t.tournament_id
-         ORDER BY COALESCE(SUM(ths.best_ball_score), 0) ASC)         AS rank      -- AC-0193 (T2)
+         ORDER BY COALESCE(SUM(ths.best_ball_score - h.par), 0) ASC)      AS rank  -- AC-0193 (T2), to-par
 FROM teams t
+JOIN tournaments tn          ON tn.id = t.tournament_id          -- reach the course for par
 LEFT JOIN team_hole_scores ths ON ths.team_id = t.id
-LEFT JOIN ... holes h
+LEFT JOIN holes h            ON h.course_id = tn.course_id
+                            AND h.number    = ths.hole_number     -- correlate par to each scored hole
 GROUP BY t.id, t.tournament_id, t.team_number
-ORDER BY total_score ASC, thru DESC                                              -- AC-0192
+ORDER BY total_vs_par ASC, thru DESC                                              -- AC-0192 (to-par, then thru)
 ```
 
-`RANK()` orders by `total_score` **only** (equal totals genuinely tie → "T2"); the outer
-`ORDER BY` adds `thru DESC` so tied teams still display in a sensible sequence.
+`RANK()` keys off `total_vs_par` **only** (equal to-par genuinely tie → "T2"); the outer `ORDER BY`
+adds `thru DESC` so tied teams display in a sensible sequence. Raw `total_score` is retained as a
+display column (AC-0191) but is **not** the ranking key — see D5. The `holes` join reaches par via
+`teams → tournaments → courses` (course_id on the tournament); `h.number = ths.hole_number`
+correlates the right par to each scored hole, and the LEFT JOIN keeps not-yet-started teams in the
+result at `vs_par = 0`.
 
 ### 4.7 Provisional surfacing — US-0055
 
