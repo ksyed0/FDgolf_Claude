@@ -123,7 +123,7 @@ npm run plan:test        # Run PlanVisualizer Jest tests
 | Protocol | Rule |
 |----------|------|
 | Unit testing | ≥80% coverage; all tests must pass before any commit |
-| Git workflow | `feature/US-XXXX-short-name` → `develop` (PR, squash merge) → `main` |
+| Git workflow | `feature/US-XXXX-short-name` → `develop` (PR, squash merge) → `main` (PR, squash merge). **Never push directly to `develop` or `main`.** Never merge feature branches directly to `main` — all code must go through `develop` first. |
 | Parallel builds | Use `isolation: "worktree"` to prevent branch cross-contamination |
 | Session close | Update `progress.md` and `MEMORY.md` before ending |
 | New artefact IDs | Read `docs/ID_REGISTRY.md` first; increment immediately after use |

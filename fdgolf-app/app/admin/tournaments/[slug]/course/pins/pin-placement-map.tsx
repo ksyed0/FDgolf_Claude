@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useTransition } from 'react'
+import { useState, useEffect, useCallback, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Map, { Marker } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -29,6 +29,16 @@ interface Props {
   courseId: string
   tournamentVenue: string
   tournamentSlug: string
+}
+
+function getSavedCoords(hole: HoleCoords, m: PlacementMode): { lat: number; lng: number } | null {
+  if (m === 'pin') {
+    return hole.pin_lat !== null && hole.pin_lng !== null
+      ? { lat: hole.pin_lat, lng: hole.pin_lng }
+      : null
+  }
+  const tee = hole.tees.find((t) => t.colour === m)
+  return tee && tee.lat !== null && tee.lng !== null ? { lat: tee.lat, lng: tee.lng } : null
 }
 
 /**
@@ -60,37 +70,31 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
   // Local hole state — starts from server data
   const [localHoles, setLocalHoles] = useState<HoleCoords[]>(holes)
 
+  // Ref kept in sync with localHoles so the hole-change effect can read the latest
+  // hole data without declaring localHoles as a dependency (which would cause spurious
+  // resets on every optimistic update).
+  const localHolesRef = useRef<HoleCoords[]>(holes)
+  useEffect(() => {
+    localHolesRef.current = localHoles
+  }, [localHoles])
+
   const [actionState, setActionState] = useState<{ error: string | null }>({ error: null })
   const [saveSuccess, setSaveSuccess] = useState(false)
 
   const currentHole = localHoles[currentHoleIndex]
   const pinsSetCount = localHoles.filter((h) => h.pin_lat !== null).length
 
-  // Derive the pending coords seed for current hole+mode
-  function getSavedCoords(hole: HoleCoords, m: PlacementMode): { lat: number; lng: number } | null {
-    if (m === 'pin') {
-      return hole.pin_lat !== null && hole.pin_lng !== null
-        ? { lat: hole.pin_lat, lng: hole.pin_lng }
-        : null
-    }
-    const tee = hole.tees.find((t) => t.colour === m)
-    return tee && tee.lat !== null && tee.lng !== null ? { lat: tee.lat, lng: tee.lng } : null
-  }
-
   const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(
     getSavedCoords(currentHole, mode)
   )
 
   // When hole or mode changes, reset pending coords and status messages.
-  // getSavedCoords is a pure function of localHoles — including it would cause
-  // spurious resets on optimistic updates, so we read localHoles via the index directly.
   useEffect(() => {
-    const hole = localHoles[currentHoleIndex]
+    const hole = localHolesRef.current[currentHoleIndex]
     if (!hole) return
     setPendingCoords(getSavedCoords(hole, mode))
     setSaveSuccess(false)
     setActionState({ error: null })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentHoleIndex, mode])
 
   // When switching holes, reset mode to 'pin'
