@@ -536,9 +536,36 @@ removes. Any reconciliation MUST preserve `teams.team_size`/`team_number`,
 `tournament_registrations.team_id`, and `rounds`, or EPIC-0006 breaks.
 
 Discovered: EPIC-0006 implementation (Forge) + code review (Lens), 2026-06-12.
-Fix: Architectural decision on which schema shape is canonical, then a reconciliation migration (or a
-rewrite of the epic0003 migration). Out of scope for EPIC-0006; likely owned by the session that
-authored the `9c053ef` merge.
+
+CANONICAL SCHEMA DETERMINED (Conductor investigation, 2026-06-12): the LIVE application code
+(EPIC-0001/0002/0003, "428 tests passing") uses the **epic0003 shape**, confirmed by:
+  - `app/profile/page.tsx`, `lib/actions/players.ts`, `lib/actions/invitations.ts` → `players.user_id`
+    and `players.full_name` (epic0003), NOT `players.id = auth.uid` / `players.name` (initial_schema).
+  - `lib/actions/teams.ts`, `lib/actions/csv-import.ts`, `app/.../teams/page.tsx` → `team_members`
+    join table (epic0003), NOT `tournament_registrations.team_id` (initial_schema).
+  - epic0003 `teams` has NO `team_size` / `team_number`; `tournament_registrations` has NO `team_id`.
+  - NO app code references `rounds` / `shots` / `hole_scores` / `team_hole_scores` — those tables
+    exist only in initial_schema and are unused until EPIC-0005/0006.
+
+Therefore the registration/team tables are canonically the **epic0003 shape**; `initial_schema.sql`
+(+ master_data_v2) is a SUPERSEDED design for those tables that the merge failed to remove.
+
+IMPACT ON EPIC-0006 (important): the scoring engine on `feature/epic0006-scoring` was designed and
+built against the SUPERSEDED initial_schema shape (`tournament_registrations.team_id`,
+`teams.team_size`, `rounds`, `players.id = auth.uid`). It passes 32/32 pgTAP only because the running
+local DB still holds that old shape. Against the canonical epic0003 schema it will NOT work as written:
+team membership must come from `team_members(team_id, player_id)`, there is no `teams.team_size`
+(roster size = count of team_members), and `rounds`/scoring tables must be re-based onto the epic0003
+`players.id` model. **EPIC-0006 requires rework after the schema is reconciled.**
+
+Fix (architectural, human/Keystone decision required):
+  1. Make the registration/team tables canonical = epic0003 (remove/avoid the duplicate definitions
+     in initial_schema + master_data_v2).
+  2. Re-base the round-tracking + scoring tables (`rounds`, `shots`, `hole_scores`,
+     `team_hole_scores`, `clubs`, `tournament_clubs`) onto the epic0003 `players`/`teams` model.
+  3. Rework EPIC-0006 scoring functions/views to use `team_members` for membership and drop the
+     `team_size` assumption.
+This is cross-cutting and affects the other session's live EPIC-0003 work — must not be hacked piecemeal.
 
 Verified fix (feature/nextjs-16-upgrade): `eslint-config-next@16.2.9` installed alongside
 `next@16.2.9` — the vulnerable `glob@10.x` dep is replaced. ESLint config migrated to flat
