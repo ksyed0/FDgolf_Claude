@@ -33,6 +33,11 @@ export default defineConfig({
         'app/admin/venues/[venueId]/courses/[courseId]/edit/page.tsx', // Server Component, integration-tested
         'app/admin/tournaments/[slug]/edit/page.tsx', // Server Component, integration-tested
         'app/admin/tournaments/[slug]/organizers/page.tsx', // Server Component, integration-tested
+        'app/admin/tournaments/[slug]/players/page.tsx', // Server Component, integration-tested
+        'app/admin/tournaments/[slug]/players/import/page.tsx', // Server Component, integration-tested
+        'app/admin/tournaments/[slug]/teams/page.tsx', // Server Component, integration-tested
+        'app/profile/page.tsx', // Server Component, integration-tested
+        'app/register/[slug]/page.tsx', // Server Component, integration-tested
         '**/*.config.*',
         '**/node_modules/**',
         '**/.next/**',
