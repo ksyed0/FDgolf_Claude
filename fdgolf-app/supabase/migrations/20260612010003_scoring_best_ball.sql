@@ -7,8 +7,11 @@
 --   best_score             = MIN gross across non-withdrawn members who have a score
 --   contributing_player_id = holder of the MIN, broken by:
 --       (1) final preferred over provisional,
---       (2) earliest hole_scores.updated_at,
---       (3) lowest player_id
+--       (2) earliest updated_at as a best-effort recency hint
+--           (note: updated_at is rewritten on every recompute by trigger_set_updated_at,
+--            so this tier is heuristic only and is NOT stable across re-edits),
+--       (3) lowest player_id as the deterministic backstop that guarantees a stable,
+--           well-defined winner
 --   status = final only when every active (non-withdrawn) member has a final hole_score.
 -- Returns NO ROW when no active member has a score for the hole (caller deletes the team row).
 CREATE OR REPLACE FUNCTION calc_best_ball_for_hole(p_team_id uuid, p_hole_number int)

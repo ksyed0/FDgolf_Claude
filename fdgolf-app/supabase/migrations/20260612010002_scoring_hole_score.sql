@@ -68,6 +68,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_shots_recompute ON shots;
 CREATE TRIGGER trg_shots_recompute
   AFTER INSERT OR UPDATE OR DELETE ON shots
   FOR EACH ROW EXECUTE FUNCTION fdgolf_shots_recompute_trigger();

@@ -56,6 +56,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_hole_scores_recompute ON hole_scores;
 CREATE TRIGGER trg_hole_scores_recompute
   AFTER INSERT OR UPDATE OR DELETE ON hole_scores
   FOR EACH ROW EXECUTE FUNCTION fdgolf_hole_scores_recompute_trigger();
