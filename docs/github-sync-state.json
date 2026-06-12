@@ -1,0 +1,97 @@
+{
+  "lastSyncAt": "2026-06-11T19:18:34.141Z",
+  "lastError": null,
+  "summary": {
+    "created": 14,
+    "closed": 0,
+    "reopened": 0,
+    "pulled": 0,
+    "skipped": 0
+  },
+  "entries": [
+    {
+      "id": "BUG-0001",
+      "ghIssueNumber": 5,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:29.185Z"
+    },
+    {
+      "id": "BUG-0002",
+      "ghIssueNumber": 6,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:29.674Z"
+    },
+    {
+      "id": "BUG-0003",
+      "ghIssueNumber": 7,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:30.143Z"
+    },
+    {
+      "id": "BUG-0004",
+      "ghIssueNumber": 8,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:30.485Z"
+    },
+    {
+      "id": "BUG-0005",
+      "ghIssueNumber": 9,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:30.832Z"
+    },
+    {
+      "id": "BUG-0006",
+      "ghIssueNumber": 10,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:31.214Z"
+    },
+    {
+      "id": "BUG-0007",
+      "ghIssueNumber": 11,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:31.562Z"
+    },
+    {
+      "id": "BUG-0008",
+      "ghIssueNumber": 12,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:31.914Z"
+    },
+    {
+      "id": "BUG-0009",
+      "ghIssueNumber": 13,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:32.256Z"
+    },
+    {
+      "id": "BUG-0010",
+      "ghIssueNumber": 14,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:32.698Z"
+    },
+    {
+      "id": "BUG-0011",
+      "ghIssueNumber": 15,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:33.121Z"
+    },
+    {
+      "id": "BUG-0012",
+      "ghIssueNumber": 16,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:33.458Z"
+    },
+    {
+      "id": "BUG-0013",
+      "ghIssueNumber": 17,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:33.763Z"
+    },
+    {
+      "id": "BUG-0014",
+      "ghIssueNumber": 18,
+      "lastKnownGhStatus": "open",
+      "lastSyncedAt": "2026-06-11T19:18:34.141Z"
+    }
+  ]
+}
