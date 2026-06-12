@@ -7,7 +7,7 @@ import { logoutAction } from '@/lib/actions/auth'
 import { createClient } from '@/lib/supabase/server'
 
 export async function AppChrome() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const [
     { data: isAdmin },
     {

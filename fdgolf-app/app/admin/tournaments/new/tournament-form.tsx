@@ -72,11 +72,10 @@ export function TournamentForm({ venues, tournament }: TournamentFormProps) {
   const [courseOptions, setCourseOptions] = useState<{ id: string; name: string }[]>([])
 
   useEffect(() => {
-    if (!selectedVenueId) {
-      setCourseOptions([])
-      return
-    }
-    getCoursesForVenueAction(selectedVenueId).then(setCourseOptions)
+    void (async () => {
+      const courses = selectedVenueId ? await getCoursesForVenueAction(selectedVenueId) : []
+      setCourseOptions(courses)
+    })()
   }, [selectedVenueId])
 
   function handleNameChange(e: React.ChangeEvent<HTMLInputElement>) {

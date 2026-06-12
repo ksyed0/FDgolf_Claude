@@ -27,7 +27,7 @@ type HoleRow = {
  * AC-0062: "Save and next hole" advances automatically.
  */
 export default async function PinsPage({ params }: PageProps) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Guard: must be admin
   const { data: isAdmin, error: adminError } = await supabase.rpc('fdgolf_is_admin')

@@ -22,7 +22,7 @@ export async function savePinAction(
   lat: number,
   lng: number
 ): Promise<{ error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Admin guard
   const { data: isAdmin, error: adminError } = await supabase.rpc('fdgolf_is_admin')
@@ -55,7 +55,7 @@ export async function saveTeeCoordAction(
   lat: number,
   lng: number
 ): Promise<{ error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 
@@ -86,7 +86,7 @@ export async function saveTeeCoordAction(
 }
 
 async function captureStaticSnapshot(
-  supabase: ReturnType<typeof createClient>,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   courseId: string,
   holeId: string,
   lat: number,

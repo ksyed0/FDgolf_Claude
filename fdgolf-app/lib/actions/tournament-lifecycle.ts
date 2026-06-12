@@ -24,7 +24,7 @@ export async function getPreflightChecks(
   tournamentId: string,
   targetStatus: 'registration_open' | 'active'
 ): Promise<PreflightResult> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: t } = await supabase
     .from('tournaments')
@@ -148,7 +148,7 @@ export async function transitionTournamentAction(
   tournamentId: string,
   targetStatus: 'registration_open' | 'active' | 'completed'
 ): Promise<{ error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 
