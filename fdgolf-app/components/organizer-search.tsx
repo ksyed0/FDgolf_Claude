@@ -4,10 +4,7 @@ import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  searchPlayersAction,
-  assignOrganizerAction,
-} from '@/lib/actions/roles'
+import { searchPlayersAction, assignOrganizerAction } from '@/lib/actions/roles'
 
 interface OrganizerSearchProps {
   tournamentId: string
@@ -20,10 +17,7 @@ interface PlayerResult {
   email: string
 }
 
-export function OrganizerSearch({
-  tournamentId,
-  tournamentName,
-}: OrganizerSearchProps) {
+export function OrganizerSearch({ tournamentId, tournamentName }: OrganizerSearchProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<PlayerResult[]>([])
   const [searchError, setSearchError] = useState<string | null>(null)
@@ -71,10 +65,7 @@ export function OrganizerSearch({
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           aria-label="Search players"
         />
-        <Button
-          onClick={handleSearch}
-          disabled={isSearchPending || query.trim().length === 0}
-        >
+        <Button onClick={handleSearch} disabled={isSearchPending || query.trim().length === 0}>
           {isSearchPending ? 'Searching…' : 'Search'}
         </Button>
       </div>
@@ -99,17 +90,13 @@ export function OrganizerSearch({
                   <CardContent className="flex items-center justify-between py-3">
                     <div>
                       <p className="font-medium">{player.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {player.email}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{player.email}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       {status && (
                         <span
                           className={
-                            status.success
-                              ? 'text-sm text-green-600'
-                              : 'text-sm text-destructive'
+                            status.success ? 'text-sm text-green-600' : 'text-sm text-destructive'
                           }
                           role="status"
                         >
@@ -118,15 +105,10 @@ export function OrganizerSearch({
                       )}
                       <Button
                         size="sm"
-                        disabled={
-                          isAssignPending ||
-                          assignStatus[player.id]?.success === true
-                        }
+                        disabled={isAssignPending || assignStatus[player.id]?.success === true}
                         onClick={() => handleAssign(player.id)}
                       >
-                        {assignStatus[player.id]?.success
-                          ? 'Organizer assigned'
-                          : 'Make organizer'}
+                        {assignStatus[player.id]?.success ? 'Organizer assigned' : 'Make organizer'}
                       </Button>
                     </div>
                   </CardContent>

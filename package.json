@@ -29,12 +29,18 @@
     "agent:apply": "node tools/agent-spec-plan.js apply-pending",
     "agent:list": "node tools/agent-spec-plan.js list",
     "agent:status": "node tools/agent-spec-plan.js status",
-    "dashboard:watch": "node tools/watch-dashboard.js"
+    "dashboard:watch": "node tools/watch-dashboard.js",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "lint-staged": {
+    "fdgolf-app/**/*.{ts,tsx,js,jsx,json,css,md}": [
+      "prettier --write"
+    ]
+  },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "chart.js": "^4.5.1",

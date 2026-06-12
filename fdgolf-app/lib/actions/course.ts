@@ -20,12 +20,12 @@ export async function saveCourseHolesAction(
 ): Promise<CourseActionState> {
   const tournament_id = (formData.get('tournament_id') as string | null)?.trim() ?? ''
   const course_id_raw = (formData.get('course_id') as string | null)?.trim() ?? ''
-  const name          = (formData.get('name')        as string | null)?.trim() ?? ''
-  const venue         = (formData.get('venue')       as string | null)?.trim() ?? ''
+  const name = (formData.get('name') as string | null)?.trim() ?? ''
+  const venue = (formData.get('venue') as string | null)?.trim() ?? ''
 
   if (!tournament_id) return { error: 'Tournament ID is required.' }
-  if (!name)          return { error: 'Course name is required.' }
-  if (!venue)         return { error: 'Venue is required.' }
+  if (!name) return { error: 'Course name is required.' }
+  if (!venue) return { error: 'Venue is required.' }
 
   // Collect hole data from formData (holes 1–18, or however many are present)
   type HoleInput = {
@@ -38,23 +38,23 @@ export async function saveCourseHolesAction(
   const holes: HoleInput[] = []
 
   for (let n = 1; n <= 18; n++) {
-    const parRaw         = formData.get(`hole_${n}_par`)
-    const yardageRaw     = formData.get(`hole_${n}_yardage`)
+    const parRaw = formData.get(`hole_${n}_par`)
+    const yardageRaw = formData.get(`hole_${n}_yardage`)
     const strokeIndexRaw = formData.get(`hole_${n}_stroke_index`)
 
     // Skip holes that were never submitted (9-hole tournaments only submit 1–9)
     if (parRaw === null) continue
 
-    const par        = parseInt(parRaw as string, 10)
+    const par = parseInt(parRaw as string, 10)
     const yardageStr = (yardageRaw as string | null)?.trim() ?? ''
-    const siStr      = (strokeIndexRaw as string | null)?.trim() ?? ''
+    const siStr = (strokeIndexRaw as string | null)?.trim() ?? ''
 
     // AC-0051: par must be 3, 4, or 5
     if (![3, 4, 5].includes(par)) {
       return { error: `Hole ${n}: par must be 3, 4, or 5.` }
     }
 
-    const yardage      = yardageStr !== '' ? parseInt(yardageStr, 10) : null
+    const yardage = yardageStr !== '' ? parseInt(yardageStr, 10) : null
     const stroke_index = siStr !== '' ? parseInt(siStr, 10) : null
 
     // AC-0052: stroke index must be 1–18 when provided
@@ -70,9 +70,7 @@ export async function saveCourseHolesAction(
   }
 
   // AC-0052: stroke indices must be unique within the submission
-  const siValues = holes
-    .map((h) => h.stroke_index)
-    .filter((si): si is number => si !== null)
+  const siValues = holes.map((h) => h.stroke_index).filter((si): si is number => si !== null)
 
   const siSet = new Set(siValues)
   if (siSet.size !== siValues.length) {

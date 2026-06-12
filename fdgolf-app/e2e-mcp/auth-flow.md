@@ -19,6 +19,7 @@ Expected: Login page with "FDgolf" header and email/password form.
 
 Tool: `browser_fill_form`
 Fields:
+
 - `input[name="email"]` → your admin email
 - `input[name="password"]` → your admin password
 

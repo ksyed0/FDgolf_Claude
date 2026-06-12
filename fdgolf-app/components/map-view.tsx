@@ -10,16 +10,10 @@ export interface MapViewProps {
   styleUrl?: string
 }
 
-export default function MapView({
-  lat,
-  lng,
-  zoom = 15,
-  styleUrl,
-}: MapViewProps) {
+export default function MapView({ lat, lng, zoom = 15, styleUrl }: MapViewProps) {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
   const DEFAULT_STYLE_URL =
-    process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL ??
-    'mapbox://styles/mapbox/outdoors-v12'
+    process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL ?? 'mapbox://styles/mapbox/outdoors-v12'
 
   if (!token) {
     return (

@@ -18,6 +18,8 @@ export default async function NewTournamentPage() {
     redirect('/')
   }
 
+  const { data: venues } = await supabase.from('venues').select('id, name').order('name')
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-lg rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -34,7 +36,7 @@ export default async function NewTournamentPage() {
         </div>
 
         <div className="px-6 py-6">
-          <TournamentForm />
+          <TournamentForm venues={venues ?? []} />
         </div>
       </div>
     </div>

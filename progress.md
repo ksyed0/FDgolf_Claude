@@ -3,6 +3,56 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 6 — 2026-06-12
+
+### What Was Done
+
+- Implemented EPIC-0003 Registration & Profile (US-0021–0029): 5 DB tables, 5 Server Actions, 12 pages/components, 428 tests passing
+- Created DB reset script + dev seed (admin + player users) + test import CSV for manual testing
+- Fixed lint/type errors and confirmed production build passes
+
+---
+
+## Session 5 — 2026-06-11
+
+### What Was Done
+
+- Executed all 19 tasks across 3 plans (Master Data V2, Tournament Editor V2, Downstream Schema Updates) via DM_AGENT subagent pipeline
+- PRs #19, #20, #21 squash-merged to develop; develop HEAD `63824dd`; 343 tests passing, 95%+ coverage
+- EPIC-0002 rebuild complete: venues/courses/holes CRUD, tournament list/edit/delete, PinPlacementMap JSONB tees, CourseHolesForm retired
+
+---
+
+## Session 4 — 2026-06-11
+
+### What Was Done
+
+- Wrote 3 full implementation plans for EPIC-0002 rebuild: Master Data V2 (venues/courses/holes), Tournament Editor V2, Downstream Schema Updates
+- Plans cover 19 tasks total with complete code, TDD steps, and commit checkpoints at every step
+- PlanVisualizer GitHub issues sync re-enabled; BUG-0001–0014 synced to GitHub issues #5–#18
+
+---
+
+## Session 3 — 2026-06-11
+
+### What Was Done
+
+- Implemented US-0012 (course preset import), US-0013 (pin placement map), US-0015 (tournament club picker) via Conductor DM_AGENT pipeline
+- 87 new tests across 3 stories; 240 tests pass; all coverage ≥ 80%; type-check and lint clean
+- BUG-0001–0014 logged to docs/BUGS.md by Lens review agents and fixed in the same cycle; all 3 PRs (#2, #3, #4) squash-merged to develop
+
+---
+
+## Session 2 — 2026-06-11
+
+### What Was Done
+
+- Implemented US-0015 end-to-end: saveClubsAction (lib/actions/clubs.ts), ClubPickerForm (club-picker-form.tsx), clubs page (Server Component), and tournament detail nav card layout
+- 24 new tests (8 action + 16 component); all 153 tests pass; 100% coverage on new files
+- TASK-0067, TASK-0068, TASK-0069 and US-0015 marked Done in RELEASE_PLAN.md
+
+---
+
 ## Session 1 — 2026-06-10
 
 ### What Was Done

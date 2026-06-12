@@ -1,66 +1,18 @@
-import { notFound, redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { CourseHolesForm } from './course-holes-form'
+import Link from 'next/link'
 
-interface PageProps {
-  params: { slug: string }
-}
-
-type HoleRow = {
-  number: number
-  par: number
-  yardage: number | null
-  stroke_index: number | null
-}
-
-/**
- * /admin/tournaments/[slug]/course — Per-hole course setup page (US-0011).
- *
- * Server Component. Checks admin status, fetches tournament & existing holes,
- * then renders CourseHolesForm.
- *
- * AC-0050: Renders one editable row per hole (1 to holes_count).
- */
-export default async function CoursePage({ params }: PageProps) {
-  const supabase = createClient()
-
-  // Guard: must be admin
-  const { data: isAdmin, error: adminError } = await supabase.rpc('fdgolf_is_admin')
-  if (adminError || !isAdmin) {
-    redirect('/')
-  }
-
-  // Fetch tournament
-  const { data: tournament, error: tournamentError } = await supabase
-    .from('tournaments')
-    .select('id,name,slug,venue,course_id,holes_count')
-    .eq('slug', params.slug)
-    .single()
-
-  if (tournamentError || !tournament) {
-    notFound()
-  }
-
-  // Fetch existing holes if course is already linked
-  let existingHoles: HoleRow[] = []
-  if (tournament.course_id) {
-    const { data: holesData } = await supabase
-      .from('holes')
-      .select('number,par,yardage,stroke_index')
-      .eq('course_id', tournament.course_id)
-      .order('number')
-
-    existingHoles = (holesData ?? []) as HoleRow[]
-  }
-
+export default function CourseSetupRedirectPage() {
   return (
-    <CourseHolesForm
-      tournamentId={tournament.id}
-      courseId={tournament.course_id ?? null}
-      tournamentName={tournament.name}
-      venue={tournament.venue}
-      holesCount={tournament.holes_count ?? 18}
-      existingHoles={existingHoles}
-    />
+    <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+      <h1 className="text-xl font-semibold mb-4">Course setup has moved</h1>
+      <p className="text-gray-600 mb-6">
+        Hole editing and course configuration now live under <strong>Venues → Courses</strong>.
+      </p>
+      <Link
+        href="/admin/venues"
+        className="inline-block bg-green-800 text-white px-4 py-2 rounded hover:bg-green-700"
+      >
+        Go to Venues
+      </Link>
+    </div>
   )
 }

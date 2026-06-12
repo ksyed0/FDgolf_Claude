@@ -116,12 +116,12 @@
       "model": null
     },
     "Lens": {
-      "status": "idle",
-      "currentTask": null,
+      "status": "active",
+      "currentTask": "code review feature/US-0012-course-preset",
       "tasksCompleted": 2,
-      "reviewsCompleted": 1,
+      "reviewsCompleted": 6,
       "blockers": 0,
-      "model": null
+      "model": "sonnet"
     },
     "Palette": {
       "status": "idle",
@@ -134,10 +134,10 @@
       "tasksCompleted": 0
     },
     "Pixel": {
-      "status": "idle",
-      "currentTask": null,
+      "status": "active",
+      "currentTask": "Build COURSE_PRESETS module and import dropdown in CourseHolesForm",
       "tasksCompleted": 5,
-      "model": null
+      "model": "sonnet"
     },
     "Sentinel": {
       "status": "idle",
@@ -164,61 +164,33 @@
     }
   },
   "stories": {
-    "US-0001": {
+    "US-0015": {
       "status": "InProgress",
-      "epic": "EPIC-0001",
-      "assignedAgent": "Pixel",
-      "startedAt": "2026-06-09T15:22:47.122Z",
+      "epic": "EPIC-0002",
+      "assignedAgent": "Lens",
+      "startedAt": "2026-06-11T17:38:18.471Z",
       "completedAt": null
     },
-    "US-0009": {
-      "status": "Complete",
+    "US-0012": {
+      "status": "InProgress",
+      "epic": "EPIC-0002",
+      "assignedAgent": "Lens",
+      "startedAt": "2026-06-11T17:38:18.564Z",
+      "completedAt": null
+    },
+    "US-0013": {
+      "status": "InProgress",
       "epic": "EPIC-0002",
       "assignedAgent": null,
-      "startedAt": null,
-      "completedAt": "2026-06-09T23:20:51.625Z"
-    },
-    "US-0020": {
-      "status": "Complete",
-      "epic": "EPIC-0002",
-      "assignedAgent": null,
-      "startedAt": null,
-      "completedAt": "2026-06-09T23:20:51.815Z"
-    },
-    "undefined": {
-      "status": "Complete",
-      "epic": null,
-      "assignedAgent": null,
-      "startedAt": null,
-      "completedAt": "2026-06-09T23:40:15.486Z"
-    },
-    "US-0016": {
-      "status": "Complete",
-      "epic": null,
-      "assignedAgent": null,
-      "startedAt": null,
-      "completedAt": "2026-06-09T23:40:23.428Z"
-    },
-    "US-0011": {
-      "status": "Complete",
-      "epic": null,
-      "assignedAgent": null,
-      "startedAt": null,
-      "completedAt": "2026-06-09T23:40:23.608Z"
-    },
-    "US-0010": {
-      "status": "Complete",
-      "epic": null,
-      "assignedAgent": null,
-      "startedAt": null,
-      "completedAt": "2026-06-09T23:41:09.198Z"
+      "startedAt": "2026-06-11T17:38:18.679Z",
+      "completedAt": null
     }
   },
   "cycles": [],
   "metrics": {
-    "storiesCompleted": 6,
-    "storiesTotal": 8,
-    "tasksCompleted": 5,
+    "storiesCompleted": 0,
+    "storiesTotal": 3,
+    "tasksCompleted": 0,
     "tasksTotal": 0,
     "testsPassed": 0,
     "testsFailed": 0,
@@ -226,7 +198,7 @@
     "bugsOpen": 0,
     "bugsFixed": 0,
     "coveragePercent": 0,
-    "reviewsApproved": 0,
+    "reviewsApproved": 2,
     "reviewsBlocked": 0
   },
   "log": [
@@ -396,6 +368,75 @@
       "time": "2026-06-09T23:41:09.296Z",
       "agent": "Pixel",
       "message": "finished US-0010"
+    },
+    {
+      "time": "2026-06-11T17:38:18.380Z",
+      "agent": "Conductor",
+      "message": "Session started — 3 stories planned"
+    },
+    {
+      "time": "2026-06-11T17:38:18.472Z",
+      "agent": "Conductor",
+      "message": "started US-0015 (EPIC-0002)"
+    },
+    {
+      "time": "2026-06-11T17:38:18.565Z",
+      "agent": "Conductor",
+      "message": "started US-0012 (EPIC-0002)"
+    },
+    {
+      "time": "2026-06-11T17:38:18.680Z",
+      "agent": "Conductor",
+      "message": "started US-0013 (EPIC-0002)"
+    },
+    {
+      "time": "2026-06-11T17:38:23.900Z",
+      "agent": "Pixel",
+      "message": "started US-0015: Build saveClubsAction, ClubPickerForm, clubs page, tournament detail nav",
+      "model": "sonnet"
+    },
+    {
+      "time": "2026-06-11T17:38:24.008Z",
+      "agent": "Pixel",
+      "message": "started US-0012: Build COURSE_PRESETS module and import dropdown in CourseHolesForm",
+      "model": "sonnet"
+    },
+    {
+      "time": "2026-06-11T17:48:46.705Z",
+      "agent": "Lens",
+      "message": "started US-0015: code review feature/US-0015-tournament-clubs",
+      "model": "sonnet"
+    },
+    {
+      "time": "2026-06-11T17:48:46.799Z",
+      "agent": "Lens",
+      "message": "started US-0012: code review feature/US-0012-course-preset",
+      "model": "sonnet"
+    },
+    {
+      "time": "2026-06-11T17:58:00.353Z",
+      "agent": "Lens",
+      "message": "request-changes review of US-0015"
+    },
+    {
+      "time": "2026-06-11T17:58:00.449Z",
+      "agent": "Lens",
+      "message": "request-changes review of US-0012"
+    },
+    {
+      "time": "2026-06-11T18:08:04.172Z",
+      "agent": "Lens",
+      "message": "approve review of US-0015"
+    },
+    {
+      "time": "2026-06-11T18:08:04.612Z",
+      "agent": "Lens",
+      "message": "approve review of US-0012"
+    },
+    {
+      "time": "2026-06-11T18:29:49.519Z",
+      "agent": "Lens",
+      "message": "request-changes review of US-0013"
     }
   ],
   "tasks": {

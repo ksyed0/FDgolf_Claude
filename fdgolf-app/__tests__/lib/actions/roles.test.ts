@@ -1,24 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const {
-  mockGetUser,
-  mockInsert,
-  mockFrom,
-  mockSelect,
-  mockIlike,
-  mockLimit,
-  mockEq,
-  mockSingle,
-} = vi.hoisted(() => ({
-  mockGetUser: vi.fn(),
-  mockInsert: vi.fn(),
-  mockFrom: vi.fn(),
-  mockSelect: vi.fn(),
-  mockIlike: vi.fn(),
-  mockLimit: vi.fn(),
-  mockEq: vi.fn(),
-  mockSingle: vi.fn(),
-}))
+const { mockGetUser, mockInsert, mockFrom, mockSelect, mockIlike, mockLimit, mockEq, mockSingle } =
+  vi.hoisted(() => ({
+    mockGetUser: vi.fn(),
+    mockInsert: vi.fn(),
+    mockFrom: vi.fn(),
+    mockSelect: vi.fn(),
+    mockIlike: vi.fn(),
+    mockLimit: vi.fn(),
+    mockEq: vi.fn(),
+    mockSingle: vi.fn(),
+  }))
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: () => ({
@@ -27,10 +19,7 @@ vi.mock('@/lib/supabase/server', () => ({
   }),
 }))
 
-import {
-  assignOrganizerAction,
-  searchPlayersAction,
-} from '@/lib/actions/roles'
+import { assignOrganizerAction, searchPlayersAction } from '@/lib/actions/roles'
 
 // ---------------------------------------------------------------------------
 // assignOrganizerAction
@@ -113,7 +102,10 @@ describe('assignOrganizerAction', () => {
     mockFrom.mockReturnValue({ insert: mockInsert })
     mockInsert.mockResolvedValue({
       data: null,
-      error: { code: '23503', message: 'insert or update on table "user_roles" violates foreign key constraint' },
+      error: {
+        code: '23503',
+        message: 'insert or update on table "user_roles" violates foreign key constraint',
+      },
     })
 
     const result = await assignOrganizerAction(TOURNAMENT_ID, PLAYER_ID)

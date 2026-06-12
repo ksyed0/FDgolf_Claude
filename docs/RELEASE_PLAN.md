@@ -267,54 +267,54 @@ Acceptance Criteria:
 US-0012 (EPIC-0002): As an admin, I want a Granite Ridge GC preset to one-tap import, so that I don't hand-key 18 rows for the first tournament.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0012-course-preset
 Dependencies: US-0011
 Acceptance Criteria:
-  - [ ] AC-0055: "Import preset" button shows a list of available presets (at least Granite Ridge GC)
-  - [ ] AC-0056: Importing populates the 18-hole table with par, yardage, stroke index
-  - [ ] AC-0057: Admin can then edit any value before saving
+  - [x] AC-0055: "Import preset" button shows a list of available presets (at least Granite Ridge GC)
+  - [x] AC-0056: Importing populates the 18-hole table with par, yardage, stroke index
+  - [x] AC-0057: Admin can then edit any value before saving
 ```
 
 ```
 US-0013 (EPIC-0002): As an admin, I want to drop pin coordinates for each hole on a satellite map, so that the round tracking app can compute distance-to-pin.
 Priority: High
 Estimate: M
-Status: Planned
-Branch: feature/US-0013-pin-placement
+Status: Done
+Branch: fix/pins-page-schema-and-bugs
 Dependencies: US-0011, US-0007
 Acceptance Criteria:
-  - [ ] AC-0058: Satellite map renders for each hole at a sensible default zoom around the course
-  - [ ] AC-0059: Click on the map drops a pin; coordinates saved to holes.pin_lat / pin_lng
-  - [ ] AC-0060: Tee coordinates can also be dropped (separate mode)
-  - [ ] AC-0061: Progress bar shows N of 18 holes with pins set
-  - [ ] AC-0062: "Save and continue to next hole" button auto-advances
-  - [ ] AC-0063: Holes table shows pin status (Set or Missing) per hole
+  - [x] AC-0058: Satellite map renders for each hole at a sensible default zoom around the course
+  - [x] AC-0059: Click on the map drops a pin; coordinates saved to holes.pin_lat / pin_lng
+  - [x] AC-0060: Tee coordinates can also be dropped (separate mode)
+  - [x] AC-0061: Progress bar shows N of 18 holes with pins set
+  - [x] AC-0062: "Save and continue to next hole" button auto-advances
+  - [x] AC-0063: Holes table shows pin status (Set or Missing) per hole
 ```
 
 ```
 US-0014 (EPIC-0002): As a player, I want a Mapbox Static API PNG snapshot stored per hole, so that distance-to-pin works even if the Mapbox tile API is rate-limited mid-round.
 Priority: Medium
 Estimate: S
-Status: Planned
-Branch: feature/US-0014-static-map-snapshot
+Status: Done
+Branch: feature/epic0002-completion
 Dependencies: US-0013
 Acceptance Criteria:
-  - [ ] AC-0064: On pin save, a request is made to Mapbox Static API for the hole region
-  - [ ] AC-0065: PNG is uploaded to Supabase Storage in `course-maps/{courseId}/hole-{n}.png`
-  - [ ] AC-0066: `holes.static_map_url` populated with the public URL
+  - [x] AC-0064: On pin save, a request is made to Mapbox Static API for the hole region
+  - [x] AC-0065: PNG is uploaded to Supabase Storage in `course-maps/{courseId}/hole-{n}.png`
+  - [x] AC-0066: `holes.static_map_url` populated with the public URL
 ```
 
 ```
 US-0015 (EPIC-0002): As an admin, I want to pick which clubs from the master list are available in this tournament, so that I can enforce sponsor-supplied bags or simplified club lists.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0015-tournament-clubs
 Dependencies: US-0008, US-0009
 Acceptance Criteria:
-  - [ ] AC-0067: All master clubs listed with toggle controls; defaults to all-active
-  - [ ] AC-0068: Disabled clubs are excluded from the player's bag picker in pre-round setup
+  - [x] AC-0067: All master clubs listed with toggle controls; defaults to all-active
+  - [x] AC-0068: Disabled clubs are excluded from the player's bag picker in pre-round setup
 ```
 
 ```
@@ -334,41 +334,41 @@ Acceptance Criteria:
 US-0017 (EPIC-0002): As an admin, I want a pre-flight checklist before activation, so that I don't open registration on a misconfigured tournament.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0017-preflight-checklist
+Status: Done
+Branch: feature/US-0017-0018-tournament-lifecycle
 Dependencies: US-0013, US-0015
 Acceptance Criteria:
-  - [ ] AC-0072: Checklist shows green checks for: basics complete, all holes configured (par 72 or expected), all 18 pin coordinates set, slug verified unique
-  - [ ] AC-0073: Checklist shows amber reminders for: clubs configured, teams unassigned
-  - [ ] AC-0074: Activate button disabled until all green checks pass
-  - [ ] AC-0075: Live preview card shows what the public leaderboard banner will look like
+  - [x] AC-0072: Checklist shows green checks for: basics complete, all holes configured (par 72 or expected), all 18 pin coordinates set, slug verified unique
+  - [x] AC-0073: Checklist shows amber reminders for: clubs configured, teams unassigned
+  - [x] AC-0074: Activate button disabled until all green checks pass
+  - [x] AC-0075: Live preview card shows what the public leaderboard banner will look like
 ```
 
 ```
 US-0018 (EPIC-0002): As an admin, I want buttons to move the tournament between statuses, so that I can open registration, start play, and close the tournament cleanly.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0018-status-workflow
+Status: Done
+Branch: feature/US-0017-0018-tournament-lifecycle
 Dependencies: US-0017
 Acceptance Criteria:
-  - [ ] AC-0076: From draft, "Open registration" moves status to registration_open
-  - [ ] AC-0077: From registration_open, "Start tournament" moves status to active
-  - [ ] AC-0078: From active, "Complete tournament" moves status to completed
-  - [ ] AC-0079: Paused status reachable via DB direct update; no UI in Phase 1
-  - [ ] AC-0080: Transitions are logged with timestamp and admin actor
+  - [x] AC-0076: From draft, "Open registration" moves status to registration_open
+  - [x] AC-0077: From registration_open, "Start tournament" moves status to active
+  - [x] AC-0078: From active, "Complete tournament" moves status to completed
+  - [x] AC-0079: Paused status reachable via DB direct update; no UI in Phase 1
+  - [x] AC-0080: Transitions are logged with timestamp and admin actor
 ```
 
 ```
 US-0019 (EPIC-0002): As an admin, I want the public registration URL displayed after activation, so that I can copy-paste it into the invite emails.
 Priority: Medium
 Estimate: S
-Status: Planned
-Branch: feature/US-0019-post-activation-url
+Status: Done
+Branch: feature/epic0002-completion
 Dependencies: US-0018
 Acceptance Criteria:
-  - [ ] AC-0081: Post-activation confirmation screen shows the URL `fdgolf.app/register/{slug}`
-  - [ ] AC-0082: Copy-to-clipboard button
+  - [x] AC-0081: Post-activation confirmation screen shows the URL `fdgolf.app/register/{slug}`
+  - [x] AC-0082: Copy-to-clipboard button
 ```
 
 ```
@@ -1836,16 +1836,16 @@ Notes: Computed live as admin edits.
 TASK-0056 (US-0012): Define Granite Ridge GC preset in lib/courses/presets.ts
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0012-course-preset
-Notes: JSON object with 18 holes: par/yards/SI.
+Notes: JSON object with 18 holes: par/yards/SI. Implemented at lib/presets/courses.ts.
 ```
 
 ```
 TASK-0057 (US-0012): Add "Import preset" button to course form
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0012-course-preset
 Notes: Opens dropdown of presets; selection populates the table.
 ```
@@ -1854,54 +1854,54 @@ Notes: Opens dropdown of presets; selection populates the table.
 TASK-0058 (US-0012): Test preset import populates all 18 rows correctly
 Type: Test
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0012-course-preset
-Notes: Snapshot test or row count assertion.
+Notes: Snapshot test or row count assertion. 6 preset import tests added; 13 preset module tests added.
 ```
 
 ```
 TASK-0059 (US-0013): Create pin placement page app/admin/tournaments/[id]/pins/page.tsx
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0013-pin-placement
-Notes: Renders MapView per hole; click handler captures lng/lat.
+Notes: Renders MapView per hole; click handler captures lng/lat. Implemented at app/admin/tournaments/[slug]/course/pins/page.tsx + pin-placement-map.tsx.
 ```
 
 ```
 TASK-0060 (US-0013): Test click on map updates pin state
 Type: Test
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0013-pin-placement
-Notes: Mock geolocation; simulate click; assert state captured.
+Notes: Mock geolocation; simulate click; assert state captured. 29 component tests in __tests__/components/pin-placement-map.test.tsx; 19 action tests in __tests__/lib/actions/pins.test.ts.
 ```
 
 ```
 TASK-0061 (US-0013): Implement savePinCoordinate server action
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0013-pin-placement
-Notes: Updates holes.pin_lat / pin_lng; revalidates.
+Notes: Updates holes.pin_lat / pin_lng; revalidates. Implemented as savePinAction in lib/actions/pins.ts; supports pin and tee modes.
 ```
 
 ```
 TASK-0062 (US-0013): Add progress bar showing N of 18 holes with pins
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0013-pin-placement
-Notes: Server query counts; displayed at top.
+Notes: Server query counts; displayed at top. Progress bar with aria-progressbar in PinPlacementMap; pin status (✓/–) column added to CourseHolesForm.
 ```
 
 ```
 TASK-0063 (US-0013): Add "Save and next hole" auto-advance behavior
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0013-pin-placement
-Notes: Successful save routes to ?hole=N+1.
+Notes: Successful save routes to ?hole=N+1. Auto-advances hole index state; on last hole routes to course page.
 ```
 
 ```
@@ -1935,27 +1935,27 @@ Notes: Integration test or manual verification.
 TASK-0067 (US-0015): Create tournament clubs config page
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0015-tournament-clubs
-Notes: app/admin/tournaments/[id]/clubs/page.tsx; lists master clubs with toggle.
+Notes: app/admin/tournaments/[slug]/clubs/page.tsx + club-picker-form.tsx; lists master clubs with toggle.
 ```
 
 ```
 TASK-0068 (US-0015): Implement upsert into tournament_clubs on toggle change
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0015-tournament-clubs
-Notes: Server action setTournamentClubActive(tournamentId, clubId, isActive).
+Notes: lib/actions/clubs.ts saveClubsAction: delete-then-insert pattern; no-rows=all-active invariant documented.
 ```
 
 ```
 TASK-0069 (US-0015): Test default: all master clubs active for new tournament
 Type: Test
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0015-tournament-clubs
-Notes: Inspect tournament_clubs after tournament creation.
+Notes: 8 action tests + 16 component tests covering default all-active, partial sets, toggles, FormData hidden inputs.
 ```
 
 ```

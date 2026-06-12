@@ -4,21 +4,27 @@ import MapView from '@/components/map-view'
 
 // Mock react-map-gl/mapbox so jsdom never attempts to load WebGL
 vi.mock('react-map-gl/mapbox', () => ({
-  default: vi.fn(({ mapboxAccessToken, initialViewState, mapStyle }: {
-    mapboxAccessToken: string
-    initialViewState: { longitude: number; latitude: number; zoom: number }
-    mapStyle: string
-    style?: React.CSSProperties
-  }) => (
-    <div
-      data-testid="mapbox-map"
-      data-token={mapboxAccessToken}
-      data-lng={initialViewState.longitude}
-      data-lat={initialViewState.latitude}
-      data-zoom={initialViewState.zoom}
-      data-style={mapStyle}
-    />
-  )),
+  default: vi.fn(
+    ({
+      mapboxAccessToken,
+      initialViewState,
+      mapStyle,
+    }: {
+      mapboxAccessToken: string
+      initialViewState: { longitude: number; latitude: number; zoom: number }
+      mapStyle: string
+      style?: React.CSSProperties
+    }) => (
+      <div
+        data-testid="mapbox-map"
+        data-token={mapboxAccessToken}
+        data-lng={initialViewState.longitude}
+        data-lat={initialViewState.latitude}
+        data-zoom={initialViewState.zoom}
+        data-style={mapStyle}
+      />
+    )
+  ),
 }))
 
 // Mock the mapbox-gl CSS import so jsdom doesn't choke on it
@@ -113,10 +119,7 @@ describe('MapView', () => {
 
     it('passes the token to the map', () => {
       render(<MapView lat={37.5} lng={-122.4} />)
-      expect(screen.getByTestId('mapbox-map')).toHaveAttribute(
-        'data-token',
-        'pk.test-token-abc'
-      )
+      expect(screen.getByTestId('mapbox-map')).toHaveAttribute('data-token', 'pk.test-token-abc')
     })
 
     it('does not render the fallback alert', () => {

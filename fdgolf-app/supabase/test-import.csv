@@ -1,0 +1,8 @@
+full_name,email,phone,handicap,company,title,team
+Diana Prince,diana@example.com,416-555-0010,6.5,Wayne Enterprises,CEO,Falcons
+Clark Kent,clark@example.com,416-555-0011,14.0,Daily Planet,Reporter,Falcons
+Bruce Wayne,bruce@example.com,416-555-0012,2.0,Wayne Enterprises,Chairman,Falcons
+Lois Lane,lois@example.com,416-555-0013,22.0,Daily Planet,Editor,Hawks
+Peter Parker,peter@example.com,416-555-0014,19.5,Bugle,Photographer,Hawks
+Mary Jane Watson,mj@example.com,416-555-0015,28.0,Modeling Agency,Model,Hawks
+Tony Stark,tony@example.com,,0.5,Stark Industries,CTO,
