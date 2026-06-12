@@ -29,7 +29,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
     .select(
-      'id,name,slug,status,starts_at,format,start_style,venue_id,course_id,venues(id,name),courses:course_id(id,name,venue_id)',
+      'id,name,slug,status,starts_at,format,start_style,venue_id,course_id,venues(id,name),courses:course_id(id,name,venue_id)'
     )
     .eq('slug', params.slug)
     .single()
@@ -152,9 +152,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
             className="group flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md hover:border-green-300"
           >
             <div className="text-2xl">{card.icon}</div>
-            <h2 className="font-semibold text-gray-900 group-hover:text-green-700">
-              {card.title}
-            </h2>
+            <h2 className="font-semibold text-gray-900 group-hover:text-green-700">{card.title}</h2>
             <p className="text-sm text-gray-500">{card.description}</p>
           </Link>
         ))}

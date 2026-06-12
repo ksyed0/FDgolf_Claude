@@ -33,9 +33,7 @@ function SubmitButton({ label }: { label: string }) {
 
 export function VenueForm({ venue }: VenueFormProps) {
   const isEdit = Boolean(venue)
-  const action = isEdit
-    ? updateVenueAction.bind(null, venue!.id)
-    : createVenueAction
+  const action = isEdit ? updateVenueAction.bind(null, venue!.id) : createVenueAction
 
   const [state, formAction] = useFormState(action, initialState)
 
@@ -75,11 +73,7 @@ export function VenueForm({ venue }: VenueFormProps) {
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label htmlFor="city">City</Label>
-          <Input
-            id="city"
-            name="city"
-            defaultValue={venue?.city ?? ''}
-          />
+          <Input id="city" name="city" defaultValue={venue?.city ?? ''} />
         </div>
         <div className="space-y-1">
           <Label htmlFor="state_province">State / Province</Label>
@@ -93,11 +87,7 @@ export function VenueForm({ venue }: VenueFormProps) {
 
       <div className="space-y-1">
         <Label htmlFor="zip_postal">ZIP / Postal code</Label>
-        <Input
-          id="zip_postal"
-          name="zip_postal"
-          defaultValue={venue?.zip_postal ?? ''}
-        />
+        <Input id="zip_postal" name="zip_postal" defaultValue={venue?.zip_postal ?? ''} />
       </div>
 
       {state.error && (

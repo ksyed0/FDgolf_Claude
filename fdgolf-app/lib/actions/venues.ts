@@ -6,12 +6,12 @@ type VenueState = { error: string | null; id?: string }
 
 function extractVenueFields(formData: FormData) {
   return {
-    name:           (formData.get('name')           as string | null)?.trim() ?? '',
-    address1:       (formData.get('address1')        as string | null)?.trim() || null,
-    address2:       (formData.get('address2')        as string | null)?.trim() || null,
-    city:           (formData.get('city')            as string | null)?.trim() || null,
-    state_province: (formData.get('state_province')  as string | null)?.trim() || null,
-    zip_postal:     (formData.get('zip_postal')      as string | null)?.trim() || null,
+    name: (formData.get('name') as string | null)?.trim() ?? '',
+    address1: (formData.get('address1') as string | null)?.trim() || null,
+    address2: (formData.get('address2') as string | null)?.trim() || null,
+    city: (formData.get('city') as string | null)?.trim() || null,
+    state_province: (formData.get('state_province') as string | null)?.trim() || null,
+    zip_postal: (formData.get('zip_postal') as string | null)?.trim() || null,
   }
 }
 
@@ -23,7 +23,8 @@ export async function createVenueAction(
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 
-  const { name, address1, address2, city, state_province, zip_postal } = extractVenueFields(formData)
+  const { name, address1, address2, city, state_province, zip_postal } =
+    extractVenueFields(formData)
   if (!name) return { error: 'Venue name is required.' }
 
   const { data, error } = await supabase
@@ -45,7 +46,8 @@ export async function updateVenueAction(
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }
 
-  const { name, address1, address2, city, state_province, zip_postal } = extractVenueFields(formData)
+  const { name, address1, address2, city, state_province, zip_postal } =
+    extractVenueFields(formData)
   if (!name) return { error: 'Venue name is required.' }
 
   const { error } = await supabase
@@ -56,9 +58,7 @@ export async function updateVenueAction(
   return { error: error?.message ?? null }
 }
 
-export async function deleteVenueAction(
-  venueId: string
-): Promise<{ error: string | null }> {
+export async function deleteVenueAction(venueId: string): Promise<{ error: string | null }> {
   const supabase = createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) return { error: 'Unauthorized.' }

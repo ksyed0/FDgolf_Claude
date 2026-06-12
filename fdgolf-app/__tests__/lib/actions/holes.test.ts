@@ -1,17 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const {
-  mockRpc, mockFrom, mockInsert, mockDelete, mockSelect, mockUpdate, mockEq, mockSingle,
-} = vi.hoisted(() => ({
-  mockRpc:    vi.fn(),
-  mockFrom:   vi.fn(),
-  mockInsert: vi.fn(),
-  mockDelete: vi.fn(),
-  mockSelect: vi.fn(),
-  mockUpdate: vi.fn(),
-  mockEq:     vi.fn(),
-  mockSingle: vi.fn(),
-}))
+const { mockRpc, mockFrom, mockInsert, mockDelete, mockSelect, mockUpdate, mockEq, mockSingle } =
+  vi.hoisted(() => ({
+    mockRpc: vi.fn(),
+    mockFrom: vi.fn(),
+    mockInsert: vi.fn(),
+    mockDelete: vi.fn(),
+    mockSelect: vi.fn(),
+    mockUpdate: vi.fn(),
+    mockEq: vi.fn(),
+    mockSingle: vi.fn(),
+  }))
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: () => ({ rpc: mockRpc, from: mockFrom }),
@@ -21,7 +20,12 @@ import { saveHolesAction } from '@/lib/actions/holes'
 import { saveTeeCoordAction } from '@/lib/actions/pins'
 
 const validHoles = [
-  { number: 1, par: 4, handicap: 7, tees: [{ colour: 'Blue', yardage: 385, lat: null, lng: null }] },
+  {
+    number: 1,
+    par: 4,
+    handicap: 7,
+    tees: [{ colour: 'Blue', yardage: 385, lat: null, lng: null }],
+  },
   { number: 2, par: 3, handicap: 15, tees: [] },
 ]
 
@@ -33,9 +37,7 @@ describe('saveHolesAction', () => {
     mockDelete.mockReturnValue({ eq: mockEq })
     mockEq.mockResolvedValue({ error: null })
     // After delete, from() returns insert
-    mockFrom
-      .mockReturnValueOnce({ delete: mockDelete })
-      .mockReturnValueOnce({ insert: mockInsert })
+    mockFrom.mockReturnValueOnce({ delete: mockDelete }).mockReturnValueOnce({ insert: mockInsert })
     mockInsert.mockResolvedValue({ error: null })
   })
 
@@ -59,12 +61,19 @@ describe('saveHolesAction', () => {
   })
 
   it('validates max 3 tees', async () => {
-    const bad = [{ number: 1, par: 4, handicap: null, tees: [
-      { colour: 'A', yardage: 100, lat: null, lng: null },
-      { colour: 'B', yardage: 200, lat: null, lng: null },
-      { colour: 'C', yardage: 300, lat: null, lng: null },
-      { colour: 'D', yardage: 400, lat: null, lng: null },
-    ] }]
+    const bad = [
+      {
+        number: 1,
+        par: 4,
+        handicap: null,
+        tees: [
+          { colour: 'A', yardage: 100, lat: null, lng: null },
+          { colour: 'B', yardage: 200, lat: null, lng: null },
+          { colour: 'C', yardage: 300, lat: null, lng: null },
+          { colour: 'D', yardage: 400, lat: null, lng: null },
+        ],
+      },
+    ]
     const result = await saveHolesAction('c-1', bad)
     expect(result.error).toMatch(/3 tees/i)
   })
@@ -113,9 +122,7 @@ describe('saveTeeCoordAction', () => {
     mockUpdate.mockReturnValue({ eq: mockUpdateEq1 })
 
     // First from() = select; second from() = update
-    mockFrom
-      .mockReturnValueOnce({ select: mockSelect })
-      .mockReturnValueOnce({ update: mockUpdate })
+    mockFrom.mockReturnValueOnce({ select: mockSelect }).mockReturnValueOnce({ update: mockUpdate })
   })
 
   it('returns error when not admin', async () => {

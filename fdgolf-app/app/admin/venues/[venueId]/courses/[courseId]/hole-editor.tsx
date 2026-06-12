@@ -72,7 +72,7 @@ interface HoleEditorProps {
 export function HoleEditor({ courseId, holesCount, initialHoles }: HoleEditorProps) {
   const [rows, setRows] = useState<HoleRow[]>(() => {
     if (initialHoles.length > 0) {
-      return initialHoles.map(h => dbHoleToRow(h, h.number))
+      return initialHoles.map((h) => dbHoleToRow(h, h.number))
     }
     return buildDefaultRows(holesCount)
   })
@@ -84,29 +84,31 @@ export function HoleEditor({ courseId, holesCount, initialHoles }: HoleEditorPro
   function updateRow(
     index: number,
     field: keyof Omit<HoleRow, 'tees' | 'number' | 'pin_lat'>,
-    value: string | number,
+    value: string | number
   ) {
-    setRows(prev => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)))
+    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)))
   }
 
   function updateTee(rowIndex: number, teeIndex: number, field: keyof TeeInput, value: string) {
-    setRows(prev =>
+    setRows((prev) =>
       prev.map((r, i) => {
         if (i !== rowIndex) return r
-        const newTees = r.tees.map((t, ti) =>
-          ti === teeIndex ? { ...t, [field]: value } : t,
-        ) as [TeeInput, TeeInput, TeeInput]
+        const newTees = r.tees.map((t, ti) => (ti === teeIndex ? { ...t, [field]: value } : t)) as [
+          TeeInput,
+          TeeInput,
+          TeeInput,
+        ]
         return { ...r, tees: newTees }
-      }),
+      })
     )
   }
 
   function applyPreset(presetId: string) {
-    const preset = COURSE_PRESETS.find(p => p.id === presetId)
+    const preset = COURSE_PRESETS.find((p) => p.id === presetId)
     if (!preset) return
-    setRows(prev =>
-      prev.map(row => {
-        const ph = preset.holes.find(h => h.number === row.number)
+    setRows((prev) =>
+      prev.map((row) => {
+        const ph = preset.holes.find((h) => h.number === row.number)
         if (!ph) return row
         return {
           ...row,
@@ -121,7 +123,7 @@ export function HoleEditor({ courseId, holesCount, initialHoles }: HoleEditorPro
             { colour: '', yardage: '' },
           ],
         }
-      }),
+      })
     )
     setShowPresets(false)
   }
@@ -130,13 +132,13 @@ export function HoleEditor({ courseId, holesCount, initialHoles }: HoleEditorPro
     setError(null)
     setSaved(false)
     startTransition(async () => {
-      const holes = rows.map(r => ({
+      const holes = rows.map((r) => ({
         number: r.number,
         par: Number(r.par),
         handicap: r.handicap !== '' ? Number(r.handicap) : null,
         tees: r.tees
-          .filter(t => t.colour.trim() !== '')
-          .map(t => ({
+          .filter((t) => t.colour.trim() !== '')
+          .map((t) => ({
             colour: t.colour.trim(),
             yardage: Number(t.yardage) || 0,
             lat: null,
@@ -161,13 +163,13 @@ export function HoleEditor({ courseId, holesCount, initialHoles }: HoleEditorPro
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setShowPresets(v => !v)}
+            onClick={() => setShowPresets((v) => !v)}
           >
             Import preset ▾
           </Button>
           {showPresets && (
             <div className="absolute right-0 mt-1 bg-white border rounded shadow-md z-10 min-w-40">
-              {COURSE_PRESETS.map(p => (
+              {COURSE_PRESETS.map((p) => (
                 <button
                   key={p.id}
                   type="button"
@@ -208,7 +210,7 @@ export function HoleEditor({ courseId, holesCount, initialHoles }: HoleEditorPro
                     min={3}
                     max={5}
                     value={row.par}
-                    onChange={e => updateRow(i, 'par', e.target.value)}
+                    onChange={(e) => updateRow(i, 'par', e.target.value)}
                     className="w-14 h-8 text-sm"
                   />
                 </td>
@@ -218,17 +220,17 @@ export function HoleEditor({ courseId, holesCount, initialHoles }: HoleEditorPro
                     min={1}
                     max={18}
                     value={row.handicap}
-                    onChange={e => updateRow(i, 'handicap', e.target.value)}
+                    onChange={(e) => updateRow(i, 'handicap', e.target.value)}
                     placeholder="–"
                     className="w-14 h-8 text-sm"
                   />
                 </td>
-                {([0, 1, 2] as const).map(ti => (
+                {([0, 1, 2] as const).map((ti) => (
                   <React.Fragment key={ti}>
                     <td className="px-2 py-1">
                       <Input
                         value={row.tees[ti].colour}
-                        onChange={e => updateTee(i, ti, 'colour', e.target.value)}
+                        onChange={(e) => updateTee(i, ti, 'colour', e.target.value)}
                         placeholder="e.g. Blue"
                         className="w-24 h-8 text-sm"
                       />
@@ -237,7 +239,7 @@ export function HoleEditor({ courseId, holesCount, initialHoles }: HoleEditorPro
                       <Input
                         type="number"
                         value={row.tees[ti].yardage}
-                        onChange={e => updateTee(i, ti, 'yardage', e.target.value)}
+                        onChange={(e) => updateTee(i, ti, 'yardage', e.target.value)}
                         placeholder="0"
                         className="w-16 h-8 text-sm"
                         disabled={!row.tees[ti].colour}

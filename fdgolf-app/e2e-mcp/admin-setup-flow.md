@@ -37,6 +37,7 @@ Verify: `input[name="slug_override"]` value = `mcp-smoke-test-2026`.
 
 Tool: `browser_fill_form`
 Fields:
+
 - `input[name="venue"]` → `Granite Ridge GC`
 - `input[name="starts_at"]` → `2026-12-01T09:00`
 
@@ -82,6 +83,7 @@ For holes 1–18, set `hole_N_stroke_index` to N.
 
 Tool: `browser_fill_form`
 Fields (example, fill all 18):
+
 - `input[name="hole_1_stroke_index"]` → `1`
 - `input[name="hole_2_stroke_index"]` → `2`
 - ... (continue through hole 18)
@@ -109,6 +111,7 @@ Verify: Hole 1 par still shows `3`; stroke indices are populated.
 ## Cleanup
 
 After the smoke test, delete the test tournament via Supabase dashboard or:
+
 ```sql
 DELETE FROM tournaments WHERE slug = 'mcp-smoke-test-2026';
 ```

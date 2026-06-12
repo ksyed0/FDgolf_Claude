@@ -20,7 +20,9 @@ test.describe('AppChrome & display (US-0001, US-0003)', () => {
     await expect(header).toContainText('AI/RUN')
   })
 
-  test('TC-0003: authenticated user stays on / and sees AppChrome header (not redirected)', async ({ page }) => {
+  test('TC-0003: authenticated user stays on / and sees AppChrome header (not redirected)', async ({
+    page,
+  }) => {
     await page.goto('/')
 
     // AC-0015: AppChrome is in root layout — header must appear on every route

@@ -27,24 +27,21 @@ export async function saveHolesAction(
   }
 
   // Delete all existing holes for this course, then reinsert
-  const { error: deleteError } = await supabase
-    .from('holes')
-    .delete()
-    .eq('course_id', courseId)
+  const { error: deleteError } = await supabase.from('holes').delete().eq('course_id', courseId)
 
   if (deleteError) return { error: deleteError.message }
 
   if (holes.length === 0) return { error: null }
 
-  const { error: insertError } = await supabase
-    .from('holes')
-    .insert(holes.map(h => ({
+  const { error: insertError } = await supabase.from('holes').insert(
+    holes.map((h) => ({
       course_id: courseId,
-      number:   h.number,
-      par:      h.par,
+      number: h.number,
+      par: h.par,
       handicap: h.handicap,
-      tees:     h.tees,
-    })))
+      tees: h.tees,
+    }))
+  )
 
   return { error: insertError?.message ?? null }
 }

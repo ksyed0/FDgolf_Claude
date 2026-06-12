@@ -85,7 +85,9 @@ describe('VenueListClient', () => {
   })
 
   it('shows error message when delete fails', async () => {
-    mockDeleteAction.mockResolvedValue({ error: 'Cannot delete: 2 tournament(s) reference this venue.' })
+    mockDeleteAction.mockResolvedValue({
+      error: 'Cannot delete: 2 tournament(s) reference this venue.',
+    })
     render(<VenueListClient venues={venues} />)
     fireEvent.click(screen.getAllByRole('button', { name: /delete/i })[0])
     fireEvent.click(screen.getByRole('button', { name: /confirm/i }))
@@ -96,7 +98,10 @@ describe('VenueListClient', () => {
 
   it('renders + Add venue link', () => {
     render(<VenueListClient venues={venues} />)
-    expect(screen.getByRole('link', { name: /add venue/i })).toHaveAttribute('href', '/admin/venues/new')
+    expect(screen.getByRole('link', { name: /add venue/i })).toHaveAttribute(
+      'href',
+      '/admin/venues/new'
+    )
   })
 
   it('shows empty state when no venues', () => {

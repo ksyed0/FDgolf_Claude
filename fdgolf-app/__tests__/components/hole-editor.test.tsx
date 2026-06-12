@@ -75,7 +75,7 @@ describe('HoleEditor', () => {
     })
     expect(mockSaveHolesAction).toHaveBeenCalledWith(
       'c-1',
-      expect.arrayContaining([expect.objectContaining({ number: 1, par: 4 })]),
+      expect.arrayContaining([expect.objectContaining({ number: 1, par: 4 })])
     )
   })
 

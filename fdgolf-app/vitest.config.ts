@@ -16,22 +16,22 @@ export default defineConfig({
       exclude: [
         'lib/supabase/**',
         'app/layout.tsx',
-        'app/page.tsx',                                // Root redirect page
-        'app/admin/tournaments/page.tsx',              // Server Component, integration-tested
-        'app/admin/tournaments/new/page.tsx',          // Server Component, integration-tested
-        'app/admin/tournaments/[slug]/page.tsx',       // Server Component nav page
-        'app/admin/tournaments/[slug]/course/page.tsx',  // Server Component, integration-tested
+        'app/page.tsx', // Root redirect page
+        'app/admin/tournaments/page.tsx', // Server Component, integration-tested
+        'app/admin/tournaments/new/page.tsx', // Server Component, integration-tested
+        'app/admin/tournaments/[slug]/page.tsx', // Server Component nav page
+        'app/admin/tournaments/[slug]/course/page.tsx', // Server Component, integration-tested
         'app/admin/tournaments/[slug]/course/pins/page.tsx', // Server Component, integration-tested
         'app/admin/tournaments/[slug]/clubs/page.tsx', // Server Component, integration-tested
-        'app/login/page.tsx',                          // Server Component, integration-tested
-        'app/admin/venues/page.tsx',                   // Server Component, integration-tested
-        'app/admin/venues/new/page.tsx',               // Server Component, integration-tested
-        'app/admin/venues/[venueId]/page.tsx',         // Server Component, integration-tested
-        'app/admin/venues/[venueId]/edit/page.tsx',    // Server Component, integration-tested
-        'app/admin/venues/[venueId]/courses/new/page.tsx',            // Server Component, integration-tested
-        'app/admin/venues/[venueId]/courses/[courseId]/page.tsx',     // Server Component, integration-tested
+        'app/login/page.tsx', // Server Component, integration-tested
+        'app/admin/venues/page.tsx', // Server Component, integration-tested
+        'app/admin/venues/new/page.tsx', // Server Component, integration-tested
+        'app/admin/venues/[venueId]/page.tsx', // Server Component, integration-tested
+        'app/admin/venues/[venueId]/edit/page.tsx', // Server Component, integration-tested
+        'app/admin/venues/[venueId]/courses/new/page.tsx', // Server Component, integration-tested
+        'app/admin/venues/[venueId]/courses/[courseId]/page.tsx', // Server Component, integration-tested
         'app/admin/venues/[venueId]/courses/[courseId]/edit/page.tsx', // Server Component, integration-tested
-        'app/admin/tournaments/[slug]/edit/page.tsx',  // Server Component, integration-tested
+        'app/admin/tournaments/[slug]/edit/page.tsx', // Server Component, integration-tested
         'app/admin/tournaments/[slug]/organizers/page.tsx', // Server Component, integration-tested
         '**/*.config.*',
         '**/node_modules/**',

@@ -18,10 +18,7 @@ export default async function NewTournamentPage() {
     redirect('/')
   }
 
-  const { data: venues } = await supabase
-    .from('venues')
-    .select('id, name')
-    .order('name')
+  const { data: venues } = await supabase.from('venues').select('id, name').order('name')
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">

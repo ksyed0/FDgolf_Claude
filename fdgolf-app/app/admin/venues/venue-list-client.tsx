@@ -47,7 +47,10 @@ export function VenueListClient({ venues }: { venues: Venue[] }) {
       </div>
 
       {deleteError && (
-        <p role="alert" className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
+        <p
+          role="alert"
+          className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2"
+        >
           {deleteError}
         </p>
       )}
@@ -56,13 +59,17 @@ export function VenueListClient({ venues }: { venues: Venue[] }) {
         <p className="text-gray-500 text-sm">No venues yet.</p>
       ) : (
         <ul className="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
-          {venues.map(v => (
+          {venues.map((v) => (
             <li key={v.id}>
               {confirmingId === v.id ? (
                 <div className="flex items-center justify-between px-4 py-3 bg-red-50 border-l-4 border-red-400">
                   <div>
-                    <p className="text-sm font-medium text-red-800">Delete &ldquo;{v.name}&rdquo;? This cannot be undone.</p>
-                    <p className="text-xs text-red-600">All courses and holes will also be deleted.</p>
+                    <p className="text-sm font-medium text-red-800">
+                      Delete &ldquo;{v.name}&rdquo;? This cannot be undone.
+                    </p>
+                    <p className="text-xs text-red-600">
+                      All courses and holes will also be deleted.
+                    </p>
                   </div>
                   <div className="flex gap-3">
                     <button
@@ -86,14 +93,28 @@ export function VenueListClient({ venues }: { venues: Venue[] }) {
                   <div>
                     <p className="font-medium text-sm">{v.name}</p>
                     <p className="text-xs text-gray-500">
-                      {[v.city, v.state_province].filter(Boolean).join(', ') || 'No address'} &middot; {v.courseCount} course{v.courseCount !== 1 ? 's' : ''}
+                      {[v.city, v.state_province].filter(Boolean).join(', ') || 'No address'}{' '}
+                      &middot; {v.courseCount} course{v.courseCount !== 1 ? 's' : ''}
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <Link href={`/admin/venues/${v.id}`} className="text-green-800 text-sm hover:underline">View →</Link>
-                    <Link href={`/admin/venues/${v.id}/edit`} className="text-gray-600 text-sm hover:underline">Edit</Link>
+                    <Link
+                      href={`/admin/venues/${v.id}`}
+                      className="text-green-800 text-sm hover:underline"
+                    >
+                      View →
+                    </Link>
+                    <Link
+                      href={`/admin/venues/${v.id}/edit`}
+                      className="text-gray-600 text-sm hover:underline"
+                    >
+                      Edit
+                    </Link>
                     <button
-                      onClick={() => { setConfirmingId(v.id); setDeleteError(null) }}
+                      onClick={() => {
+                        setConfirmingId(v.id)
+                        setDeleteError(null)
+                      }}
                       disabled={isPending}
                       className="text-red-600 text-sm hover:underline disabled:opacity-50"
                     >

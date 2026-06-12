@@ -1,17 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const {
-  mockRpc, mockFrom, mockInsert, mockUpdate, mockDelete, mockSelect, mockEq, mockSingle,
-} = vi.hoisted(() => ({
-  mockRpc:    vi.fn(),
-  mockFrom:   vi.fn(),
-  mockInsert: vi.fn(),
-  mockUpdate: vi.fn(),
-  mockDelete: vi.fn(),
-  mockSelect: vi.fn(),
-  mockEq:     vi.fn(),
-  mockSingle: vi.fn(),
-}))
+const { mockRpc, mockFrom, mockInsert, mockUpdate, mockDelete, mockSelect, mockEq, mockSingle } =
+  vi.hoisted(() => ({
+    mockRpc: vi.fn(),
+    mockFrom: vi.fn(),
+    mockInsert: vi.fn(),
+    mockUpdate: vi.fn(),
+    mockDelete: vi.fn(),
+    mockSelect: vi.fn(),
+    mockEq: vi.fn(),
+    mockSingle: vi.fn(),
+  }))
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: () => ({ rpc: mockRpc, from: mockFrom }),
@@ -59,20 +58,24 @@ describe('createCourseAction', () => {
 
   it('inserts with venue_id and correct fields', async () => {
     await createCourseAction('v-1', { error: null }, makeForm({ par_total: '72' }))
-    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
-      venue_id: 'v-1',
-      name: 'Main Course',
-      holes_count: 18,
-      par_total: 72,
-    }))
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        venue_id: 'v-1',
+        name: 'Main Course',
+        holes_count: 18,
+        par_total: 72,
+      })
+    )
   })
 
   it('parses tee_yardages JSON when provided', async () => {
     const tees = JSON.stringify([{ colour: 'Blue', total_yardage: 6540 }])
     await createCourseAction('v-1', { error: null }, makeForm({ tee_yardages: tees }))
-    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
-      tee_yardages: [{ colour: 'Blue', total_yardage: 6540 }],
-    }))
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tee_yardages: [{ colour: 'Blue', total_yardage: 6540 }],
+      })
+    )
   })
 
   it('uses empty array when tee_yardages is blank', async () => {
@@ -158,9 +161,7 @@ describe('deleteCourseAction', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     mockRpc.mockResolvedValue({ data: true, error: null })
-    mockFrom
-      .mockReturnValueOnce({ select: mockSelect })
-      .mockReturnValueOnce({ delete: mockDelete })
+    mockFrom.mockReturnValueOnce({ select: mockSelect }).mockReturnValueOnce({ delete: mockDelete })
     mockSelect.mockReturnValue({ eq: mockEq })
     mockEq.mockResolvedValueOnce({ count: 0, error: null })
     mockDelete.mockReturnValue({ eq: mockEq })
@@ -196,10 +197,12 @@ describe('getCoursesForVenueAction', () => {
     vi.clearAllMocks()
     mockFrom.mockReturnValue({ select: mockSelect })
     mockSelect.mockReturnValue({ eq: mockEq })
-    mockEq.mockReturnValue({ order: vi.fn().mockResolvedValue({
-      data: [{ id: 'c-1', name: 'Main Course' }],
-      error: null,
-    }) })
+    mockEq.mockReturnValue({
+      order: vi.fn().mockResolvedValue({
+        data: [{ id: 'c-1', name: 'Main Course' }],
+        error: null,
+      }),
+    })
   })
 
   it('returns courses for a venue', async () => {

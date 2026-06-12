@@ -24,13 +24,22 @@ export default async function VenueDetailPage({ params }: { params: { venueId: s
 
   if (coursesError) throw new Error(coursesError.message)
 
-  const address = [venue.address1, venue.address2, venue.city, venue.state_province, venue.zip_postal]
+  const address = [
+    venue.address1,
+    venue.address2,
+    venue.city,
+    venue.state_province,
+    venue.zip_postal,
+  ]
     .filter(Boolean)
     .join(', ')
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <Link href="/admin/venues" className="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-block">
+      <Link
+        href="/admin/venues"
+        className="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-block"
+      >
         ← Venues
       </Link>
       <div className="flex items-center justify-between mb-6">
@@ -38,7 +47,10 @@ export default async function VenueDetailPage({ params }: { params: { venueId: s
           <h1 className="text-2xl font-bold">{venue.name}</h1>
           {address && <p className="text-sm text-gray-500 mt-1">{address}</p>}
         </div>
-        <Link href={`/admin/venues/${params.venueId}/edit`} className="text-sm text-gray-600 hover:underline">
+        <Link
+          href={`/admin/venues/${params.venueId}/edit`}
+          className="text-sm text-gray-600 hover:underline"
+        >
           Edit venue
         </Link>
       </div>

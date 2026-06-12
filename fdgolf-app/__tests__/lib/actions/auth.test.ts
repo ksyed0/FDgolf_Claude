@@ -63,7 +63,9 @@ describe('loginAction', () => {
   it('calls redirect to next param on successful sign-in', async () => {
     mockSignInWithPassword.mockResolvedValue({ data: { user: {} }, error: null })
     // redirect() throws in real Next.js; mock throws to simulate behaviour
-    mockRedirect.mockImplementation(() => { throw new Error('REDIRECT') })
+    mockRedirect.mockImplementation(() => {
+      throw new Error('REDIRECT')
+    })
 
     const formData = new FormData()
     formData.set('email', 'player@fdgolf.com')
@@ -76,7 +78,9 @@ describe('loginAction', () => {
 
   it('defaults redirect to / when next param is missing', async () => {
     mockSignInWithPassword.mockResolvedValue({ data: { user: {} }, error: null })
-    mockRedirect.mockImplementation(() => { throw new Error('REDIRECT') })
+    mockRedirect.mockImplementation(() => {
+      throw new Error('REDIRECT')
+    })
 
     const formData = new FormData()
     formData.set('email', 'player@fdgolf.com')
@@ -95,7 +99,9 @@ describe('logoutAction', () => {
 
   it('calls signOut and redirects to /login', async () => {
     mockSignOut.mockResolvedValue({ error: null })
-    mockRedirect.mockImplementation(() => { throw new Error('REDIRECT') })
+    mockRedirect.mockImplementation(() => {
+      throw new Error('REDIRECT')
+    })
 
     await expect(logoutAction()).rejects.toThrow('REDIRECT')
 

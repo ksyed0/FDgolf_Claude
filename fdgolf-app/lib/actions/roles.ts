@@ -62,9 +62,7 @@ export async function assignOrganizerAction(
  * RLS: the `players_select_self_or_teammate_or_admin` policy means only admin
  * can search all players — which is correct since this action is admin-only.
  */
-export async function searchPlayersAction(
-  query: string
-): Promise<{
+export async function searchPlayersAction(query: string): Promise<{
   players: { id: string; name: string; email: string }[]
   error: string | null
 }> {

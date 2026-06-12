@@ -86,17 +86,20 @@ describe('createTournamentAction', () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-uuid-123' } } })
     mockInsert.mockReturnValue({
       select: () => ({
-        single: () => Promise.resolve({
-          data: { slug: 'summer-classic' },
-          error: null,
-        }),
+        single: () =>
+          Promise.resolve({
+            data: { slug: 'summer-classic' },
+            error: null,
+          }),
       }),
     })
-    mockRedirect.mockImplementation(() => { throw new Error('REDIRECT') })
+    mockRedirect.mockImplementation(() => {
+      throw new Error('REDIRECT')
+    })
 
-    await expect(
-      createTournamentAction({ error: null }, validFormData())
-    ).rejects.toThrow('REDIRECT')
+    await expect(createTournamentAction({ error: null }, validFormData())).rejects.toThrow(
+      'REDIRECT'
+    )
 
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -116,17 +119,20 @@ describe('createTournamentAction', () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-uuid-123' } } })
     mockInsert.mockReturnValue({
       select: () => ({
-        single: () => Promise.resolve({
-          data: { slug: 'summer-classic' },
-          error: null,
-        }),
+        single: () =>
+          Promise.resolve({
+            data: { slug: 'summer-classic' },
+            error: null,
+          }),
       }),
     })
-    mockRedirect.mockImplementation(() => { throw new Error('REDIRECT') })
+    mockRedirect.mockImplementation(() => {
+      throw new Error('REDIRECT')
+    })
 
-    await expect(
-      createTournamentAction({ error: null }, validFormData())
-    ).rejects.toThrow('REDIRECT')
+    await expect(createTournamentAction({ error: null }, validFormData())).rejects.toThrow(
+      'REDIRECT'
+    )
 
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -139,38 +145,42 @@ describe('createTournamentAction', () => {
     mockGetUser.mockResolvedValue({ data: { user: null } })
     mockInsert.mockReturnValue({
       select: () => ({
-        single: () => Promise.resolve({
-          data: { slug: 'summer-classic' },
-          error: null,
-        }),
+        single: () =>
+          Promise.resolve({
+            data: { slug: 'summer-classic' },
+            error: null,
+          }),
       }),
     })
-    mockRedirect.mockImplementation(() => { throw new Error('REDIRECT') })
+    mockRedirect.mockImplementation(() => {
+      throw new Error('REDIRECT')
+    })
 
-    await expect(
-      createTournamentAction({ error: null }, validFormData())
-    ).rejects.toThrow('REDIRECT')
-
-    expect(mockInsert).toHaveBeenCalledWith(
-      expect.objectContaining({ created_by: null })
+    await expect(createTournamentAction({ error: null }, validFormData())).rejects.toThrow(
+      'REDIRECT'
     )
+
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ created_by: null }))
   })
 
   it('redirects to /admin/tournaments/[slug] after successful insert', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-uuid-123' } } })
     mockInsert.mockReturnValue({
       select: () => ({
-        single: () => Promise.resolve({
-          data: { slug: 'summer-classic' },
-          error: null,
-        }),
+        single: () =>
+          Promise.resolve({
+            data: { slug: 'summer-classic' },
+            error: null,
+          }),
       }),
     })
-    mockRedirect.mockImplementation(() => { throw new Error('REDIRECT') })
+    mockRedirect.mockImplementation(() => {
+      throw new Error('REDIRECT')
+    })
 
-    await expect(
-      createTournamentAction({ error: null }, validFormData())
-    ).rejects.toThrow('REDIRECT')
+    await expect(createTournamentAction({ error: null }, validFormData())).rejects.toThrow(
+      'REDIRECT'
+    )
 
     expect(mockRedirect).toHaveBeenCalledWith('/admin/tournaments/summer-classic')
   })
@@ -179,10 +189,11 @@ describe('createTournamentAction', () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-uuid-123' } } })
     mockInsert.mockReturnValue({
       select: () => ({
-        single: () => Promise.resolve({
-          data: null,
-          error: { message: 'duplicate key value violates unique constraint' },
-        }),
+        single: () =>
+          Promise.resolve({
+            data: null,
+            error: { message: 'duplicate key value violates unique constraint' },
+          }),
       }),
     })
 
@@ -195,24 +206,23 @@ describe('createTournamentAction', () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-uuid-123' } } })
     mockInsert.mockReturnValue({
       select: () => ({
-        single: () => Promise.resolve({
-          data: { slug: 'my-custom-slug' },
-          error: null,
-        }),
+        single: () =>
+          Promise.resolve({
+            data: { slug: 'my-custom-slug' },
+            error: null,
+          }),
       }),
     })
-    mockRedirect.mockImplementation(() => { throw new Error('REDIRECT') })
+    mockRedirect.mockImplementation(() => {
+      throw new Error('REDIRECT')
+    })
 
     const fd = validFormData()
     fd.set('slug_override', 'my-custom-slug')
 
-    await expect(
-      createTournamentAction({ error: null }, fd)
-    ).rejects.toThrow('REDIRECT')
+    await expect(createTournamentAction({ error: null }, fd)).rejects.toThrow('REDIRECT')
 
-    expect(mockInsert).toHaveBeenCalledWith(
-      expect.objectContaining({ slug: 'my-custom-slug' })
-    )
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ slug: 'my-custom-slug' }))
   })
 
   it('rejects invalid slug_override with uppercase characters', async () => {
@@ -228,18 +238,21 @@ describe('createTournamentAction', () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-uuid-123' } } })
     mockInsert.mockReturnValue({
       select: () => ({
-        single: () => Promise.resolve({
-          data: { slug: 'summer-classic' },
-          error: null,
-        }),
+        single: () =>
+          Promise.resolve({
+            data: { slug: 'summer-classic' },
+            error: null,
+          }),
       }),
     })
-    mockRedirect.mockImplementation(() => { throw new Error('REDIRECT') })
+    mockRedirect.mockImplementation(() => {
+      throw new Error('REDIRECT')
+    })
 
     // validFormData has no slug_override field
-    await expect(
-      createTournamentAction({ error: null }, validFormData())
-    ).rejects.toThrow('REDIRECT')
+    await expect(createTournamentAction({ error: null }, validFormData())).rejects.toThrow(
+      'REDIRECT'
+    )
 
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({ slug: generateSlug('Summer Classic') })

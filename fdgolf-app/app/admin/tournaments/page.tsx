@@ -14,7 +14,7 @@ export default async function TournamentsPage() {
   if (error) throw new Error(error.message)
 
   // Supabase returns the joined relation as an array; normalise to object | null
-  const tournaments = (raw ?? []).map(t => ({
+  const tournaments = (raw ?? []).map((t) => ({
     ...t,
     venues: Array.isArray(t.venues) ? (t.venues[0] ?? null) : t.venues,
   }))
