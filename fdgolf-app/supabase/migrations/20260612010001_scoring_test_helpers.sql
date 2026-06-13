@@ -10,6 +10,10 @@ CREATE SCHEMA IF NOT EXISTS tests;
 
 -- Seed a tournament with an 18-hole par-4 course (par_total 72) and one team.
 -- Returns the new tournament_id and team_id.
+-- BUG-0017: epic0003 teams has `name` (no team_number/team_size). The legacy
+-- p_team_size parameter is retained for call-site compatibility but is now only
+-- a documentation hint ("how many members the test intends to add"); roster size
+-- is derived from team_members at scoring time, not stored on teams.
 CREATE OR REPLACE FUNCTION tests.seed_tournament(p_team_size int DEFAULT 4)
 RETURNS TABLE (tournament_id uuid, team_id uuid)
 LANGUAGE plpgsql
@@ -32,8 +36,8 @@ BEGIN
     VALUES ('Test T', 'test-' || substr(gen_random_uuid()::text, 1, 8), now(), v_course, 'active')
     RETURNING id INTO v_t;
 
-  INSERT INTO teams (tournament_id, team_number, team_size)
-    VALUES (v_t, 1, p_team_size) RETURNING id INTO v_team;
+  INSERT INTO teams (tournament_id, name)
+    VALUES (v_t, 'Team ' || substr(gen_random_uuid()::text, 1, 4)) RETURNING id INTO v_team;
 
   tournament_id := v_t;
   team_id := v_team;
@@ -68,26 +72,35 @@ CREATE OR REPLACE FUNCTION tests.add_member(
 RETURNS uuid
 LANGUAGE plpgsql
 AS $$
+-- BUG-0017: epic0003 players has a RANDOM id and a user_id -> auth.users link
+-- (players.id is NOT auth.uid()). Membership goes through team_members; the
+-- registration no longer carries team_id. Returns the new RANDOM player_id
+-- (callers use it for team_hole_scores.contributing_player_id assertions).
 DECLARE
-  v_uid   uuid := gen_random_uuid();
+  v_uid    uuid := gen_random_uuid();  -- auth user id
+  v_player uuid := gen_random_uuid();  -- random players.id (epic0003)
   v_email text := p_name || '-' || substr(gen_random_uuid()::text, 1, 8) || '@test.dev';
 BEGIN
   INSERT INTO auth.users (id, instance_id, aud, role, email)
     VALUES (v_uid, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', v_email);
 
-  INSERT INTO players (id, name, email) VALUES (v_uid, p_name, v_email);
+  INSERT INTO players (id, user_id, email, full_name)
+    VALUES (v_player, v_uid, v_email, p_name);
 
-  INSERT INTO tournament_registrations (tournament_id, player_id, team_id, status)
-    VALUES (p_tournament, v_uid, p_team,
+  INSERT INTO team_members (team_id, player_id)
+    VALUES (p_team, v_player);
+
+  INSERT INTO tournament_registrations (tournament_id, player_id, status)
+    VALUES (p_tournament, v_player,
             CASE WHEN p_withdrawn THEN 'withdrawn'::registration_status
                  ELSE 'registered'::registration_status END);
 
   INSERT INTO rounds (tournament_id, player_id, team_id, start_hole, status)
-    VALUES (p_tournament, v_uid, p_team, 1,
+    VALUES (p_tournament, v_player, p_team, 1,
             CASE WHEN p_withdrawn THEN 'withdrawn'::round_status
                  ELSE 'in_progress'::round_status END);
 
-  RETURN v_uid;
+  RETURN v_player;
 END;
 $$;
 

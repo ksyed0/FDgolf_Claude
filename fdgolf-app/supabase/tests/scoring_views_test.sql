@@ -1,7 +1,7 @@
 BEGIN;
 SELECT plan(9);
 
--- Use team_size=2 minimum; only add one member to test vs-par with a single scorer.
+-- Only add one member to test vs-par with a single scorer.
 SELECT tournament_id AS t, team_id AS tm FROM tests.seed_tournament(2) \gset
 SELECT tests.add_member(:'t', :'tm', 'Solo') AS solo \gset
 
@@ -30,10 +30,10 @@ SELECT is(
   0, 'cumulative through hole 2 is even (+1 then -1)');
 
 -- Standings: build a second and third team in the same tournament to test ranking + ties.
--- seed_tournament created only team_number 1, so add teams 2 and 3 here.
--- team_size=2 is the minimum allowed by the schema CHECK constraint.
-INSERT INTO teams (tournament_id, team_number, team_size) VALUES (:'t', 2, 2) RETURNING id AS tm2 \gset
-INSERT INTO teams (tournament_id, team_number, team_size) VALUES (:'t', 3, 2) RETURNING id AS tm3 \gset
+-- seed_tournament created only one team, so add teams 2 and 3 here (epic0003
+-- teams just need a name; membership comes from team_members via add_member).
+INSERT INTO teams (tournament_id, name) VALUES (:'t', 'Team 2') RETURNING id AS tm2 \gset
+INSERT INTO teams (tournament_id, name) VALUES (:'t', 'Team 3') RETURNING id AS tm3 \gset
 
 SELECT tests.add_member(:'t', :'tm2', 'Two')   AS p2 \gset
 SELECT tests.add_member(:'t', :'tm3', 'Three') AS p3 \gset
@@ -67,7 +67,7 @@ SELECT is(
   1, 'team 2 is thru 1 hole');
 
 -- A team with NO scores still appears (LEFT JOIN), at even par.
-INSERT INTO teams (tournament_id, team_number, team_size) VALUES (:'t', 4, 2) RETURNING id AS tm4 \gset
+INSERT INTO teams (tournament_id, name) VALUES (:'t', 'Team 4') RETURNING id AS tm4 \gset
 SELECT is(
   (SELECT total_vs_par::int FROM team_standings WHERE team_id = :'tm4'),
   0, 'a team with no scores still appears at even par (all-teams LEFT JOIN)');

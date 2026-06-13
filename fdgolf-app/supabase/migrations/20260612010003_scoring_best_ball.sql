@@ -27,13 +27,23 @@ DECLARE
   v_best   int;
   v_player uuid;
 BEGIN
-  -- Active roster size = non-withdrawn registrations for the team.
+  -- BUG-0017: membership comes from team_members (epic0003), not
+  -- tournament_registrations.team_id (removed). Active roster = team_members
+  -- whose tournament_registration (for the team's tournament) is non-withdrawn.
+  -- The withdrawn source of truth stays tournament_registrations.status (D4).
   SELECT count(*) INTO v_active
-    FROM tournament_registrations tr
-   WHERE tr.team_id = p_team_id
+    FROM team_members tm
+    JOIN teams t
+      ON t.id = tm.team_id
+    JOIN tournament_registrations tr
+      ON tr.player_id = tm.player_id
+     AND tr.tournament_id = t.tournament_id
+   WHERE tm.team_id = p_team_id
      AND tr.status <> 'withdrawn';
 
   -- Member scores for this hole, restricted to non-withdrawn members.
+  -- Membership is team_members; the withdrawn filter is correlated through
+  -- tournament_registrations on the team's tournament.
   -- Note: ms_status alias avoids ambiguity with the OUT parameter 'status'.
   WITH member_scores AS (
     SELECT hs.gross_score,
@@ -43,11 +53,13 @@ BEGIN
       FROM hole_scores hs
       JOIN rounds r
         ON r.id = hs.round_id
+      JOIN team_members tm
+        ON tm.player_id = r.player_id
+       AND tm.team_id   = p_team_id
       JOIN tournament_registrations tr
         ON tr.player_id = r.player_id
        AND tr.tournament_id = r.tournament_id
-     WHERE r.team_id = p_team_id
-       AND tr.status <> 'withdrawn'
+     WHERE tr.status <> 'withdrawn'
        AND hs.hole_number = p_hole_number
   )
   SELECT
