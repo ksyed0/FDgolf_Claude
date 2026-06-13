@@ -667,6 +667,11 @@ Acceptance Criteria:
   - [ ] AC-0156: Computes gross_score as sum of stroke_count on this hole
   - [ ] AC-0157: Inserts/updates hole_scores row with status=provisional or final
   - [ ] AC-0158: Triggers team_hole_scores recalc via EPIC-0006
+  > EPIC-0006 contract (2026-06-13, PR #36): hole_scores is now trigger-derived from shots by the
+  > scoring engine. Round tracking writes SHOTS ONLY and must NOT write hole_scores directly —
+  > AC-0156/0157 are satisfied automatically by the recompute trigger. stroke_count contract:
+  > in_play/sunk=1, mulligan=0, out_of_bounds=2. See
+  > docs/superpowers/specs/2026-06-12-epic0006-scoring-engine-design.md §8.
 ```
 
 ```
@@ -780,90 +785,90 @@ Acceptance Criteria:
 US-0049 (EPIC-0006): As a developer, I want a PostgreSQL function calc_best_ball_for_hole, so that team scoring is computed server-side consistently.
 Priority: High
 Estimate: M
-Status: Planned
+Status: Done
 Branch: feature/US-0049-best-ball-function
 Dependencies: US-0005
 Acceptance Criteria:
-  - [ ] AC-0182: Function signature: calc_best_ball_for_hole(p_team_id uuid, p_hole_number int) returns (best_score int, contributing_player_id uuid, status hole_score_status)
-  - [ ] AC-0183: Returns min gross_score across team members for the hole
-  - [ ] AC-0184: Status is final only when all team_size members have final hole_score for this hole
-  - [ ] AC-0185: SQL tests verify with 2-, 3-, 4-, 5-player teams
+  - [x] AC-0182: Function signature: calc_best_ball_for_hole(p_team_id uuid, p_hole_number int) returns (best_score int, contributing_player_id uuid, status hole_score_status)
+  - [x] AC-0183: Returns min gross_score across team members for the hole
+  - [x] AC-0184: Status is final only when all team_size members have final hole_score for this hole
+  - [x] AC-0185: SQL tests verify with 2-, 3-, 4-, 5-player teams
 ```
 
 ```
 US-0050 (EPIC-0006): As a developer, I want a DB trigger on hole_scores that upserts team_hole_scores, so that team totals stay in sync without app-side bookkeeping.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0050-trigger-team-scores
 Dependencies: US-0049
 Acceptance Criteria:
-  - [ ] AC-0186: AFTER INSERT/UPDATE on hole_scores calls calc_best_ball_for_hole
-  - [ ] AC-0187: team_hole_scores row created or updated with returned values
-  - [ ] AC-0188: status (provisional/final) flows from the function result
+  - [x] AC-0186: AFTER INSERT/UPDATE on hole_scores calls calc_best_ball_for_hole
+  - [x] AC-0187: team_hole_scores row created or updated with returned values
+  - [x] AC-0188: status (provisional/final) flows from the function result
 ```
 
 ```
 US-0051 (EPIC-0006): As a developer, I want score-vs-par helpers, so that the leaderboard can show "-2 to par" without app-side math.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0051-vs-par-helpers
 Dependencies: US-0050
 Acceptance Criteria:
-  - [ ] AC-0189: SQL view returns per-hole and cumulative score-vs-par
-  - [ ] AC-0190: Handles missing holes (returns null cumulative until first hole completes)
+  - [x] AC-0189: SQL view returns per-hole and cumulative score-vs-par
+  - [x] AC-0190: Handles missing holes (returns null cumulative until first hole completes)
 ```
 
 ```
 US-0052 (EPIC-0006): As a developer, I want a team_standings SQL view, so that the leaderboard query is a single fetch.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0052-team-standings-view
 Dependencies: US-0051
 Acceptance Criteria:
-  - [ ] AC-0191: View aggregates team_hole_scores into total score, thru count, score-vs-par
-  - [ ] AC-0192: Sorted by score ascending, then thru descending
-  - [ ] AC-0193: Includes rank column with proper tied handling
+  - [x] AC-0191: View aggregates team_hole_scores into total score, thru count, score-vs-par
+  - [x] AC-0192: Sorted by score ascending, then thru descending
+  - [x] AC-0193: Includes rank column with proper tied handling
 ```
 
 ```
 US-0053 (EPIC-0006): As a developer, I want provisional vs final status to be deterministic, so that the leaderboard never disagrees with the round.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0053-provisional-status
 Dependencies: US-0049
 Acceptance Criteria:
-  - [ ] AC-0194: hole_scores.status=final when player has outcome=sunk OR shot count on hole > 8 (auto-finalize blowout)
-  - [ ] AC-0195: team_hole_scores.status=final only when all team_size members have final hole_score for the hole
+  - [x] AC-0194: hole_scores.status=final when player has outcome=sunk OR shot count on hole > 8 (auto-finalize blowout)
+  - [x] AC-0195: team_hole_scores.status=final only when all team_size members have final hole_score for the hole
 ```
 
 ```
 US-0054 (EPIC-0006): As a developer, I want test coverage of Best Ball edge cases, so that scoring bugs don't blow up the tournament.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0054-best-ball-edges
 Dependencies: US-0049
 Acceptance Criteria:
-  - [ ] AC-0196: Tests cover variable team_size (2, 3, 4, 5)
-  - [ ] AC-0197: Mulligan shots (stroke_count=0) do not inflate scores
-  - [ ] AC-0198: OOB penalty stroke is correctly included in gross_score
-  - [ ] AC-0199: Withdrawn players excluded from team Best Ball calc
+  - [x] AC-0196: Tests cover variable team_size (2, 3, 4, 5)
+  - [x] AC-0197: Mulligan shots (stroke_count=0) do not inflate scores
+  - [x] AC-0198: OOB penalty stroke is correctly included in gross_score
+  - [x] AC-0199: Withdrawn players excluded from team Best Ball calc
 ```
 
 ```
 US-0055 (EPIC-0006): As a player, I want provisional team scores shown distinctly on the leaderboard, so that I know which holes aren't fully scored yet.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0055-provisional-flag
 Dependencies: US-0053
 Acceptance Criteria:
-  - [ ] AC-0200: team_hole_scores.status returned in leaderboard payload
-  - [ ] AC-0201: Client renders italic grey for provisional, solid for final
+  - [x] AC-0200: team_hole_scores.status returned in leaderboard payload
+  - [x] AC-0201: Client renders italic grey for provisional, solid for final
 ```
 
 ---
