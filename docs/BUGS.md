@@ -512,11 +512,12 @@ BUG-0017: supabase db reset fails — epic0003 migration conflicts with initial 
 Severity: High
 Related Story: (none — migration chain / 9c053ef merge divergence)
 Related Task: (none)
-Status: Fixed
+Status: Verified
 Fix Branch: feature/epic0006-scoring-engine
 Lesson Encoded: No
 
-Resolved 2026-06-13 (Option A reconciliation): collapsed to a single canonical epic0003 chain —
+Verified 2026-06-13 — merged to develop in PR #36; CI green (Analyze, CodeQL, Quality Gate,
+Security Audit). Resolved (Option A reconciliation): collapsed to a single canonical epic0003 chain —
 removed the superseded players/teams/user_roles/registrations defs from initial_schema, dropped the
 duplicate CREATE TYPE in epic0003, re-based round-tracking/scoring tables into a new
 20260612000003_round_tracking.sql. `supabase db reset` now completes with zero errors; pgTAP 32/32;
@@ -579,11 +580,11 @@ BUG-0018: Admin/role authorization silently broken under canonical epic0003 sche
 Severity: Critical
 Related Story: EPIC-0003 (auth/registration)
 Related Task: (none)
-Status: Fixed
+Status: Verified
 Fix Branch: feature/epic0006-scoring-engine
 Lesson Encoded: No
 
-Resolved 2026-06-13: `user_roles` re-keyed to `user_id → auth.users`; `fdgolf_is_admin()` /
+Verified 2026-06-13 — merged to develop in PR #36; CI green. Resolved: `user_roles` re-keyed to `user_id → auth.users`; `fdgolf_is_admin()` /
 `fdgolf_is_organizer_for()` / `fdgolf_is_teammate()` rewritten to resolve via `players.user_id` /
 `team_members`; all `player_id = auth.uid()` RLS predicates rewritten; `lib/actions/roles.ts`
 organizer insert switched to `user_id` (rejects unclaimed players); `searchPlayersAction` fixed to
