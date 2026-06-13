@@ -3,7 +3,7 @@
 -- Created: 2026-06-12 | BUG-0017 §4
 -- Depends on: epic0003 (players, teams, team_members, tournament_registrations),
 --             initial_schema (tournaments, clubs, enums, trigger_set_updated_at),
---             auth_reconciliation (fdgolf_is_teammate / fdgolf_is_admin / _organizer)
+--             auth_reconciliation (fdgolf_is_admin / fdgolf_is_organizer_for — note: no policy in this file calls fdgolf_is_teammate; team visibility is inlined via team_members joins)
 -- ============================================================
 -- These tables were originally in initial_schema keyed on players.id = auth.uid().
 -- Under the canonical epic0003 model players.id is a random UUID and the auth

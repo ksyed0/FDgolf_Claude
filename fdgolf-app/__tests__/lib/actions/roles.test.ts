@@ -166,6 +166,7 @@ describe('searchPlayersAction', () => {
   })
 
   it('returns matching players for a non-empty query', async () => {
+    // Supabase aliasing (name:full_name) returns the key as 'name' in the response.
     const mockPlayers = [
       { id: 'p1', name: 'Alice Smith', email: 'alice@example.com' },
       { id: 'p2', name: 'Alice Jones', email: 'ajones@example.com' },
@@ -183,7 +184,9 @@ describe('searchPlayersAction', () => {
     expect(result.error).toBeNull()
     expect(result.players).toHaveLength(2)
     expect(result.players[0].name).toBe('Alice Smith')
-    expect(chainMock.ilike).toHaveBeenCalledWith('name', '%Alice%')
+    // Fix 2 (BUG): canonical column is full_name; query must filter on it, not 'name'.
+    expect(chainMock.select).toHaveBeenCalledWith('id, name:full_name, email')
+    expect(chainMock.ilike).toHaveBeenCalledWith('full_name', '%Alice%')
   })
 
   it('returns empty array without calling Supabase when query is blank', async () => {
@@ -221,6 +224,7 @@ describe('searchPlayersAction', () => {
 
     await searchPlayersAction('  Bob  ')
 
-    expect(chainMock.ilike).toHaveBeenCalledWith('name', '%Bob%')
+    // Fix 2 (BUG): filter must use canonical full_name column.
+    expect(chainMock.ilike).toHaveBeenCalledWith('full_name', '%Bob%')
   })
 })

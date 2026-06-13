@@ -31,3 +31,8 @@ AS $$
       AND  tm_them.player_id = p_other_player_id
   );
 $$;
+
+-- AC-0030: players may read their own teammates' rows (self + admin already covered by epic0003 players_own_read).
+CREATE POLICY players_teammate_read ON players
+  FOR SELECT TO authenticated
+  USING (fdgolf_is_teammate(id));

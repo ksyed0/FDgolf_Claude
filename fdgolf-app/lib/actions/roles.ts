@@ -94,8 +94,8 @@ export async function searchPlayersAction(query: string): Promise<{
 
   const { data, error } = await supabase
     .from('players')
-    .select('id, name, email')
-    .ilike('name', `%${query.trim()}%`)
+    .select('id, name:full_name, email')
+    .ilike('full_name', `%${query.trim()}%`)
     .limit(20)
 
   if (error) {
