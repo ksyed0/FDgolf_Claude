@@ -512,9 +512,15 @@ BUG-0017: supabase db reset fails — epic0003 migration conflicts with initial 
 Severity: High
 Related Story: (none — migration chain / 9c053ef merge divergence)
 Related Task: (none)
-Status: Open
-Fix Branch: (none — needs schema reconciliation decision)
+Status: Fixed
+Fix Branch: feature/epic0006-scoring-engine
 Lesson Encoded: No
+
+Resolved 2026-06-13 (Option A reconciliation): collapsed to a single canonical epic0003 chain —
+removed the superseded players/teams/user_roles/registrations defs from initial_schema, dropped the
+duplicate CREATE TYPE in epic0003, re-based round-tracking/scoring tables into a new
+20260612000003_round_tracking.sql. `supabase db reset` now completes with zero errors; pgTAP 32/32;
+vitest 444/444. Lens-reviewed (APPROVE).
 
 `supabase db reset` fails at `20260612000001_epic0003_registration.sql` with
 `ERROR: type "registration_status" already exists`. The `9c053ef` merge ("merge main into develop")
@@ -573,9 +579,16 @@ BUG-0018: Admin/role authorization silently broken under canonical epic0003 sche
 Severity: Critical
 Related Story: EPIC-0003 (auth/registration)
 Related Task: (none)
-Status: Open
-Fix Branch: (none — owned by the EPIC-0003 session per serialization decision)
+Status: Fixed
+Fix Branch: feature/epic0006-scoring-engine
 Lesson Encoded: No
+
+Resolved 2026-06-13: `user_roles` re-keyed to `user_id → auth.users`; `fdgolf_is_admin()` /
+`fdgolf_is_organizer_for()` / `fdgolf_is_teammate()` rewritten to resolve via `players.user_id` /
+`team_members`; all `player_id = auth.uid()` RLS predicates rewritten; `lib/actions/roles.ts`
+organizer insert switched to `user_id` (rejects unclaimed players); `searchPlayersAction` fixed to
+`full_name`; AC-0030 teammate-read policy restored; stale `tournaments.club_id` seed ref removed.
+`fdgolf_is_admin()` returns TRUE for the seed admin under the canonical schema. Lens-reviewed (APPROVE).
 
 The RLS helper functions `fdgolf_is_admin()`, `fdgolf_is_organizer_for()`, and `fdgolf_is_teammate()`
 (`20260609000001_rls_policies.sql`) key on `user_roles.player_id = auth.uid()`. That invariant held
