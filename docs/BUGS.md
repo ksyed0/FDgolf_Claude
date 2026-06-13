@@ -567,6 +567,34 @@ Fix (architectural, human/Keystone decision required):
      `team_size` assumption.
 This is cross-cutting and affects the other session's live EPIC-0003 work — must not be hacked piecemeal.
 
+---
+
+BUG-0018: Admin/role authorization silently broken under canonical epic0003 schema (player_id vs user_id)
+Severity: Critical
+Related Story: EPIC-0003 (auth/registration)
+Related Task: (none)
+Status: Open
+Fix Branch: (none — owned by the EPIC-0003 session per serialization decision)
+Lesson Encoded: No
+
+The RLS helper functions `fdgolf_is_admin()`, `fdgolf_is_organizer_for()`, and `fdgolf_is_teammate()`
+(`20260609000001_rls_policies.sql`) key on `user_roles.player_id = auth.uid()`. That invariant held
+under the retired initial_schema (where `players.id = auth.uid()`), but under the CANONICAL epic0003
+schema `auth.uid() = players.user_id` and `players.id` is a random UUID. Consequence: these helpers
+return FALSE for every real authenticated user, silently disabling admin/organizer authorization
+across ~24 call sites (RLS policies + page guards). Discovered by Keystone, 2026-06-12.
+
+Additionally, app code and `supabase/seed-dev.sql` assume columns that NO migration provides:
+  - `user_roles.user_id` (`seed-dev.sql:39`) — `user_roles` currently has `player_id` only.
+  - `tournaments.club_id` — referenced by seed/EPIC-0003 but defined in no migration.
+
+Fix (owned by the EPIC-0003 session; serialized BEFORE the EPIC-0006 rebase):
+  1. Re-key `user_roles` to `user_id → auth.users(id)`; update `lib/supabase/roles.ts` to insert user_id.
+  2. Rewrite the three helpers to resolve via `players.user_id` / `team_members`.
+  3. Add `tournaments.club_id` (real FK) or remove the stale seed reference — decision needed.
+Full plan: `docs/superpowers/specs/2026-06-12-schema-reconciliation-design.md` §auth reconciliation.
+Blocks: EPIC-0006 rebase onto the canonical schema (`feature/epic0006-scoring`).
+
 Verified fix (feature/nextjs-16-upgrade): `eslint-config-next@16.2.9` installed alongside
 `next@16.2.9` — the vulnerable `glob@10.x` dep is replaced. ESLint config migrated to flat
 config format (`eslint.config.mjs`) to satisfy ESLint 9.x requirements.
