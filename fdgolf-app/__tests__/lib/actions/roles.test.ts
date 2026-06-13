@@ -36,15 +36,41 @@ describe('assignOrganizerAction', () => {
     })
   })
 
+  const ASSIGNEE_USER_ID = 'assignee-auth-uid'
+
+  // BUG-0018: the action first resolves players.user_id, then inserts user_id.
+  // Build a `from()` mock that returns the player-lookup chain for 'players'
+  // and the insert chain for 'user_roles'.
+  function wireFrom({
+    player = { user_id: ASSIGNEE_USER_ID },
+    playerError = null,
+    insertResult = { error: null },
+  }: {
+    player?: { user_id: string | null } | null
+    playerError?: unknown
+    insertResult?: { error: unknown; data?: unknown }
+  } = {}) {
+    mockInsert.mockResolvedValue(insertResult)
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'players') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: player, error: playerError }),
+        }
+      }
+      return { insert: mockInsert }
+    })
+  }
+
   it('returns { error: null } on successful insert (AC-0084)', async () => {
-    mockFrom.mockReturnValue({ insert: mockInsert })
-    mockInsert.mockResolvedValue({ error: null })
+    wireFrom()
 
     const result = await assignOrganizerAction(TOURNAMENT_ID, PLAYER_ID)
 
     expect(result).toEqual({ error: null })
     expect(mockInsert).toHaveBeenCalledWith({
-      player_id: PLAYER_ID,
+      user_id: ASSIGNEE_USER_ID,
       role: 'tournament_organizer',
       tournament_id: TOURNAMENT_ID,
     })
@@ -52,16 +78,33 @@ describe('assignOrganizerAction', () => {
 
   it('returns { error: null } when the role already exists (duplicate no-op) (AC-0084)', async () => {
     // Supabase returns null error when ON CONFLICT DO NOTHING fires
-    mockFrom.mockReturnValue({ insert: mockInsert })
-    mockInsert.mockResolvedValue({ data: null, error: null })
+    wireFrom({ insertResult: { data: null, error: null } })
 
     const result = await assignOrganizerAction(TOURNAMENT_ID, PLAYER_ID)
 
     expect(result).toEqual({ error: null })
   })
 
+  it('rejects assigning a role to an unclaimed player (user_id IS NULL)', async () => {
+    wireFrom({ player: { user_id: null } })
+
+    const result = await assignOrganizerAction(TOURNAMENT_ID, PLAYER_ID)
+
+    expect(result).toEqual({ error: 'Player has not claimed their account yet' })
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('returns not-found error when the player does not exist', async () => {
+    wireFrom({ player: null, playerError: { message: 'no rows' } })
+
+    const result = await assignOrganizerAction(TOURNAMENT_ID, PLAYER_ID)
+
+    expect(result).toEqual({ error: 'Player not found' })
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
   it('returns unauthorized error when RLS blocks the insert (AC-0085)', async () => {
-    mockFrom.mockReturnValue({ insert: mockInsert })
+    wireFrom()
     mockInsert.mockResolvedValue({
       data: null,
       error: {
@@ -99,7 +142,7 @@ describe('assignOrganizerAction', () => {
   })
 
   it('surfaces generic DB error message for non-RLS failures', async () => {
-    mockFrom.mockReturnValue({ insert: mockInsert })
+    wireFrom()
     mockInsert.mockResolvedValue({
       data: null,
       error: {

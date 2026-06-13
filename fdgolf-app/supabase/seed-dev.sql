@@ -52,16 +52,16 @@ VALUES
 ON CONFLICT (email) DO NOTHING;
 
 -- ── Sample tournament (registration_open) ─────────────────────────────
--- Note: this assumes a club and venue exist from the main seed.sql
--- If running standalone, adjust foreign keys as needed.
-INSERT INTO tournaments (id, name, slug, status, club_id)
-SELECT
+-- BUG-0017/0018: tournaments has no club_id column (clubs are linked via the
+-- tournament_clubs many-to-many table, US-0015). The stale club_id reference
+-- was removed here rather than adding an unused column no app code writes.
+INSERT INTO tournaments (id, name, slug, status)
+VALUES (
   '00000000-0000-0000-0000-000000000099',
   'CIBC ARC Golf 2026 (Dev)',
   'cibc-arc-2026-dev',
-  'registration_open',
-  id
-FROM clubs LIMIT 1
+  'registration_open'
+)
 ON CONFLICT (slug) DO NOTHING;
 
 -- ── Sample team + members ──────────────────────────────────────────────

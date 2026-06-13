@@ -6,8 +6,11 @@ import { createClient } from '@/lib/supabase/server'
  * assignOrganizerAction — promotes a player to tournament_organizer for a
  * specific tournament by inserting a user_roles row.
  *
- * Idempotent: uses ON CONFLICT (player_id, role, tournament_id) DO NOTHING
+ * Idempotent: uses ON CONFLICT (user_id, role, tournament_id) DO NOTHING
  * so calling it twice for the same player+tournament pair is a silent no-op (AC-0084).
+ *
+ * BUG-0018: user_roles is keyed on user_id (auth.users), so the assignee's
+ * players.user_id is resolved first; unclaimed players (user_id IS NULL) are rejected.
  *
  * RLS enforcement: the `user_roles_insert_admin` policy (US-0006) requires the
  * calling user to pass fdgolf_is_admin() — non-admins receive a Postgres RLS
@@ -33,10 +36,27 @@ export async function assignOrganizerAction(
     return { error: 'Not authenticated' }
   }
 
+  // BUG-0018: user_roles is keyed on user_id (auth.users), not player_id.
+  // Resolve the assignee player's auth user_id. Invited-but-unclaimed players
+  // (user_id IS NULL) cannot hold a role until they claim their account.
+  const { data: player, error: playerError } = await supabase
+    .from('players')
+    .select('user_id')
+    .eq('id', playerId)
+    .single()
+
+  if (playerError || !player) {
+    return { error: 'Player not found' }
+  }
+
+  if (!player.user_id) {
+    return { error: 'Player has not claimed their account yet' }
+  }
+
   // Insert with ON CONFLICT DO NOTHING — idempotent (AC-0084).
   // RLS policy `user_roles_insert_admin` enforces admin-only at DB level.
   const { error } = await supabase.from('user_roles').insert({
-    player_id: playerId,
+    user_id: player.user_id,
     role: 'tournament_organizer',
     tournament_id: tournamentId,
   })
