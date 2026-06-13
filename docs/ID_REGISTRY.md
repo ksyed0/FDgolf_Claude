@@ -10,8 +10,8 @@ working in parallel don't collide.
 | US       | US-0090           | US-0089       |
 | AC       | AC-0307           | AC-0306       |
 | TASK     | TASK-0313         | TASK-0312     |
-| TC       | TC-0016           | TC-0015       |
-| BUG      | BUG-0017          | BUG-0016      |
+| TC       | TC-0021           | TC-0020       |
+| BUG      | BUG-0019          | BUG-0018      |
 | L        | L-0002            | L-0001        |
 
 ## Conventions

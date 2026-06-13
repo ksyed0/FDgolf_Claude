@@ -1,3 +1,4 @@
+-- Pre-launch reconciliation BUG-0017 (edited under documented waiver) — see docs/superpowers/specs/2026-06-12-schema-reconciliation-design.md
 -- ============================================================
 -- FDgolf: Initial Schema Migration
 -- Story: US-0005
@@ -154,64 +155,68 @@ CREATE TABLE tournaments (
   updated_at     TIMESTAMPTZ        NOT NULL DEFAULT NOW()
 );
 
--- players (id is FK to auth.users — same UUID as Supabase Auth user)
-CREATE TABLE players (
-  id               UUID    PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  name             TEXT    NOT NULL,
-  title            TEXT,
-  company          TEXT,
-  email            TEXT    NOT NULL UNIQUE,
-  phone            TEXT,
-  year_of_birth    INT,
-  handicap_index   NUMERIC,
-  is_admin         BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+-- ------------------------------------------------------------
+-- BUG-0017 reconciliation: players / teams / team_members /
+-- tournament_registrations / player_invitations are now defined
+-- CANONICALLY in 20260612000001_epic0003_registration.sql (epic0003 shape).
+-- They have been REMOVED from this migration. The round-tracking and
+-- scoring tables (rounds, shots, hole_scores, team_hole_scores,
+-- shot_edits, shot_attestations, score_disputes) are re-based onto the
+-- epic0003 players.id model and now live in 20260612000003_round_tracking.sql.
+--
+-- user_roles is re-keyed to user_id -> auth.users (BUG-0018, §2.2a). It is
+-- defined HERE (it only depends on auth.users + tournaments) so the corrected
+-- admin/organizer RLS helpers can be created before the policies that use them
+-- (tournaments/clubs/courses/holes/venues, which all run before epic0003).
+-- ------------------------------------------------------------
 
--- user_roles (depends on players and tournaments)
+-- user_roles (re-keyed: user_id -> auth.users; BUG-0018 §2.2a)
 CREATE TABLE user_roles (
   id              UUID      PRIMARY KEY DEFAULT uuid_generate_v4(),
-  player_id       UUID      NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  user_id         UUID      NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   role            role_type NOT NULL,
   tournament_id   UUID      REFERENCES tournaments(id) ON DELETE CASCADE,
-  UNIQUE (player_id, role, tournament_id)
+  UNIQUE (user_id, role, tournament_id)
 );
 
--- teams (depends on tournaments and players)
-CREATE TABLE teams (
-  id                UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
-  tournament_id     UUID    NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
-  team_number       INT     NOT NULL,
-  team_size         INT     NOT NULL DEFAULT 4 CHECK (team_size BETWEEN 2 AND 5),
-  captain_player_id UUID    REFERENCES players(id) ON DELETE SET NULL,
-  UNIQUE (tournament_id, team_number)
-);
+-- ------------------------------------------------------------
+-- Corrected auth helpers (BUG-0018 §2.2b) — admin/organizer key on
+-- auth.uid() directly via user_roles.user_id. fdgolf_is_teammate is
+-- defined later (20260612000002_auth_reconciliation.sql) because it
+-- needs team_members/players from epic0003.
+-- SECURITY DEFINER + locked search_path (privilege-escalation guard).
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION fdgolf_is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM   user_roles
+    WHERE  user_id       = auth.uid()
+      AND  role          = 'admin'
+      AND  tournament_id IS NULL
+  );
+$$;
 
--- tournament_registrations (depends on tournaments, players, teams)
-CREATE TABLE tournament_registrations (
-  id              UUID                  PRIMARY KEY DEFAULT uuid_generate_v4(),
-  tournament_id   UUID                  NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
-  player_id       UUID                  NOT NULL REFERENCES players(id) ON DELETE CASCADE,
-  team_id         UUID                  REFERENCES teams(id) ON DELETE SET NULL,
-  status          registration_status   NOT NULL DEFAULT 'invited',
-  registered_at   TIMESTAMPTZ           NOT NULL DEFAULT NOW(),
-  UNIQUE (tournament_id, player_id)
-);
-
--- rounds (depends on tournaments, players, teams)
-CREATE TABLE rounds (
-  id              UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
-  tournament_id   UUID          NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
-  player_id       UUID          NOT NULL REFERENCES players(id) ON DELETE CASCADE,
-  team_id         UUID          NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
-  start_hole      INT           NOT NULL CHECK (start_hole BETWEEN 1 AND 18),
-  status          round_status  NOT NULL DEFAULT 'not_started',
-  started_at      TIMESTAMPTZ,
-  completed_at    TIMESTAMPTZ,
-  updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-  UNIQUE (tournament_id, player_id)
-);
+CREATE OR REPLACE FUNCTION fdgolf_is_organizer_for(p_tournament_id uuid)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM   user_roles
+    WHERE  user_id       = auth.uid()
+      AND  role          = 'tournament_organizer'
+      AND  tournament_id = p_tournament_id
+  );
+$$;
 
 -- clubs (no dependencies — master club list)
 CREATE TABLE clubs (
@@ -223,60 +228,6 @@ CREATE TABLE clubs (
   is_active             BOOLEAN   NOT NULL DEFAULT TRUE
 );
 
--- shots (depends on rounds, clubs; self-referential FK for rehit)
-CREATE TABLE shots (
-  id                  UUID              PRIMARY KEY DEFAULT uuid_generate_v4(),
-  round_id            UUID              NOT NULL REFERENCES rounds(id) ON DELETE CASCADE,
-  hole_number         INT               NOT NULL CHECK (hole_number BETWEEN 1 AND 18),
-  shot_number         INT               NOT NULL CHECK (shot_number >= 1),
-  club_id             UUID              REFERENCES clubs(id) ON DELETE SET NULL,
-  origin_lat          DOUBLE PRECISION,
-  origin_lng          DOUBLE PRECISION,
-  outcome             shot_outcome      NOT NULL,
-  stroke_count        INT               NOT NULL DEFAULT 1 CHECK (stroke_count >= 0),
-  rehit_from_shot_id  UUID              REFERENCES shots(id) ON DELETE SET NULL,
-  rehit_origin        rehit_origin_type,
-  created_at          TIMESTAMPTZ       NOT NULL DEFAULT NOW(),
-  updated_at          TIMESTAMPTZ       NOT NULL DEFAULT NOW(),
-  updated_by          UUID              REFERENCES auth.users(id) ON DELETE SET NULL
-);
-
--- shot_edits — audit trail; insert via trigger only (see US-0006 RLS)
-CREATE TABLE shot_edits (
-  id           UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
-  shot_id      UUID        NOT NULL REFERENCES shots(id) ON DELETE CASCADE,
-  edited_by    UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  edited_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  before_state JSONB       NOT NULL,
-  after_state  JSONB       NOT NULL,
-  reason       TEXT
-);
-
--- hole_scores (depends on rounds)
-CREATE TABLE hole_scores (
-  id                UUID              PRIMARY KEY DEFAULT uuid_generate_v4(),
-  round_id          UUID              NOT NULL REFERENCES rounds(id) ON DELETE CASCADE,
-  hole_number       INT               NOT NULL CHECK (hole_number BETWEEN 1 AND 18),
-  gross_score       INT               NOT NULL,
-  net_score         NUMERIC,
-  stableford_points INT,
-  status            hole_score_status NOT NULL DEFAULT 'provisional',
-  updated_at        TIMESTAMPTZ       NOT NULL DEFAULT NOW(),
-  UNIQUE (round_id, hole_number)
-);
-
--- team_hole_scores (depends on teams, players)
-CREATE TABLE team_hole_scores (
-  id                      UUID              PRIMARY KEY DEFAULT uuid_generate_v4(),
-  team_id                 UUID              NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
-  hole_number             INT               NOT NULL CHECK (hole_number BETWEEN 1 AND 18),
-  best_ball_score         INT               NOT NULL,
-  contributing_player_id  UUID              REFERENCES players(id) ON DELETE SET NULL,
-  status                  hole_score_status NOT NULL DEFAULT 'provisional',
-  updated_at              TIMESTAMPTZ       NOT NULL DEFAULT NOW(),
-  UNIQUE (team_id, hole_number)
-);
-
 -- tournament_clubs — per-tournament club overrides
 CREATE TABLE tournament_clubs (
   tournament_id   UUID    NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
@@ -286,56 +237,17 @@ CREATE TABLE tournament_clubs (
   UNIQUE (tournament_id, club_id)
 );
 
--- shot_attestations — Phase 2 UI; table created Phase 1 (design spec section 4)
-CREATE TABLE shot_attestations (
-  id                    UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
-  hole_summary_id       UUID        NOT NULL REFERENCES hole_scores(id) ON DELETE CASCADE,
-  attested_by_player_id UUID        NOT NULL REFERENCES players(id) ON DELETE CASCADE,
-  attested_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- score_disputes — Phase 2 UI; table created Phase 1 (design spec section 4)
-CREATE TABLE score_disputes (
-  id                    UUID           PRIMARY KEY DEFAULT uuid_generate_v4(),
-  hole_score_id         UUID           NOT NULL REFERENCES hole_scores(id) ON DELETE CASCADE,
-  raised_by_player_id   UUID           NOT NULL REFERENCES players(id) ON DELETE CASCADE,
-  reason                TEXT           NOT NULL,
-  status                dispute_status NOT NULL DEFAULT 'open',
-  resolved_by           UUID           REFERENCES players(id) ON DELETE SET NULL,
-  resolved_at           TIMESTAMPTZ
-);
+-- NOTE (BUG-0017): rounds, shots, shot_edits, hole_scores, team_hole_scores,
+-- shot_attestations, score_disputes are re-based onto the epic0003 players.id
+-- model and now live in 20260612000003_round_tracking.sql (runs after epic0003).
 
 -- ============================================================
 -- Trigger bindings: auto-update updated_at (AC-0026)
 -- Applied to all tables carrying an updated_at column.
+-- (round/scoring table bindings live in 20260612000003_round_tracking.sql.)
 -- ============================================================
 
 -- tournaments
 CREATE TRIGGER set_tournaments_updated_at
   BEFORE UPDATE ON tournaments
-  FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
-
--- players
-CREATE TRIGGER set_players_updated_at
-  BEFORE UPDATE ON players
-  FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
-
--- rounds
-CREATE TRIGGER set_rounds_updated_at
-  BEFORE UPDATE ON rounds
-  FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
-
--- shots (AC-0026 primary requirement)
-CREATE TRIGGER set_shots_updated_at
-  BEFORE UPDATE ON shots
-  FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
-
--- hole_scores
-CREATE TRIGGER set_hole_scores_updated_at
-  BEFORE UPDATE ON hole_scores
-  FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
-
--- team_hole_scores
-CREATE TRIGGER set_team_hole_scores_updated_at
-  BEFORE UPDATE ON team_hole_scores
   FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();

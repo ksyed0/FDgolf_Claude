@@ -20,7 +20,8 @@
     "e2e": "playwright test --config e2e/playwright.config.ts",
     "e2e:report": "playwright show-report e2e/playwright-report",
     "seed:dev": "bash scripts/seed-dev.sh",
-    "db:reset": "bash scripts/reset-db.sh"
+    "db:reset": "bash scripts/reset-db.sh",
+    "test:db": "supabase test db"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

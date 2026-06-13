@@ -506,6 +506,108 @@ from the terminal, which is not part of any project workflow).
 
 Fix: Same path as BUG-0015 — upgrade to `eslint-config-next@16.x` which requires `next@16.x`.
 
+---
+
+BUG-0017: supabase db reset fails — epic0003 migration conflicts with initial schema (merge divergence)
+Severity: High
+Related Story: (none — migration chain / 9c053ef merge divergence)
+Related Task: (none)
+Status: Fixed
+Fix Branch: feature/epic0006-scoring-engine
+Lesson Encoded: No
+
+Resolved 2026-06-13 (Option A reconciliation): collapsed to a single canonical epic0003 chain —
+removed the superseded players/teams/user_roles/registrations defs from initial_schema, dropped the
+duplicate CREATE TYPE in epic0003, re-based round-tracking/scoring tables into a new
+20260612000003_round_tracking.sql. `supabase db reset` now completes with zero errors; pgTAP 32/32;
+vitest 444/444. Lens-reviewed (APPROVE).
+
+`supabase db reset` fails at `20260612000001_epic0003_registration.sql` with
+`ERROR: type "registration_status" already exists`. The `9c053ef` merge ("merge main into develop")
+combined two divergent schema histories that define the same entities incompatibly:
+- `20260609000000_initial_schema.sql` + `20260611000001_master_data_v2.sql` define
+  `players`(id = auth.uid), `teams`(team_size, team_number), `tournament_registrations`(team_id),
+  and a `rounds` table — and `CREATE TYPE registration_status`.
+- `20260612000001_epic0003_registration.sql` redefines `players`(user_id), `teams`(name; no
+  team_size/team_number), a `team_members` join table, no `rounds`, and re-runs
+  `CREATE TYPE registration_status` (already created above).
+
+The two definitions are mutually incompatible, so a clean from-scratch replay cannot succeed.
+
+Impact: blocks `supabase db reset` and therefore CI for the WHOLE branch/develop, not just EPIC-0006.
+EPIC-0006 scoring (`feature/epic0006-scoring`) is functionally complete and passes 32/32 pgTAP
+against the running local stack (which holds the pre-merge v2 schema), but its functions join
+`tournament_registrations.team_id` and the `rounds` table — both of which the epic0003 definition
+removes. Any reconciliation MUST preserve `teams.team_size`/`team_number`,
+`tournament_registrations.team_id`, and `rounds`, or EPIC-0006 breaks.
+
+Discovered: EPIC-0006 implementation (Forge) + code review (Lens), 2026-06-12.
+
+CANONICAL SCHEMA DETERMINED (Conductor investigation, 2026-06-12): the LIVE application code
+(EPIC-0001/0002/0003, "428 tests passing") uses the **epic0003 shape**, confirmed by:
+  - `app/profile/page.tsx`, `lib/actions/players.ts`, `lib/actions/invitations.ts` → `players.user_id`
+    and `players.full_name` (epic0003), NOT `players.id = auth.uid` / `players.name` (initial_schema).
+  - `lib/actions/teams.ts`, `lib/actions/csv-import.ts`, `app/.../teams/page.tsx` → `team_members`
+    join table (epic0003), NOT `tournament_registrations.team_id` (initial_schema).
+  - epic0003 `teams` has NO `team_size` / `team_number`; `tournament_registrations` has NO `team_id`.
+  - NO app code references `rounds` / `shots` / `hole_scores` / `team_hole_scores` — those tables
+    exist only in initial_schema and are unused until EPIC-0005/0006.
+
+Therefore the registration/team tables are canonically the **epic0003 shape**; `initial_schema.sql`
+(+ master_data_v2) is a SUPERSEDED design for those tables that the merge failed to remove.
+
+IMPACT ON EPIC-0006 (important): the scoring engine on `feature/epic0006-scoring` was designed and
+built against the SUPERSEDED initial_schema shape (`tournament_registrations.team_id`,
+`teams.team_size`, `rounds`, `players.id = auth.uid`). It passes 32/32 pgTAP only because the running
+local DB still holds that old shape. Against the canonical epic0003 schema it will NOT work as written:
+team membership must come from `team_members(team_id, player_id)`, there is no `teams.team_size`
+(roster size = count of team_members), and `rounds`/scoring tables must be re-based onto the epic0003
+`players.id` model. **EPIC-0006 requires rework after the schema is reconciled.**
+
+Fix (architectural, human/Keystone decision required):
+  1. Make the registration/team tables canonical = epic0003 (remove/avoid the duplicate definitions
+     in initial_schema + master_data_v2).
+  2. Re-base the round-tracking + scoring tables (`rounds`, `shots`, `hole_scores`,
+     `team_hole_scores`, `clubs`, `tournament_clubs`) onto the epic0003 `players`/`teams` model.
+  3. Rework EPIC-0006 scoring functions/views to use `team_members` for membership and drop the
+     `team_size` assumption.
+This is cross-cutting and affects the other session's live EPIC-0003 work — must not be hacked piecemeal.
+
+---
+
+BUG-0018: Admin/role authorization silently broken under canonical epic0003 schema (player_id vs user_id)
+Severity: Critical
+Related Story: EPIC-0003 (auth/registration)
+Related Task: (none)
+Status: Fixed
+Fix Branch: feature/epic0006-scoring-engine
+Lesson Encoded: No
+
+Resolved 2026-06-13: `user_roles` re-keyed to `user_id → auth.users`; `fdgolf_is_admin()` /
+`fdgolf_is_organizer_for()` / `fdgolf_is_teammate()` rewritten to resolve via `players.user_id` /
+`team_members`; all `player_id = auth.uid()` RLS predicates rewritten; `lib/actions/roles.ts`
+organizer insert switched to `user_id` (rejects unclaimed players); `searchPlayersAction` fixed to
+`full_name`; AC-0030 teammate-read policy restored; stale `tournaments.club_id` seed ref removed.
+`fdgolf_is_admin()` returns TRUE for the seed admin under the canonical schema. Lens-reviewed (APPROVE).
+
+The RLS helper functions `fdgolf_is_admin()`, `fdgolf_is_organizer_for()`, and `fdgolf_is_teammate()`
+(`20260609000001_rls_policies.sql`) key on `user_roles.player_id = auth.uid()`. That invariant held
+under the retired initial_schema (where `players.id = auth.uid()`), but under the CANONICAL epic0003
+schema `auth.uid() = players.user_id` and `players.id` is a random UUID. Consequence: these helpers
+return FALSE for every real authenticated user, silently disabling admin/organizer authorization
+across ~24 call sites (RLS policies + page guards). Discovered by Keystone, 2026-06-12.
+
+Additionally, app code and `supabase/seed-dev.sql` assume columns that NO migration provides:
+  - `user_roles.user_id` (`seed-dev.sql:39`) — `user_roles` currently has `player_id` only.
+  - `tournaments.club_id` — referenced by seed/EPIC-0003 but defined in no migration.
+
+Fix (owned by the EPIC-0003 session; serialized BEFORE the EPIC-0006 rebase):
+  1. Re-key `user_roles` to `user_id → auth.users(id)`; update `lib/supabase/roles.ts` to insert user_id.
+  2. Rewrite the three helpers to resolve via `players.user_id` / `team_members`.
+  3. Add `tournaments.club_id` (real FK) or remove the stale seed reference — decision needed.
+Full plan: `docs/superpowers/specs/2026-06-12-schema-reconciliation-design.md` §auth reconciliation.
+Blocks: EPIC-0006 rebase onto the canonical schema (`feature/epic0006-scoring`).
+
 Verified fix (feature/nextjs-16-upgrade): `eslint-config-next@16.2.9` installed alongside
 `next@16.2.9` — the vulnerable `glob@10.x` dep is replaced. ESLint config migrated to flat
 config format (`eslint.config.mjs`) to satisfy ESLint 9.x requirements.

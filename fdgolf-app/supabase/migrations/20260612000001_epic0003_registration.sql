@@ -1,6 +1,9 @@
--- EPIC-0003: Registration & Profile schema
-
-CREATE TYPE registration_status AS ENUM ('invited', 'registered', 'withdrawn');
+-- Pre-launch reconciliation BUG-0017 (edited under documented waiver) — see docs/superpowers/specs/2026-06-12-schema-reconciliation-design.md
+-- EPIC-0003: Registration & Profile schema (CANONICAL identity/registration tables)
+--
+-- BUG-0017: the duplicate `CREATE TYPE registration_status` was removed here;
+-- the enum is defined once in 20260609000000_initial_schema.sql. This migration
+-- still uses the type for tournament_registrations.status.
 
 CREATE TABLE players (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
