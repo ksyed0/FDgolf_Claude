@@ -26,7 +26,7 @@ export default async function RoundPage({ params }: { params: { roundId: string 
     )
   }
 
-  const courseId = (round.tournaments as { course_id: string } | null)?.course_id
+  const courseId = (round.tournaments as unknown as { course_id: string } | null)?.course_id
 
   // Fetch starting hole
   const { data: hole } = await supabase
