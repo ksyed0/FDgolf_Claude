@@ -19,7 +19,11 @@ export async function middleware(request: NextRequest) {
 
   // Protect / and all /admin/* routes.
   const isProtected =
-    pathname === '/' || pathname.startsWith('/admin') || pathname.startsWith('/profile')
+    pathname === '/' ||
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/t/') ||
+    pathname.startsWith('/round/')
 
   if (isProtected && !user) {
     const loginUrl = new URL('/login', request.url)
