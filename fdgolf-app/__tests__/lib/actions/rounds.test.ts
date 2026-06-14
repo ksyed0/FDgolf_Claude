@@ -102,6 +102,20 @@ describe('createRoundAction', () => {
     expect(mockRedirect).toHaveBeenCalledWith('/round/r-new')
   })
 
+  it('returns error when insert returns no data (newRound is null)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    let call = 0
+    mockFrom.mockImplementation(() => {
+      call++
+      if (call === 1) return buildChain({ id: 'p1' })
+      if (call === 2) return buildChain({ id: 't1', status: 'active' })
+      if (call === 3) return buildChain(null) // no existing round
+      return buildChain(null) // insert returns null (DB error or RLS rejection)
+    })
+    const result = await createRoundAction(PARAMS)
+    expect(result).toEqual({ error: 'Failed to create round' })
+  })
+
   it('passes bag_clubs and first_player_id to insert', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
     const insertedData: unknown[] = []

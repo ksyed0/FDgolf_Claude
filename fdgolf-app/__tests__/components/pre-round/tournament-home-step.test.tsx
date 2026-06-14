@@ -63,4 +63,47 @@ describe('TournamentHomeStep', () => {
     fireEvent.click(screen.getByRole('button', { name: /start round/i }))
     expect(onNext).toHaveBeenCalled()
   })
+
+  it('omits company separator when member has no company', () => {
+    const propsNoCompany = {
+      ...PROPS,
+      members: [{ id: 'p1', full_name: 'K. Syed', company: null }],
+    }
+    render(<TournamentHomeStep {...propsNoCompany} />)
+    // Full name should appear without "·" separator
+    const listItem = screen.getByText('K. Syed')
+    expect(listItem.textContent).not.toContain('·')
+  })
+
+  it('omits yardage when startingHole.yardage is null', () => {
+    const propsNoYardage = {
+      ...PROPS,
+      startingHole: {
+        number: 7,
+        par: 4,
+        strokeIndex: 5,
+        yardage: null,
+        pinLat: null,
+        pinLng: null,
+      },
+    }
+    render(<TournamentHomeStep {...propsNoYardage} />)
+    expect(screen.queryByText(/yds/)).not.toBeInTheDocument()
+  })
+
+  it('omits stroke index line when strokeIndex is null', () => {
+    const propsNoSI = {
+      ...PROPS,
+      startingHole: {
+        number: 7,
+        par: 4,
+        strokeIndex: null,
+        yardage: 382,
+        pinLat: null,
+        pinLng: null,
+      },
+    }
+    render(<TournamentHomeStep {...propsNoSI} />)
+    expect(screen.queryByText(/stroke index/i)).not.toBeInTheDocument()
+  })
 })

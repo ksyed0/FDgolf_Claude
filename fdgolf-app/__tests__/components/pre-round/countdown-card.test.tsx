@@ -38,4 +38,10 @@ describe('CountdownCard', () => {
     render(<CountdownCard startsAt={FUTURE} tournamentStatus="active" holeNumber={7} />)
     expect(screen.getByText(/hole 7/i)).toBeInTheDocument()
   })
+
+  it('shows 00:00:00 when countdown has reached zero', () => {
+    const PAST = new Date(Date.now() - 1000).toISOString()
+    render(<CountdownCard startsAt={PAST} tournamentStatus="active" holeNumber={1} />)
+    expect(screen.getByRole('timer').textContent).toBe('00:00:00')
+  })
 })

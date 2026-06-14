@@ -68,4 +68,44 @@ describe('WhoGoesFirstStep', () => {
     fireEvent.click(screen.getByRole('button', { name: /back/i }))
     expect(onBack).toHaveBeenCalled()
   })
+
+  it('shows loading state on Start Round button', () => {
+    render(<WhoGoesFirstStep {...BASE_PROPS} loading={true} />)
+    expect(screen.getByRole('button', { name: /starting/i })).toBeDisabled()
+  })
+
+  it('omits company in teammate list when company is null', () => {
+    const membersNoCompany = [
+      { id: 'p1', full_name: 'K. Syed', company: null },
+      { id: 'p2', full_name: 'J. Smith', company: null },
+    ]
+    render(<WhoGoesFirstStep {...BASE_PROPS} members={membersNoCompany} />)
+    // The J. Smith entry should not have " · " separator
+    const smithEntry = screen.getByText('J. Smith')
+    expect(smithEntry.textContent).not.toContain('·')
+  })
+
+  it('omits company in selected player card when company is null', () => {
+    const membersNoCompany = [
+      { id: 'p1', full_name: 'K. Syed', company: null },
+      { id: 'p2', full_name: 'J. Smith', company: 'TD' },
+    ]
+    render(<WhoGoesFirstStep {...BASE_PROPS} members={membersNoCompany} />)
+    const card = screen.getByTestId('first-player-selected')
+    // Should not render the company paragraph when company is null
+    expect(card).not.toHaveTextContent('·')
+  })
+
+  it('omits yardage in starting hole summary when yardage is null', () => {
+    const holeNoYardage = {
+      number: 7,
+      par: 4,
+      strokeIndex: 5,
+      yardage: null,
+      pinLat: null,
+      pinLng: null,
+    }
+    render(<WhoGoesFirstStep {...BASE_PROPS} startingHole={holeNoYardage} />)
+    expect(screen.queryByText(/yds/)).not.toBeInTheDocument()
+  })
 })

@@ -72,4 +72,37 @@ describe('HoleEntryScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
     expect(mockGetCurrentPosition).toHaveBeenCalled()
   })
+
+  it('navigates without coords when GPS fails', () => {
+    mockGetCurrentPosition.mockImplementation(
+      (_success: unknown, errorCb: (err: GeolocationPositionError) => void) =>
+        errorCb({ code: 1, message: 'denied' } as GeolocationPositionError)
+    )
+    render(<HoleEntryScreen roundId="r1" hole={HOLE} clubs={CLUBS} shotNumber={1} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('/round/r1/shot/new?club='))
+    expect(mockPush).not.toHaveBeenCalledWith(expect.stringContaining('lat='))
+  })
+
+  it('opens club picker when change button tapped', () => {
+    render(<HoleEntryScreen roundId="r1" hole={HOLE} clubs={CLUBS} shotNumber={1} />)
+    fireEvent.click(screen.getByText(/change/i))
+    expect(screen.getByText('Putter')).toBeInTheDocument()
+  })
+
+  it('selects a new club from the picker and closes it', () => {
+    render(<HoleEntryScreen roundId="r1" hole={HOLE} clubs={CLUBS} shotNumber={1} />)
+    fireEvent.click(screen.getByText(/change/i))
+    fireEvent.click(screen.getByText('Putter'))
+    // Picker is closed and selected club shows Putter (now shown in the trigger button)
+    expect(screen.queryByText('7 Iron')).not.toBeInTheDocument()
+  })
+
+  it('falls back to pin coords when pinLat/pinLng are null', () => {
+    const holeNoPins = { ...HOLE, pinLat: null, pinLng: null }
+    render(<HoleEntryScreen roundId="r1" hole={holeNoPins} clubs={CLUBS} shotNumber={1} />)
+    const map = screen.getByTestId('map')
+    expect(map).toHaveAttribute('data-lat', '43.65')
+    expect(map).toHaveAttribute('data-lng', '-79.38')
+  })
 })

@@ -127,6 +127,25 @@ describe('getPlayerContext', () => {
     expect(result?.startingHole.strokeIndex).toBe(5)
   })
 
+  it('filters clubs by tournament_clubs when restricted list is set', async () => {
+    const TC_ROWS = [{ club_id: 'cl1' }] // only Driver allowed
+    let callCount = 0
+    mockFrom.mockImplementation(() => {
+      callCount++
+      if (callCount === 1) return buildChain({ data: TOURNAMENT, error: null })
+      if (callCount === 2) return buildChain({ data: PLAYER, error: null })
+      if (callCount === 3) return buildChain({ data: TEAM, error: null })
+      if (callCount === 4) return buildChain({ data: MEMBERS, error: null })
+      if (callCount === 5) return buildChain({ data: HOLE, error: null })
+      if (callCount === 6) return buildChain({ data: CLUBS, error: null })
+      if (callCount === 7) return buildChain({ data: TC_ROWS, error: null }) // restricted to cl1
+      return buildChain({ data: null, error: null })
+    })
+    const result = await getPlayerContext('cibc-2026', 'u1')
+    expect(result?.clubs).toHaveLength(1)
+    expect(result?.clubs[0].display_name).toBe('Driver')
+  })
+
   it('returns all clubs when tournament_clubs is empty (invariant)', async () => {
     let callCount = 0
     mockFrom.mockImplementation(() => {
