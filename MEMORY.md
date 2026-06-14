@@ -6,7 +6,7 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 9 — 2026-06-13
+Session 10 — 2026-06-14
 
 ---
 
@@ -16,10 +16,10 @@ Session 9 — 2026-06-13
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `067ad16`+ (EPIC-0006 PR #36 + write-back #37 merged; session-8 docs on top)
-- **Pending PRs:** none for EPIC-0006 (merged). Session-9 close PR is the only open one.
-- **Stories done:** EPIC-0001, EPIC-0002, EPIC-0003 complete; **EPIC-0006 complete** (US-0049–US-0055, merged PR #36)
-- **Stories planned next:** EPIC-0004 (Pre-Round Setup, US-0030–0034), EPIC-0005 (Round Tracking — now has a real schema), EPIC-0007 (Leaderboard, consumes team_standings)
+- **Develop tip:** `c295e59` (plan + spec for EPIC-0004 on local develop; plan commits rebased onto `3b17a8b`)
+- **Pending PRs:** PR #42 (EPIC-0004 feature — auto-merge queued on CI), PR #43 (EPIC-0004 RELEASE_PLAN write-back — auto-merge queued)
+- **Stories done:** EPIC-0001, EPIC-0002, EPIC-0003 complete; **EPIC-0006 complete** (US-0049–US-0055); **EPIC-0004 complete** (US-0030–0034, PR #42 auto-merge queued)
+- **Stories planned next:** EPIC-0005 (Round Tracking — canonical schema in place, shots-only, triggers derive hole_scores), EPIC-0007 (Leaderboard, needs public/anon RLS on team_standings views)
 
 ---
 
@@ -47,7 +47,7 @@ Session 9 — 2026-06-13
 
 ---
 
-## ID Registry (from docs/ID_REGISTRY.md)
+## ID Registry (from docs/ID_REGISTRY.md — approximate, verify before use)
 
 | Sequence | Next Available |
 |----------|----------------|
@@ -56,7 +56,7 @@ Session 9 — 2026-06-13
 | AC       | AC-0341        |
 | TASK     | TASK-0313      |
 | TC       | TC-0021        |
-| BUG      | BUG-0019       |
+| BUG      | BUG-0020       |
 | L        | L-0002         |
 
 ---
@@ -76,12 +76,21 @@ Session 9 — 2026-06-13
 EPIC-0001, EPIC-0002, EPIC-0003 all **complete** and merged to main.
 
 EPIC-0006 (Scoring Engine) complete and merged.
+EPIC-0004 (Pre-Round Setup) complete — PR #42 auto-merge queued on CI.
 
 Next up:
-- **EPIC-0004 — Pre-Round Setup** (US-0030–0034): tournament home, bag confirm, round create. Depends on EPIC-0002/0003 (done).
-- **EPIC-0005 — Round Tracking** (US-0035–0048): now has a canonical schema foundation (`20260612000003_round_tracking.sql`). Per the EPIC-0006 contract, it writes SHOTS ONLY; hole_scores is trigger-derived.
-- **EPIC-0007 — Leaderboard** (US-0056–0064): consumes the `team_standings` / `team_hole_vs_par` views shipped in EPIC-0006; must add public/anon RLS visibility for those views (deferred from EPIC-0006).
+- **EPIC-0005 — Round Tracking** (US-0035–0048): canonical schema in place (`20260612000003_round_tracking.sql`). Writes SHOTS ONLY; `hole_scores` and `team_hole_scores` are trigger-derived (EPIC-0006 contract). HoleEntryScreen (US-0034) hands off via `/round/[roundId]/shot/new?lat=&lng=&club=`. `bag_clubs` and `first_player_id` now on rounds row for EPIC-0005 to read.
+- **EPIC-0007 — Leaderboard** (US-0056–0064): consumes `team_standings` / `team_hole_vs_par` views from EPIC-0006; must add public/anon RLS visibility for those views (deferred from EPIC-0006).
 - **Latent follow-up:** `searchPlayersAction` was fixed to `full_name`; audit other EPIC-0003 actions for stale `players.name` references.
+
+## Known Patterns / Gotchas (additions from Session 10)
+
+- **`getPlayerContext` location:** lives in `lib/supabase/player.ts` (NOT `lib/actions/`) — exception to the pattern of read helpers being in `lib/actions/`. `lib/supabase/` holds server-only clients and this player context helper.
+- **`.single()` discipline:** NEVER use `.single()` unless the query has a `UNIQUE` or `PRIMARY KEY` constraint that guarantees exactly one row. Supabase silently returns `data: null` + sets a PGRST116 error when multiple rows are returned — unit tests with mocks won't catch this.
+- **Clubs query pattern:** `clubs` table always returns multiple rows. Use a plain list query; filter in-app code using `bag_clubs` or `tournament_clubs` (zero rows = all active).
+- **EPIC-0004 deferred to EPIC-0005:** Hole map has no pin/GPS/tee markers yet (AC-0133 partial); distance shown is static hole length ("~X yds (hole length)"), not live GPS haversine (AC-0134).
+- **HoleEntryScreen smart default:** Driver when `shotNumber === 1`; last-used from `localStorage['fdgolf:lastClub:{roundId}']` on subsequent shots.
+- **localStorage polyfill in vitest.setup.ts:** Added a polyfill for `localStorage.clear()` because Node 25 exposes a global `localStorage` stub without `clear()`. Remove if Node is pinned < 25.
 
 ## Known Issues / Gotchas (additions from Session 7)
 

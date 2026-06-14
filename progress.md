@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 10 — 2026-06-14
+
+### What Was Done
+
+- Orchestrated EPIC-0004 Pre-Round Setup (US-0030–0034) end-to-end: design spec → implementation plan → Forge implementation (13 tasks, TDD) → Lens review (caught 3 `.single()` on multi-row tables + leaderboard UUID bug) → Forge retry → Lens approval → Sentinel (BUG-0019 filed) + Circuit (80.41% coverage) → BUG-0019 fix → PR #42 (auto-merge queued)
+- 510 tests passing; 17 ACs satisfied (AC-0120–0136); `bag_clubs` + `first_player_id` migration added
+- PR #43 opened for RELEASE_PLAN.md write-back (US-0030–0034 marked Done)
+
+---
+
 ## Session 9 — 2026-06-13
 
 ### What Was Done
