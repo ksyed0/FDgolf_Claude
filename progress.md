@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 7 — 2026-06-12
+
+### What Was Done
+
+- Resolved develop→main merge conflicts (PR #27); merged EPIC-0001 through EPIC-0003 to main
+- Logged BUG-0015 (14 Next.js 14.x CVEs) and BUG-0016 (glob CLI injection) to BUGS.md; verified all prior bugs BUG-0001–0014
+- Upgraded Next.js 14→16.2.9, React 18→19.2.7, ESLint 9 flat config — resolves BUG-0015/0016; all 442 tests pass
+
+---
+
 ## Session 6 — 2026-06-12
 
 ### What Was Done
