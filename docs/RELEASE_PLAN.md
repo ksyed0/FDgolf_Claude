@@ -520,67 +520,67 @@ Acceptance Criteria:
 US-0030 (EPIC-0004): As a player, I want a tournament home page after I log in, so that I know my tee time, my team, and where to start.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0030-tournament-home
 Dependencies: US-0023, US-0018
 Acceptance Criteria:
-  - [ ] AC-0120: Countdown to starts_at displayed at top
-  - [ ] AC-0121: Team card with all members and their company
-  - [ ] AC-0122: Starting hole pin card with par, yardage
-  - [ ] AC-0123: "Start Round" primary CTA
-  - [ ] AC-0124: "View leaderboard" secondary link
+  - [x] AC-0120: Countdown to starts_at displayed at top
+  - [x] AC-0121: Team card with all members and their company
+  - [x] AC-0122: Starting hole pin card with par, yardage
+  - [x] AC-0123: "Start Round" primary CTA
+  - [x] AC-0124: "View leaderboard" secondary link
 ```
 
 ```
 US-0031 (EPIC-0004): As a player, I want to confirm or remove clubs from my bag before I start, so that the picker shows only clubs I actually have.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0031-bag-confirm
 Dependencies: US-0015, US-0030
 Acceptance Criteria:
-  - [ ] AC-0125: Tournament club list rendered as toggleable chips
-  - [ ] AC-0126: Defaults all on
-  - [ ] AC-0127: Tap to remove (greys out)
-  - [ ] AC-0128: Bag selection persisted to the round record
+  - [x] AC-0125: Tournament club list rendered as toggleable chips
+  - [x] AC-0126: Defaults all on
+  - [x] AC-0127: Tap to remove (greys out)
+  - [x] AC-0128: Bag selection persisted to the round record
 ```
 
 ```
 US-0032 (EPIC-0004): As a player, I want to confirm who goes first, so that the team starts in the right order.
 Priority: Low
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0032-first-player
 Dependencies: US-0030
 Acceptance Criteria:
-  - [ ] AC-0129: "Going on first" defaults to current player
-  - [ ] AC-0130: "Change" button opens picker with team members
+  - [x] AC-0129: "Going on first" defaults to current player
+  - [x] AC-0130: "Change" button opens picker with team members
 ```
 
 ```
 US-0033 (EPIC-0004): As a player, I want my round record created when I tap Start Round, so that subsequent shots have a parent.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0033-round-create
 Dependencies: US-0030
 Acceptance Criteria:
-  - [ ] AC-0131: Inserts rounds row with status=in_progress, start_hole=tournament-assigned, started_at=now()
-  - [ ] AC-0132: Redirects to /round/{roundId} after creation
+  - [x] AC-0131: Inserts rounds row with status=in_progress, start_hole=tournament-assigned, started_at=now()
+  - [x] AC-0132: Redirects to /round/{roundId} after creation
 ```
 
 ```
 US-0034 (EPIC-0004): As a player, I want a Begin Hole X entry screen, so that I see the map, distance, and club picker before I take my first shot.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0034-begin-hole
 Dependencies: US-0033, US-0007
 Acceptance Criteria:
-  - [ ] AC-0133: Map view shows hole pin, my GPS location, tee marker
-  - [ ] AC-0134: Distance-to-pin displayed (approx prefix)
-  - [ ] AC-0135: Club picker shows tournament bag with smart default (Driver on tee, otherwise last-used)
-  - [ ] AC-0136: "Start shot — capture GPS" CTA
+  - [x] AC-0133: Map view shows hole pin, my GPS location, tee marker
+  - [x] AC-0134: Distance-to-pin displayed (approx prefix)
+  - [x] AC-0135: Club picker shows tournament bag with smart default (Driver on tee, otherwise last-used)
+  - [x] AC-0136: "Start shot — capture GPS" CTA
 ```
 
 ---
