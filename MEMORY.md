@@ -6,17 +6,18 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 6 — 2026-06-12
+Session 7 — 2026-06-12
 
 ---
 
 ## Repo State
 
-- **Branch:** `feature/epic0003-registration-profile` (EPIC-0003 implementation, PR pending)
+- **Branch:** `develop` (current working branch)
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `2368334` (EPIC-0002 completion, PR #25)
+- **Develop tip:** `93130d9` (Next.js 16 upgrade, PR #30 squash-merged)
+- **Pending PRs:** PR #31 (develop→main), PR #32 (fix/sync-main-into-develop→develop) — CI green, awaiting merge
 - **Stories done:** US-0001–US-0013, US-0015, US-0016, US-0020, US-0021–US-0029, US-0090–US-0095 (EPIC-0001, EPIC-0002, EPIC-0003 all complete)
 - **Stories planned next:** US-0017 (tournament lifecycle), US-0018 (activation)
 
@@ -26,7 +27,7 @@ Session 6 — 2026-06-12
 
 | Decision | Rationale |
 |----------|-----------|
-| Next.js 14 (not 15) | cookies() API is async in 15 — Lens caught incompatibility before build |
+| Next.js 16.2.9 (upgraded from 14) | BUG-0015/0016 CVE resolution; cookies() is now async — all createClient() callers use await |
 | `fdgolf-app/` at repo root | Keystone decision; monorepo with PlanVisualizer tooling at root |
 | Worktree isolation for parallel builds | Prevents branch cross-contamination (occurred once in Phase 5) |
 | `workers: 1` for Playwright E2E | Single shared Supabase instance — parallel writes cause DB conflicts |
@@ -52,7 +53,7 @@ Session 6 — 2026-06-12
 | AC       | AC-0341        |
 | TASK     | TASK-0313      |
 | TC       | TC-0016        |
-| BUG      | BUG-0015       |
+| BUG      | BUG-0017       |
 | L        | L-0002         |
 
 ---
@@ -69,12 +70,20 @@ Session 6 — 2026-06-12
 
 ## Next Priorities
 
-EPIC-0002 rebuild **complete** (US-0090–0095, PRs #19–#21 merged 2026-06-11).
+EPIC-0001, EPIC-0002, EPIC-0003 all **complete** and merged to main.
 
 Next up:
+- **Merge PR #32** (fix/sync-main-into-develop → develop) — then merge PR #31 (develop → main)
 - **US-0017** — tournament lifecycle (draft → active → completed state machine)
 - **US-0018** — tournament activation (admin triggers activation)
-- **US-0021** — registration landing page (player-facing)
+
+## Known Issues / Gotchas (additions from Session 7)
+
+- **ESLint config is now flat config** (`eslint.config.mjs`) — `next lint` no longer works; use `npm run lint` which calls `eslint . --ext .ts,.tsx` directly
+- **`createClient()` is async** — all Server Component pages and Server Actions must `await createClient()`; middleware uses `NextRequest.cookies` (sync) and is unaffected
+- **`useFormState`** from `react-dom` — still available in React 19 for backward compatibility; no migration needed yet
+- **2 residual moderate postcss advisories** in `npm audit` — bundled inside `next/node_modules/postcss` for build-time CSS only; not fixable without downgrading Next.js; zero runtime risk
+- **Develop/main divergence pattern** — main occasionally gets direct squash-merges that bypass develop (from earlier sessions); always check for conflicts before PRing develop→main
 
 ## Known Patterns / Gotchas (additions from Session 4)
 

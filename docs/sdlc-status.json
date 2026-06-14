@@ -112,14 +112,14 @@
     "Keystone": {
       "status": "idle",
       "currentTask": null,
-      "tasksCompleted": 2,
+      "tasksCompleted": 4,
       "model": null
     },
     "Lens": {
       "status": "active",
-      "currentTask": "code review feature/US-0012-course-preset",
+      "currentTask": "Review reconciliation + auth/RLS rewrite + EPIC-0006 rework (security-critical)",
       "tasksCompleted": 2,
-      "reviewsCompleted": 6,
+      "reviewsCompleted": 10,
       "blockers": 0,
       "model": "sonnet"
     },
@@ -131,7 +131,8 @@
     "Forge": {
       "status": "idle",
       "currentTask": null,
-      "tasksCompleted": 0
+      "tasksCompleted": 3,
+      "model": null
     },
     "Pixel": {
       "status": "active",
@@ -161,6 +162,14 @@
       "completedAt": null,
       "storiesCompleted": 0,
       "storiesTotal": 8
+    },
+    "EPIC-0006": {
+      "name": "Scoring Engine",
+      "status": "complete",
+      "startedAt": "2026-06-12T19:37:00.811Z",
+      "completedAt": "2026-06-14T00:00:00.805Z",
+      "storiesCompleted": 0,
+      "storiesTotal": 7
     }
   },
   "stories": {
@@ -184,21 +193,35 @@
       "assignedAgent": null,
       "startedAt": "2026-06-11T17:38:18.679Z",
       "completedAt": null
+    },
+    "US-0049": {
+      "status": "InProgress",
+      "epic": null,
+      "assignedAgent": "Forge",
+      "startedAt": "2026-06-12T19:37:00.896Z",
+      "completedAt": null
+    },
+    "BUG-0017": {
+      "status": "InProgress",
+      "epic": null,
+      "assignedAgent": "Forge",
+      "startedAt": "2026-06-12T20:35:43.350Z",
+      "completedAt": null
     }
   },
   "cycles": [],
   "metrics": {
     "storiesCompleted": 0,
     "storiesTotal": 3,
-    "tasksCompleted": 0,
+    "tasksCompleted": 5,
     "tasksTotal": 0,
     "testsPassed": 0,
     "testsFailed": 0,
     "testsTotal": 0,
     "bugsOpen": 0,
-    "bugsFixed": 0,
+    "bugsFixed": 1,
     "coveragePercent": 0,
-    "reviewsApproved": 2,
+    "reviewsApproved": 4,
     "reviewsBlocked": 0
   },
   "log": [
@@ -437,6 +460,138 @@
       "time": "2026-06-11T18:29:49.519Z",
       "agent": "Lens",
       "message": "request-changes review of US-0013"
+    },
+    {
+      "time": "2026-06-12T19:37:00.811Z",
+      "agent": "Conductor",
+      "message": "Epic EPIC-0006 (Scoring Engine) started"
+    },
+    {
+      "time": "2026-06-12T19:37:00.896Z",
+      "agent": "Forge",
+      "message": "started US-0049: Implement scoring pipeline Tasks 0-7 (pgTAP TDD)",
+      "model": "sonnet"
+    },
+    {
+      "time": "2026-06-12T19:59:34.946Z",
+      "agent": "Forge",
+      "message": "finished US-0049"
+    },
+    {
+      "time": "2026-06-12T19:59:35.048Z",
+      "agent": "Lens",
+      "message": "started US-0049: Review EPIC-0006 scoring SQL (SECURITY DEFINER + correctness)",
+      "model": "sonnet"
+    },
+    {
+      "time": "2026-06-12T20:04:23.199Z",
+      "agent": "Lens",
+      "message": "request-changes review of US-0049"
+    },
+    {
+      "time": "2026-06-12T20:04:23.284Z",
+      "agent": "Forge",
+      "message": "started US-0049: Apply Lens fixes: tie-break wording + MIN tests + trigger idempotency",
+      "model": "sonnet"
+    },
+    {
+      "time": "2026-06-12T20:08:54.990Z",
+      "agent": "Forge",
+      "message": "finished US-0049"
+    },
+    {
+      "time": "2026-06-12T20:08:55.100Z",
+      "agent": "Lens",
+      "message": "approve review of US-0049"
+    },
+    {
+      "time": "2026-06-12T20:19:58.069Z",
+      "agent": "Conductor",
+      "message": "BUG-0017 investigation: canonical schema is epic0003 shape; EPIC-0006 built on superseded v2 schema, needs rework. ESCALATED."
+    },
+    {
+      "time": "2026-06-12T20:35:43.351Z",
+      "agent": "Keystone",
+      "message": "started BUG-0017: Schema reconciliation design (epic0003 canonical + round-tracking base)",
+      "model": "sonnet"
+    },
+    {
+      "time": "2026-06-13T17:45:41.895Z",
+      "agent": "Keystone",
+      "message": "finished BUG-0017"
+    },
+    {
+      "time": "2026-06-13T17:45:41.996Z",
+      "agent": "Conductor",
+      "message": "EPIC-0006 PAUSED pending EPIC-0003 auth/schema reconciliation (BUG-0017/0018). Resume = rebase + 6-file rework after canonical schema lands on develop."
+    },
+    {
+      "time": "2026-06-13T23:00:02.863Z",
+      "agent": "Keystone",
+      "message": "started BUG-0017: Implement schema reconciliation (Option A) + EPIC-0006 rework; db reset+pgTAP+vitest green",
+      "model": "sonnet"
+    },
+    {
+      "time": "2026-06-13T23:13:36.894Z",
+      "agent": "Keystone",
+      "message": "finished BUG-0017"
+    },
+    {
+      "time": "2026-06-13T23:13:36.999Z",
+      "agent": "Lens",
+      "message": "started BUG-0017: Review reconciliation + auth/RLS rewrite + EPIC-0006 rework (security-critical)",
+      "model": "sonnet"
+    },
+    {
+      "time": "2026-06-13T23:17:58.998Z",
+      "agent": "Lens",
+      "message": "request-changes review of BUG-0017"
+    },
+    {
+      "time": "2026-06-13T23:17:59.081Z",
+      "agent": "Forge",
+      "message": "started BUG-0017: Fix AC-0030 teammate-read policy + searchPlayersAction full_name",
+      "model": "sonnet"
+    },
+    {
+      "time": "2026-06-13T23:21:39.243Z",
+      "agent": "Forge",
+      "message": "finished BUG-0017"
+    },
+    {
+      "time": "2026-06-13T23:21:39.344Z",
+      "agent": "Lens",
+      "message": "approve review of BUG-0017"
+    },
+    {
+      "time": "2026-06-13T23:21:39.430Z",
+      "agent": "Conductor",
+      "message": "EPIC-0006 + schema reconciliation COMPLETE & review-clean on feature/epic0006-scoring. db reset green, 32/32 pgTAP, 444 vitest. BUG-0017/0018 fixed. Pending: rebase onto origin/develop + PR."
+    },
+    {
+      "time": "2026-06-13T23:35:47.944Z",
+      "agent": "Conductor",
+      "message": "PR #36 opened: EPIC-0006 + BUG-0017/0018 reconciliation → develop. db reset green, 32/32 pgTAP, 444 vitest, Lens APPROVE."
+    },
+    {
+      "time": "2026-06-13T23:35:48.027Z",
+      "agent": "Conductor",
+      "message": "bug fixed on US-0049"
+    },
+    {
+      "time": "2026-06-13T23:54:15.269Z",
+      "agent": "Conductor",
+      "message": "PR #36 CI all green (Analyze, CodeQL, Quality Gate, Security Audit). Mergeable, awaiting go-ahead."
+    },
+    {
+      "time": "2026-06-14T00:00:00.806Z",
+      "agent": "Conductor",
+      "message": "Epic EPIC-0006 complete"
+    },
+    {
+      "time": "2026-06-14T00:00:00.891Z",
+      "agent": "Conductor",
+      "message": "EPIC-0006 merged to develop (PR #36) + write-back (PR #37). BUG-0017/0018 Verified. Worktree+branches cleaned. develop tip de7c618."
     }
   ],
   "tasks": {

@@ -2,3 +2,7 @@ node_modules/
 .superpowers/
 docs/dashboard.html
 docs/fdgolf-ux-review.zip
+.claire/
+.claude/worktrees/
+.history/
+.playwright-mcp/

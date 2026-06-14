@@ -552,23 +552,23 @@
       "title": "As an admin, I want a Granite Ridge GC preset to one-tap import, so that I don't hand-key 18 rows for the first tournament.",
       "priority": "Medium",
       "estimate": "S",
-      "status": "Planned",
+      "status": "Done",
       "branch": "feature/US-0012-course-preset",
       "acs": [
         {
           "id": "AC-0055",
           "text": "\"Import preset\" button shows a list of available presets (at least Granite Ridge GC)",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0056",
           "text": "Importing populates the 18-hole table with par, yardage, stroke index",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0057",
           "text": "Admin can then edit any value before saving",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -581,38 +581,38 @@
       "title": "As an admin, I want to drop pin coordinates for each hole on a satellite map, so that the round tracking app can compute distance-to-pin.",
       "priority": "High",
       "estimate": "M",
-      "status": "Planned",
-      "branch": "feature/US-0013-pin-placement",
+      "status": "Done",
+      "branch": "fix/pins-page-schema-and-bugs",
       "acs": [
         {
           "id": "AC-0058",
           "text": "Satellite map renders for each hole at a sensible default zoom around the course",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0059",
           "text": "Click on the map drops a pin; coordinates saved to holes.pin_lat / pin_lng",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0060",
           "text": "Tee coordinates can also be dropped (separate mode)",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0061",
           "text": "Progress bar shows N of 18 holes with pins set",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0062",
           "text": "\"Save and continue to next hole\" button auto-advances",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0063",
           "text": "Holes table shows pin status (Set or Missing) per hole",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -626,23 +626,23 @@
       "title": "As a player, I want a Mapbox Static API PNG snapshot stored per hole, so that distance-to-pin works even if the Mapbox tile API is rate-limited mid-round.",
       "priority": "Medium",
       "estimate": "S",
-      "status": "Planned",
-      "branch": "feature/US-0014-static-map-snapshot",
+      "status": "Done",
+      "branch": "feature/epic0002-completion",
       "acs": [
         {
           "id": "AC-0064",
           "text": "On pin save, a request is made to Mapbox Static API for the hole region",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0065",
           "text": "PNG is uploaded to Supabase Storage in `course-maps/{courseId}/hole-{n}.png`",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0066",
           "text": "`holes.static_map_url` populated with the public URL",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -655,18 +655,18 @@
       "title": "As an admin, I want to pick which clubs from the master list are available in this tournament, so that I can enforce sponsor-supplied bags or simplified club lists.",
       "priority": "Medium",
       "estimate": "S",
-      "status": "Planned",
+      "status": "Done",
       "branch": "feature/US-0015-tournament-clubs",
       "acs": [
         {
           "id": "AC-0067",
           "text": "All master clubs listed with toggle controls; defaults to all-active",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0068",
           "text": "Disabled clubs are excluded from the player's bag picker in pre-round setup",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -709,28 +709,28 @@
       "title": "As an admin, I want a pre-flight checklist before activation, so that I don't open registration on a misconfigured tournament.",
       "priority": "High",
       "estimate": "S",
-      "status": "Planned",
-      "branch": "feature/US-0017-preflight-checklist",
+      "status": "Done",
+      "branch": "feature/US-0017-0018-tournament-lifecycle",
       "acs": [
         {
           "id": "AC-0072",
           "text": "Checklist shows green checks for: basics complete, all holes configured (par 72 or expected), all 18 pin coordinates set, slug verified unique",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0073",
           "text": "Checklist shows amber reminders for: clubs configured, teams unassigned",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0074",
           "text": "Activate button disabled until all green checks pass",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0075",
           "text": "Live preview card shows what the public leaderboard banner will look like",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -744,33 +744,33 @@
       "title": "As an admin, I want buttons to move the tournament between statuses, so that I can open registration, start play, and close the tournament cleanly.",
       "priority": "High",
       "estimate": "S",
-      "status": "Planned",
-      "branch": "feature/US-0018-status-workflow",
+      "status": "Done",
+      "branch": "feature/US-0017-0018-tournament-lifecycle",
       "acs": [
         {
           "id": "AC-0076",
           "text": "From draft, \"Open registration\" moves status to registration_open",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0077",
           "text": "From registration_open, \"Start tournament\" moves status to active",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0078",
           "text": "From active, \"Complete tournament\" moves status to completed",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0079",
           "text": "Paused status reachable via DB direct update; no UI in Phase 1",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0080",
           "text": "Transitions are logged with timestamp and admin actor",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -783,18 +783,18 @@
       "title": "As an admin, I want the public registration URL displayed after activation, so that I can copy-paste it into the invite emails.",
       "priority": "Medium",
       "estimate": "S",
-      "status": "Planned",
-      "branch": "feature/US-0019-post-activation-url",
+      "status": "Done",
+      "branch": "feature/epic0002-completion",
       "acs": [
         {
           "id": "AC-0081",
           "text": "Post-activation confirmation screen shows the URL `fdgolf.app/register/{slug}`",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0082",
           "text": "Copy-to-clipboard button",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -1713,28 +1713,28 @@
       "title": "As a developer, I want a PostgreSQL function calc_best_ball_for_hole, so that team scoring is computed server-side consistently.",
       "priority": "High",
       "estimate": "M",
-      "status": "Planned",
+      "status": "Done",
       "branch": "feature/US-0049-best-ball-function",
       "acs": [
         {
           "id": "AC-0182",
           "text": "Function signature: calc_best_ball_for_hole(p_team_id uuid, p_hole_number int) returns (best_score int, contributing_player_id uuid, status hole_score_status)",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0183",
           "text": "Returns min gross_score across team members for the hole",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0184",
           "text": "Status is final only when all team_size members have final hole_score for this hole",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0185",
           "text": "SQL tests verify with 2-, 3-, 4-, 5-player teams",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -1747,23 +1747,23 @@
       "title": "As a developer, I want a DB trigger on hole_scores that upserts team_hole_scores, so that team totals stay in sync without app-side bookkeeping.",
       "priority": "High",
       "estimate": "S",
-      "status": "Planned",
+      "status": "Done",
       "branch": "feature/US-0050-trigger-team-scores",
       "acs": [
         {
           "id": "AC-0186",
           "text": "AFTER INSERT/UPDATE on hole_scores calls calc_best_ball_for_hole",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0187",
           "text": "team_hole_scores row created or updated with returned values",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0188",
           "text": "status (provisional/final) flows from the function result",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -1776,18 +1776,18 @@
       "title": "As a developer, I want score-vs-par helpers, so that the leaderboard can show \"-2 to par\" without app-side math.",
       "priority": "Medium",
       "estimate": "S",
-      "status": "Planned",
+      "status": "Done",
       "branch": "feature/US-0051-vs-par-helpers",
       "acs": [
         {
           "id": "AC-0189",
           "text": "SQL view returns per-hole and cumulative score-vs-par",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0190",
           "text": "Handles missing holes (returns null cumulative until first hole completes)",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -1800,23 +1800,23 @@
       "title": "As a developer, I want a team_standings SQL view, so that the leaderboard query is a single fetch.",
       "priority": "High",
       "estimate": "S",
-      "status": "Planned",
+      "status": "Done",
       "branch": "feature/US-0052-team-standings-view",
       "acs": [
         {
           "id": "AC-0191",
           "text": "View aggregates team_hole_scores into total score, thru count, score-vs-par",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0192",
           "text": "Sorted by score ascending, then thru descending",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0193",
           "text": "Includes rank column with proper tied handling",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -1829,18 +1829,18 @@
       "title": "As a developer, I want provisional vs final status to be deterministic, so that the leaderboard never disagrees with the round.",
       "priority": "High",
       "estimate": "S",
-      "status": "Planned",
+      "status": "Done",
       "branch": "feature/US-0053-provisional-status",
       "acs": [
         {
           "id": "AC-0194",
           "text": "hole_scores.status=final when player has outcome=sunk OR shot count on hole > 8 (auto-finalize blowout)",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0195",
           "text": "team_hole_scores.status=final only when all team_size members have final hole_score for the hole",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -1853,28 +1853,28 @@
       "title": "As a developer, I want test coverage of Best Ball edge cases, so that scoring bugs don't blow up the tournament.",
       "priority": "High",
       "estimate": "S",
-      "status": "Planned",
+      "status": "Done",
       "branch": "feature/US-0054-best-ball-edges",
       "acs": [
         {
           "id": "AC-0196",
           "text": "Tests cover variable team_size (2, 3, 4, 5)",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0197",
           "text": "Mulligan shots (stroke_count=0) do not inflate scores",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0198",
           "text": "OOB penalty stroke is correctly included in gross_score",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0199",
           "text": "Withdrawn players excluded from team Best Ball calc",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -1887,18 +1887,18 @@
       "title": "As a player, I want provisional team scores shown distinctly on the leaderboard, so that I know which holes aren't fully scored yet.",
       "priority": "Medium",
       "estimate": "S",
-      "status": "Planned",
+      "status": "Done",
       "branch": "feature/US-0055-provisional-flag",
       "acs": [
         {
           "id": "AC-0200",
           "text": "team_hole_scores.status returned in leaderboard payload",
-          "done": false
+          "done": true
         },
         {
           "id": "AC-0201",
           "text": "Client renders italic grey for provisional, solid for final",
-          "done": false
+          "done": true
         }
       ],
       "dependencies": [
@@ -3465,9 +3465,9 @@
       "title": "Define Granite Ridge GC preset in lib/courses/presets.ts",
       "type": "Dev",
       "assignee": "Agent",
-      "status": "To Do",
+      "status": "Done",
       "branch": "feature/US-0012-course-preset",
-      "notes": "JSON object with 18 holes: par/yards/SI."
+      "notes": "JSON object with 18 holes: par/yards/SI. Implemented at lib/presets/courses.ts."
     },
     {
       "id": "TASK-0057",
@@ -3475,7 +3475,7 @@
       "title": "Add \"Import preset\" button to course form",
       "type": "Dev",
       "assignee": "Agent",
-      "status": "To Do",
+      "status": "Done",
       "branch": "feature/US-0012-course-preset",
       "notes": "Opens dropdown of presets; selection populates the table."
     },
@@ -3485,9 +3485,9 @@
       "title": "Test preset import populates all 18 rows correctly",
       "type": "Test",
       "assignee": "Agent",
-      "status": "To Do",
+      "status": "Done",
       "branch": "feature/US-0012-course-preset",
-      "notes": "Snapshot test or row count assertion."
+      "notes": "Snapshot test or row count assertion. 6 preset import tests added; 13 preset module tests added."
     },
     {
       "id": "TASK-0059",
@@ -3495,9 +3495,9 @@
       "title": "Create pin placement page app/admin/tournaments/[id]/pins/page.tsx",
       "type": "Dev",
       "assignee": "Agent",
-      "status": "To Do",
+      "status": "Done",
       "branch": "feature/US-0013-pin-placement",
-      "notes": "Renders MapView per hole; click handler captures lng/lat."
+      "notes": "Renders MapView per hole; click handler captures lng/lat. Implemented at app/admin/tournaments/[slug]/course/pins/page.tsx + pin-placement-map.tsx."
     },
     {
       "id": "TASK-0060",
@@ -3505,9 +3505,9 @@
       "title": "Test click on map updates pin state",
       "type": "Test",
       "assignee": "Agent",
-      "status": "To Do",
+      "status": "Done",
       "branch": "feature/US-0013-pin-placement",
-      "notes": "Mock geolocation; simulate click; assert state captured."
+      "notes": "Mock geolocation; simulate click; assert state captured. 29 component tests in __tests__/components/pin-placement-map.test.tsx; 19 action tests in __tests__/lib/actions/pins.test.ts."
     },
     {
       "id": "TASK-0061",
@@ -3515,9 +3515,9 @@
       "title": "Implement savePinCoordinate server action",
       "type": "Dev",
       "assignee": "Agent",
-      "status": "To Do",
+      "status": "Done",
       "branch": "feature/US-0013-pin-placement",
-      "notes": "Updates holes.pin_lat / pin_lng; revalidates."
+      "notes": "Updates holes.pin_lat / pin_lng; revalidates. Implemented as savePinAction in lib/actions/pins.ts; supports pin and tee modes."
     },
     {
       "id": "TASK-0062",
@@ -3525,9 +3525,9 @@
       "title": "Add progress bar showing N of 18 holes with pins",
       "type": "Dev",
       "assignee": "Agent",
-      "status": "To Do",
+      "status": "Done",
       "branch": "feature/US-0013-pin-placement",
-      "notes": "Server query counts; displayed at top."
+      "notes": "Server query counts; displayed at top. Progress bar with aria-progressbar in PinPlacementMap; pin status (✓/–) column added to CourseHolesForm."
     },
     {
       "id": "TASK-0063",
@@ -3535,9 +3535,9 @@
       "title": "Add \"Save and next hole\" auto-advance behavior",
       "type": "Dev",
       "assignee": "Agent",
-      "status": "To Do",
+      "status": "Done",
       "branch": "feature/US-0013-pin-placement",
-      "notes": "Successful save routes to ?hole=N+1."
+      "notes": "Successful save routes to ?hole=N+1. Auto-advances hole index state; on last hole routes to course page."
     },
     {
       "id": "TASK-0064",
@@ -3575,9 +3575,9 @@
       "title": "Create tournament clubs config page",
       "type": "Dev",
       "assignee": "Agent",
-      "status": "To Do",
+      "status": "Done",
       "branch": "feature/US-0015-tournament-clubs",
-      "notes": "app/admin/tournaments/[id]/clubs/page.tsx; lists master clubs with toggle."
+      "notes": "app/admin/tournaments/[slug]/clubs/page.tsx + club-picker-form.tsx; lists master clubs with toggle."
     },
     {
       "id": "TASK-0068",
@@ -3585,9 +3585,9 @@
       "title": "Implement upsert into tournament_clubs on toggle change",
       "type": "Dev",
       "assignee": "Agent",
-      "status": "To Do",
+      "status": "Done",
       "branch": "feature/US-0015-tournament-clubs",
-      "notes": "Server action setTournamentClubActive(tournamentId, clubId, isActive)."
+      "notes": "lib/actions/clubs.ts saveClubsAction: delete-then-insert pattern; no-rows=all-active invariant documented."
     },
     {
       "id": "TASK-0069",
@@ -3595,9 +3595,9 @@
       "title": "Test default: all master clubs active for new tournament",
       "type": "Test",
       "assignee": "Agent",
-      "status": "To Do",
+      "status": "Done",
       "branch": "feature/US-0015-tournament-clubs",
-      "notes": "Inspect tournament_clubs after tournament creation."
+      "notes": "8 action tests + 16 component tests covering default all-active, partial sets, toggles, FormData hidden inputs."
     },
     {
       "id": "TASK-0070",
@@ -5640,549 +5640,1061 @@
       "notes": "For deliverability debugging."
     }
   ],
-  "testCases": [],
-  "bugs": [],
+  "testCases": [
+    {
+      "id": "TC-0001",
+      "title": "App loads — home page renders and AppChrome header is visible",
+      "relatedStory": "US-0001",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0001",
+      "type": "Functional",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0002",
+      "title": "Unauthenticated visit to / redirects to /login?next=/",
+      "relatedStory": "US-0004",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0021",
+      "type": "Functional",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0003",
+      "title": "Authenticated user stays on / and sees AppChrome header (not redirected)",
+      "relatedStory": "US-0003",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0011",
+      "type": "Functional",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0004",
+      "title": "Valid email + password logs in and redirects to intended destination",
+      "relatedStory": "US-0004",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0017",
+      "type": "Functional",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0005",
+      "title": "Invalid credentials show generic error with no account-existence hint",
+      "relatedStory": "US-0004",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0018",
+      "type": "Negative",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0006",
+      "title": "Logout clears session and redirects to /login",
+      "relatedStory": "US-0004",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0020",
+      "type": "Functional",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0007",
+      "title": "MapView renders on home page without console token errors",
+      "relatedStory": "US-0007",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0036",
+      "type": "Functional",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0008",
+      "title": "Create tournament with all required fields — redirected to tournament detail page",
+      "relatedStory": "US-0009",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0045",
+      "type": "Functional",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0009",
+      "title": "Submit tournament form with missing required field — validation blocks submission",
+      "relatedStory": "US-0009",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0044",
+      "type": "Negative",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0010",
+      "title": "Typing tournament name auto-fills slug field after 300ms debounce",
+      "relatedStory": "US-0010",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0046",
+      "type": "Functional",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0011",
+      "title": "Entering a duplicate slug shows uniqueness error on blur",
+      "relatedStory": "US-0010",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0048",
+      "type": "Edge Case",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0012",
+      "title": "Save all 18 holes with par/yardage/stroke index — data persists on reload",
+      "relatedStory": "US-0011",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0054",
+      "type": "Functional",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0013",
+      "title": "Changing par values updates the live par total in real time",
+      "relatedStory": "US-0011",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0053",
+      "type": "Functional",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0014",
+      "title": "SponsorBar renders sponsor logos for cibc-granite-ridge-2026 slug",
+      "relatedStory": "US-0016",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0070",
+      "type": "Functional",
+      "status": "Not Run",
+      "defect": "None"
+    },
+    {
+      "id": "TC-0015",
+      "title": "Search players by name, select result, assign as organizer — confirmation shown",
+      "relatedStory": "US-0020",
+      "relatedTask": "TASK-0001",
+      "relatedAC": "AC-0083",
+      "type": "Functional",
+      "status": "Not Run",
+      "defect": "None"
+    }
+  ],
+  "bugs": [
+    {
+      "id": "BUG-0001",
+      "title": "Success banner never appears after a successful save",
+      "severity": "High",
+      "relatedStory": "US-0015",
+      "relatedTask": "TASK-0067",
+      "status": "Verified",
+      "fixBranch": "bugfix/BUG-0001-success-banner",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 5
+    },
+    {
+      "id": "BUG-0002",
+      "title": "Invariant comment contradicts actual saveClubsAction behavior",
+      "severity": "Medium",
+      "relatedStory": "US-0015",
+      "relatedTask": "TASK-0068",
+      "status": "Open",
+      "fixBranch": "bugfix/BUG-0002-invariant-comment",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 6
+    },
+    {
+      "id": "BUG-0003",
+      "title": "vitest.config.ts still marks [slug]/page.tsx as \"Stub Server Component\" after replacement",
+      "severity": "Low",
+      "relatedStory": "US-0015",
+      "relatedTask": "TASK-0067",
+      "status": "Verified",
+      "fixBranch": "bugfix/BUG-0003-vitest-comment",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 7
+    },
+    {
+      "id": "BUG-0004",
+      "title": "clubs/page.tsx silently continues with empty club list on DB error",
+      "severity": "Medium",
+      "relatedStory": "US-0015",
+      "relatedTask": "TASK-0067",
+      "status": "Verified",
+      "fixBranch": "bugfix/BUG-0004-clubs-fetch-error-handling",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 8
+    },
+    {
+      "id": "BUG-0005",
+      "title": "COURSE_PRESETS array is mutable — external code can push/splice preset entries",
+      "severity": "Medium",
+      "relatedStory": "US-0012",
+      "relatedTask": "TASK-0056",
+      "status": "Verified",
+      "fixBranch": "bugfix/BUG-0005-course-presets-readonly",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 9
+    },
+    {
+      "id": "BUG-0006",
+      "title": "Branch coverage drops below 80% threshold after this PR (coverage CI would fail)",
+      "severity": "High",
+      "relatedStory": "US-0012",
+      "relatedTask": "TASK-0058",
+      "status": "Verified",
+      "fixBranch": "bugfix/BUG-0006-coverage-branch-threshold",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 10
+    },
+    {
+      "id": "BUG-0007",
+      "title": "Dropdown lacks keyboard navigation — Escape and Arrow keys not handled",
+      "severity": "Medium",
+      "relatedStory": "US-0012",
+      "relatedTask": "TASK-0057",
+      "status": "Verified",
+      "fixBranch": "bugfix/BUG-0007-preset-dropdown-keyboard-nav",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 11
+    },
+    {
+      "id": "BUG-0008",
+      "title": "`aria-selected={false}` is hardcoded — does not reflect actual selected state",
+      "severity": "Low",
+      "relatedStory": "US-0012",
+      "relatedTask": "TASK-0057",
+      "status": "Verified",
+      "fixBranch": "bugfix/BUG-0008-aria-selected-state",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 12
+    },
+    {
+      "id": "BUG-0009",
+      "title": "Unused `act` import in course-holes-form test file",
+      "severity": "Low",
+      "relatedStory": "US-0012",
+      "relatedTask": "TASK-0058",
+      "status": "Verified",
+      "fixBranch": "bugfix/BUG-0009-unused-act-import",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 13
+    },
+    {
+      "id": "BUG-0010",
+      "title": "ArrowDown on trigger opens dropdown but does not move keyboard focus to first option",
+      "severity": "Low",
+      "relatedStory": "US-0012",
+      "relatedTask": "TASK-0057",
+      "status": "Closed",
+      "fixBranch": "(none — component retired)",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 14
+    },
+    {
+      "id": "BUG-0011",
+      "title": "PinPlacementMap crashes with TypeError when holes array is empty",
+      "severity": "High",
+      "relatedStory": "US-0013",
+      "relatedTask": "TASK-0059",
+      "status": "Verified",
+      "fixBranch": "bugfix/BUG-0011-empty-holes-guard",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 15
+    },
+    {
+      "id": "BUG-0012",
+      "title": "Map initial zoom is 15 but AC-0058 requires zoom 16",
+      "severity": "Low",
+      "relatedStory": "US-0013",
+      "relatedTask": "TASK-0059",
+      "status": "Verified",
+      "fixBranch": "bugfix/BUG-0012-zoom-level",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 16
+    },
+    {
+      "id": "BUG-0013",
+      "title": "savePinAction updates any hole by ID — no course-scoping check",
+      "severity": "Medium",
+      "relatedStory": "US-0013",
+      "relatedTask": "TASK-0061",
+      "status": "Verified",
+      "fixBranch": "bugfix/BUG-0013-hole-ownership-check",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": 17
+    },
+    {
+      "id": "BUG-0014",
+      "title": "useEffect dependency suppression hides localHoles staleness risk",
+      "severity": "Low",
+      "relatedStory": "US-0013",
+      "relatedTask": "TASK-0059",
+      "status": "Verified",
+      "fixBranch": "bugfix/open-bugs-resolution",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": null
+    },
+    {
+      "id": "BUG-0015",
+      "title": "Next.js 14.2.35 — multiple security CVEs (14 advisories)",
+      "severity": "High",
+      "relatedStory": "(none — dependency)",
+      "relatedTask": "(none)",
+      "status": "Verified",
+      "fixBranch": "feature/nextjs-16-upgrade",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": null
+    },
+    {
+      "id": "BUG-0016",
+      "title": "glob CLI command injection in eslint-config-next (dev-only)",
+      "severity": "High (dev dependency only — no production impact)",
+      "relatedStory": "(none — dependency)",
+      "relatedTask": "(none)",
+      "status": "Verified",
+      "fixBranch": "feature/nextjs-16-upgrade",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": null
+    },
+    {
+      "id": "BUG-0017",
+      "title": "supabase db reset fails — epic0003 migration conflicts with initial schema (merge divergence)",
+      "severity": "High",
+      "relatedStory": "(none — migration chain / 9c053ef merge divergence)",
+      "relatedTask": "(none)",
+      "status": "Verified",
+      "fixBranch": "feature/epic0006-scoring-engine",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": null
+    },
+    {
+      "id": "BUG-0018",
+      "title": "Admin/role authorization silently broken under canonical epic0003 schema (player_id vs user_id)",
+      "severity": "Critical",
+      "relatedStory": "EPIC-0003 (auth/registration)",
+      "relatedTask": "(none)",
+      "status": "Verified",
+      "fixBranch": "feature/epic0006-scoring-engine",
+      "lessonEncoded": "No",
+      "estimatedCostUsd": 0,
+      "ghIssueNumber": null
+    }
+  ],
   "costs": {
     "US-0001": {
       "projectedUsd": 400,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0002": {
       "projectedUsd": 400,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0003": {
       "projectedUsd": 400,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0004": {
       "projectedUsd": 400,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0005": {
       "projectedUsd": 800,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0006": {
       "projectedUsd": 800,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0007": {
       "projectedUsd": 400,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0008": {
       "projectedUsd": 400,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0009": {
       "projectedUsd": 400,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0010": {
       "projectedUsd": 400,
-      "costUsd": 42.636136,
+      "costUsd": 44.057478,
       "inputTokens": 2743332,
       "outputTokens": 547938
     },
     "US-0011": {
       "projectedUsd": 400,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0012": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 400,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0013": {
-      "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "projectedUsd": 800,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0014": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 400,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0015": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 400,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0016": {
       "projectedUsd": 400,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0017": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 400,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0018": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 400,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0019": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 400,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0020": {
       "projectedUsd": 400,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0021": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0022": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0023": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0024": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0025": {
       "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0026": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0027": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0028": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0029": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0030": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0031": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0032": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0033": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0034": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0035": {
       "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0036": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0037": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0038": {
       "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0039": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0040": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0041": {
       "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0042": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0043": {
       "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0044": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0045": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0046": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0047": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0048": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0049": {
-      "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "projectedUsd": 800,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0050": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 400,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0051": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 400,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0052": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 400,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0053": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 400,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0054": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 400,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0055": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 400,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0056": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0057": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0058": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0059": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0060": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0061": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0062": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0063": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0064": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0065": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0066": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0067": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0068": {
       "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0069": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0070": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0071": {
       "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0072": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0073": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0074": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0075": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0076": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0077": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0078": {
       "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0079": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0080": {
       "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0081": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0082": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0083": {
       "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0084": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0085": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0086": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0087": {
       "projectedUsd": 0.9,
-      "costUsd": 0.440936,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0088": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0089": {
-      "projectedUsd": 5.385707999999999,
-      "costUsd": 0.440936,
+      "projectedUsd": 2.5757820000000002,
+      "costUsd": 1.862278,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "_totals": {
-      "costUsd": 81.4385,
-      "inputTokens": 4965766,
-      "outputTokens": 1248041
+      "costUsd": 207.93789999999998,
+      "inputTokens": 12408958,
+      "outputTokens": 3446819
     },
     "_bugs": {
+      "BUG-0001": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 800
+      },
+      "BUG-0002": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 400
+      },
+      "BUG-0003": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 400
+      },
+      "BUG-0004": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 400
+      },
+      "BUG-0005": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 400
+      },
+      "BUG-0006": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 800
+      },
+      "BUG-0007": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 400
+      },
+      "BUG-0008": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 400
+      },
+      "BUG-0009": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 400
+      },
+      "BUG-0010": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 400
+      },
+      "BUG-0011": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 800
+      },
+      "BUG-0012": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 400
+      },
+      "BUG-0013": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 400
+      },
+      "BUG-0014": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 400
+      },
+      "BUG-0015": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 800
+      },
+      "BUG-0016": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 400
+      },
+      "BUG-0017": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 800
+      },
+      "BUG-0018": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "sessions": 0,
+        "isEstimated": false,
+        "projectedUsd": 1600
+      },
       "_totals": {
         "costUsd": 0,
         "inputTokens": 0,
@@ -6192,7 +6704,7 @@
   },
   "atRisk": {
     "US-0001": {
-      "missingTCs": true,
+      "missingTCs": false,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
@@ -6206,14 +6718,14 @@
       "isAtRisk": false
     },
     "US-0003": {
-      "missingTCs": true,
+      "missingTCs": false,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
       "isAtRisk": false
     },
     "US-0004": {
-      "missingTCs": true,
+      "missingTCs": false,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
@@ -6234,7 +6746,7 @@
       "isAtRisk": false
     },
     "US-0007": {
-      "missingTCs": true,
+      "missingTCs": false,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
@@ -6248,21 +6760,21 @@
       "isAtRisk": false
     },
     "US-0009": {
-      "missingTCs": true,
+      "missingTCs": false,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
       "isAtRisk": false
     },
     "US-0010": {
-      "missingTCs": true,
+      "missingTCs": false,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
       "isAtRisk": false
     },
     "US-0011": {
-      "missingTCs": true,
+      "missingTCs": false,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
@@ -6273,31 +6785,31 @@
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0013": {
       "missingTCs": true,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0014": {
       "missingTCs": true,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0015": {
       "missingTCs": true,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0016": {
-      "missingTCs": true,
+      "missingTCs": false,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
@@ -6308,24 +6820,24 @@
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0018": {
       "missingTCs": true,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0019": {
       "missingTCs": true,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0020": {
-      "missingTCs": true,
+      "missingTCs": false,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
@@ -6532,49 +7044,49 @@
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0050": {
       "missingTCs": true,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0051": {
       "missingTCs": true,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0052": {
       "missingTCs": true,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0053": {
       "missingTCs": true,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0054": {
       "missingTCs": true,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0055": {
       "missingTCs": true,
       "noBranch": false,
       "failedTCNoBug": false,
       "openCriticalBug": false,
-      "isAtRisk": true
+      "isAtRisk": false
     },
     "US-0056": {
       "missingTCs": true,
@@ -6820,15 +7332,41 @@
     "byEpic": {}
   },
   "coverage": {
-    "lines": 0,
-    "statements": 0,
-    "functions": 0,
-    "branches": 0,
-    "overall": 0,
-    "meetsTarget": false,
-    "available": false
+    "lines": 90.46,
+    "statements": 87.97,
+    "functions": 84.17,
+    "branches": 80.42,
+    "overall": 90.46,
+    "meetsTarget": true,
+    "available": true
   },
-  "recentActivity": [],
+  "recentActivity": [
+    {
+      "sessionNum": 7,
+      "date": "2026-06-12",
+      "summary": "Resolved develop→main merge conflicts (PR #27); merged EPIC-0001 through EPIC-0003 to main; Logged BUG-0015 (14 Next.js 14.x CVEs) and BUG-0016 (glob CLI injection) to BUGS.md; verified all prior bugs BUG-0001–0014; Upgraded Next.js 14→16.2.9, React 18→19.2.7, ESLint 9 flat config — resolves BUG-0015/0016; all 442 tests pass"
+    },
+    {
+      "sessionNum": 6,
+      "date": "2026-06-12",
+      "summary": "Implemented EPIC-0003 Registration & Profile (US-0021–0029): 5 DB tables, 5 Server Actions, 12 pages/components, 428 tests passing; Created DB reset script + dev seed (admin + player users) + test import CSV for manual testing; Fixed lint/type errors and confirmed production build passes"
+    },
+    {
+      "sessionNum": 5,
+      "date": "2026-06-11",
+      "summary": "Executed all 19 tasks across 3 plans (Master Data V2, Tournament Editor V2, Downstream Schema Updates) via DM_AGENT subagent pipeline; PRs #19, #20, #21 squash-merged to develop; develop HEAD `63824dd`; 343 tests passing, 95%+ coverage; EPIC-0002 rebuild complete: venues/courses/holes CRUD, tournament list/edit/delete, PinPlacementMap JSONB tees, CourseHolesForm retired"
+    },
+    {
+      "sessionNum": 4,
+      "date": "2026-06-11",
+      "summary": "Wrote 3 full implementation plans for EPIC-0002 rebuild: Master Data V2 (venues/courses/holes), Tournament Editor V2, Downstream Schema Updates; Plans cover 19 tasks total with complete code, TDD steps, and commit checkpoints at every step; PlanVisualizer GitHub issues sync re-enabled; BUG-0001–0014 synced to GitHub issues #5–#18"
+    },
+    {
+      "sessionNum": 3,
+      "date": "2026-06-11",
+      "summary": "Implemented US-0012 (course preset import), US-0013 (pin placement map), US-0015 (tournament club picker) via Conductor DM_AGENT pipeline; 87 new tests across 3 stories; 240 tests pass; all coverage ≥ 80%; type-check and lint clean; BUG-0001–0014 logged to docs/BUGS.md by Lens review agents and fixed in the same cycle; all 3 PRs (#2, #3, #4) squash-merged to develop"
+    }
+  ],
   "lessons": [
     {
       "id": "L-0001",
@@ -6839,9 +7377,9 @@
       "bugIds": []
     }
   ],
-  "generatedAt": "2026-06-10T03:21:42.234Z",
-  "commitSha": "ab05d57",
-  "buildNumber": "29",
+  "generatedAt": "2026-06-13T23:59:49.532Z",
+  "commitSha": "de7c618",
+  "buildNumber": "82",
   "branch": "develop",
   "sessionTimeline": [
     {
@@ -6853,8 +7391,12 @@
       "cumCost": 76.7983
     },
     {
-      "date": "2026-06-10",
-      "cumCost": 81.4385
+      "date": "2026-06-12",
+      "cumCost": 206.5748
+    },
+    {
+      "date": "2026-06-13",
+      "cumCost": 207.9379
     }
   ],
   "costHistory": {
@@ -6862,6 +7404,10 @@
       {
         "date": "2026-06-09",
         "costUsd": 34.6031
+      },
+      {
+        "date": "2026-06-12",
+        "costUsd": 129.7765
       }
     ],
     "feature/US-0010-slug-override": [
@@ -6872,12 +7418,12 @@
     ],
     "develop": [
       {
-        "date": "2026-06-10",
-        "costUsd": 4.6402
+        "date": "2026-06-13",
+        "costUsd": 1.3631
       }
     ]
   },
-  "deltaSpend": 4.64,
+  "deltaSpend": 1.36,
   "projectName": "Claude",
   "tagline": "FDgolf tournament app — Claude project.",
   "version": "1.0.0",
@@ -6957,100 +7503,102 @@
     }
   },
   "budget": {
-    "totalBudget": 432.43810400000007,
-    "totalSpent": 81.4385,
-    "totalProjected": 6350.999603999982,
-    "percentUsed": 19,
-    "burnRate": 33.57155,
-    "daysRemaining": 10,
-    "projectedExhaustion": 10,
+    "totalBudget": 349.2027820000001,
+    "totalSpent": 207.93789999999998,
+    "totalProjected": 12541.26488199999,
+    "percentUsed": 60,
+    "burnRate": 32.27375,
+    "daysRemaining": 4,
+    "projectedExhaustion": 4,
     "thresholds": [
       50,
       75,
       90,
       100
     ],
-    "crossedThresholds": [],
+    "crossedThresholds": [
+      50
+    ],
     "epicBudgets": [
       {
         "id": "EPIC-0001",
         "title": "Foundation & Infrastructure",
-        "budget": 3.527487999999999,
-        "spent": 3.527487999999999,
+        "budget": 14.898224,
+        "spent": 14.898224,
         "remaining": 0,
         "percentUsed": 100
       },
       {
         "id": "EPIC-0002",
         "title": "Tournament Setup (Admin)",
-        "budget": 80.70068,
-        "spent": 47.48643200000001,
-        "remaining": 33.214248,
-        "percentUsed": 59
-      },
-      {
-        "id": "EPIC-0005",
-        "title": "Round Tracking",
-        "budget": 63.630184,
-        "spent": 6.173103999999998,
-        "remaining": 57.457080000000005,
-        "percentUsed": 10
-      },
-      {
-        "id": "EPIC-0009",
-        "title": "Offline & Sync",
-        "budget": 25.988448,
-        "spent": 2.6456159999999995,
-        "remaining": 23.342832,
-        "percentUsed": 10
-      },
-      {
-        "id": "EPIC-0010",
-        "title": "Security & 2FA",
-        "budget": 31.815091999999993,
-        "spent": 3.0865519999999993,
-        "remaining": 28.728539999999995,
-        "percentUsed": 10
+        "budget": 64.54253600000004,
+        "spent": 64.54253600000004,
+        "remaining": 0,
+        "percentUsed": 100
       },
       {
         "id": "EPIC-0006",
         "title": "Scoring Engine",
-        "budget": 36.300799999999995,
-        "spent": 3.0865519999999993,
-        "remaining": 33.214248,
-        "percentUsed": 9
+        "budget": 13.035946000000001,
+        "spent": 13.035946000000001,
+        "remaining": 0,
+        "percentUsed": 100
+      },
+      {
+        "id": "EPIC-0009",
+        "title": "Offline & Sync",
+        "budget": 23.276796000000004,
+        "spent": 11.173668000000001,
+        "remaining": 12.103128000000003,
+        "percentUsed": 48
+      },
+      {
+        "id": "EPIC-0005",
+        "title": "Round Tracking",
+        "budget": 55.42971200000001,
+        "spent": 26.071892000000002,
+        "remaining": 29.357820000000007,
+        "percentUsed": 47
+      },
+      {
+        "id": "EPIC-0010",
+        "title": "Security & 2FA",
+        "budget": 27.714856000000005,
+        "spent": 13.035946000000001,
+        "remaining": 14.678910000000004,
+        "percentUsed": 47
       },
       {
         "id": "EPIC-0008",
         "title": "Admin Operations",
-        "budget": 60.948312,
-        "spent": 5.291231999999998,
-        "remaining": 55.65708,
-        "percentUsed": 9
+        "budget": 49.905156000000005,
+        "spent": 22.347336000000002,
+        "remaining": 27.557820000000003,
+        "percentUsed": 45
       },
       {
         "id": "EPIC-0003",
         "title": "Registration & Profile",
-        "budget": 47.954088,
-        "spent": 3.968423999999999,
-        "remaining": 43.985664,
-        "percentUsed": 8
+        "budget": 38.266758,
+        "spent": 16.760502000000002,
+        "remaining": 21.506256,
+        "percentUsed": 44
       },
       {
         "id": "EPIC-0004",
         "title": "Pre-Round Setup",
-        "budget": 29.133219999999998,
-        "spent": 2.2046799999999998,
-        "remaining": 26.928539999999998,
-        "percentUsed": 8
+        "budget": 22.1903,
+        "spent": 9.311390000000001,
+        "remaining": 12.87891,
+        "percentUsed": 42
       },
       {
         "id": "EPIC-0007",
         "title": "Leaderboard",
-        "budget": 52.439796,
-        "spent": 3.968423999999999,
-        "remaining": 48.471372,
-        "percentUsed": 8
+        "budget": 39.94254000000001,
+        "spent": 16.760502000000002,
+        "remaining": 23.182038000000006,
+        "percentUsed": 42
       }
     ],
     "hasBudget": true
@@ -7062,16 +7610,19 @@
       "2026-06-09T16:06:02.930Z",
       "2026-06-09T23:21:21.205Z",
       "2026-06-09T23:44:27.702Z",
-      "2026-06-10T03:21:42.310Z"
+      "2026-06-10T03:21:42.310Z",
+      "2026-06-13T23:59:49.618Z"
     ],
     "doneCounts": [
       0,
       1,
       10,
       13,
-      13
+      13,
+      27
     ],
     "totalStories": [
+      89,
       89,
       89,
       89,
@@ -7083,30 +7634,35 @@
       38.577799999999996,
       71.2622,
       76.7983,
-      81.4385
+      81.4385,
+      207.93789999999998
     ],
     "coverage": [
       null,
       null,
       null,
       null,
-      null
+      null,
+      90.46
     ],
     "velocity": [
       0,
       1,
       14,
       17,
-      17
+      17,
+      35
     ],
     "openBugs": [
       0,
       0,
       0,
       0,
-      0
+      0,
+      18
     ],
     "atRisk": [
+      0,
       0,
       0,
       0,
@@ -7118,31 +7674,34 @@
       2300102,
       4215231,
       4628658,
-      4965766
+      4965766,
+      12408958
     ],
     "outputTokens": [
       373545,
       660234,
       1059203,
       1159078,
-      1248041
+      1248041,
+      3446819
     ],
     "avgRisk": [
       1.0999999999999985,
       1.0999999999999988,
       1.0999999999999992,
       1.0999999999999994,
-      1.0999999999999994
+      1.0999999999999994,
+      1.1000000000000005
     ],
     "velocityByWeek": {
       "labels": [
         "2026-W24"
       ],
       "points": [
-        17
+        35
       ],
       "rollingAvg": [
-        17
+        35
       ]
     }
   }
