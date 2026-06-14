@@ -52,7 +52,8 @@ function buildChain(returnValue: unknown) {
   chain.single = vi.fn().mockResolvedValue(returnValue)
   chain.order = vi.fn().mockReturnValue(chain)
   chain.filter = vi.fn().mockReturnValue(chain)
-  chain.then = undefined
+  // Make the chain thenable so it resolves when awaited without .single()
+  chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve(returnValue).then(resolve)
   return chain
 }
 

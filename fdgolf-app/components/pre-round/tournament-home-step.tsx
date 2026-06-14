@@ -3,6 +3,7 @@ import { CountdownCard } from './countdown-card'
 interface Tournament {
   id: string
   name: string
+  slug: string
   starts_at: string
   status: string
 }
@@ -71,7 +72,7 @@ export function TournamentHomeStep({ tournament, team, members, startingHole, on
       </div>
 
       <a
-        href={`/t/${tournament.id}/leaderboard`}
+        href={`/t/${tournament.slug}/leaderboard`}
         className="text-center text-xs text-blue-400 underline"
       >
         View leaderboard

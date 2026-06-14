@@ -38,14 +38,16 @@ export default async function RoundPage({ params }: { params: { roundId: string 
 
   // Fetch bag clubs (filtered to round.bag_clubs if non-empty)
   const bagClubIds = (round.bag_clubs as string[]) ?? []
-  const { data: clubsData } = await supabase
+  // Fetch ALL clubs (not single)
+  const { data: allClubs } = await supabase
     .from('clubs')
     .select('id, display_name')
     .order('display_order')
-    .single()
 
-  const allClubs = Array.isArray(clubsData) ? clubsData : clubsData ? [clubsData] : []
-  const clubs = bagClubIds.length > 0 ? allClubs.filter((c) => bagClubIds.includes(c.id)) : allClubs
+  const clubs =
+    bagClubIds.length > 0
+      ? (allClubs ?? []).filter((c) => bagClubIds.includes(c.id))
+      : (allClubs ?? [])
 
   const tees = (hole?.tees ?? []) as Tee[]
   const holeData = {

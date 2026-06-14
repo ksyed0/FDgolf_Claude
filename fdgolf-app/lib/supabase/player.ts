@@ -51,16 +51,18 @@ export async function getPlayerContext(
     .single()
   if (!team) return null
 
-  // 4. All team members
+  // 4. All team members — use select() not single() — a team has 2–5 members
   const { data: memberRows } = await supabase
     .from('team_members')
     .select('player_id, players(id, full_name, company)')
     .eq('team_id', team.id)
-    .single()
 
-  const rawMembers = Array.isArray(memberRows) ? memberRows : memberRows ? [memberRows] : []
-  const members = rawMembers.map((row) => {
-    const p = row.players as { id: string; full_name: string; company: string | null }
+  const members = (memberRows ?? []).map((row) => {
+    const p = (Array.isArray(row.players) ? row.players[0] : row.players) as {
+      id: string
+      full_name: string
+      company: string | null
+    }
     return { id: p.id, full_name: p.full_name, company: p.company }
   })
 
@@ -82,27 +84,24 @@ export async function getPlayerContext(
     pinLng: hole?.pin_lng ?? null,
   }
 
-  // 6. All clubs (ordered by display_order)
+  // 6. Clubs — remove .single(), use array query
   const { data: allClubs } = await supabase
     .from('clubs')
     .select('id, display_name')
     .order('display_order')
-    .single()
 
-  const allClubsArray = Array.isArray(allClubs) ? allClubs : allClubs ? [allClubs] : []
-
-  // 7. Tournament club restrictions — invariant: 0 rows = all clubs active
-  const { data: tcRow } = await supabase
+  // tournament_clubs invariant: 0 rows = all clubs active; N rows = restricted list
+  const { data: tcRows } = await supabase
     .from('tournament_clubs')
     .select('club_id')
     .eq('tournament_id', tournament.id)
-    .single()
 
-  const tcRows = Array.isArray(tcRow) ? tcRow : tcRow ? [tcRow] : []
   const clubs =
-    tcRows.length === 0
-      ? allClubsArray
-      : allClubsArray.filter((c) => tcRows.some((tc) => tc.club_id === c.id))
+    !tcRows || tcRows.length === 0
+      ? (allClubs ?? [])
+      : (allClubs ?? []).filter((c) =>
+          tcRows.some((tc: { club_id: string }) => tc.club_id === c.id)
+        )
 
   // 8. Existing round for this player+tournament
   const { data: existingRound } = await supabase

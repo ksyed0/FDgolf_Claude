@@ -15,6 +15,7 @@ const PROPS = {
   tournament: {
     id: 't1',
     name: 'CIBC ARC Golf 2026',
+    slug: 'cibc-arc-golf-2026',
     starts_at: '2026-06-20T12:00:00Z',
     status: 'active',
   },
