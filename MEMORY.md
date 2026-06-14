@@ -6,7 +6,7 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 7 — 2026-06-12
+Session 9 — 2026-06-13
 
 ---
 
@@ -16,10 +16,10 @@ Session 7 — 2026-06-12
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `93130d9` (Next.js 16 upgrade, PR #30 squash-merged)
-- **Pending PRs:** PR #31 (develop→main), PR #32 (fix/sync-main-into-develop→develop) — CI green, awaiting merge
-- **Stories done:** US-0001–US-0013, US-0015, US-0016, US-0020, US-0021–US-0029, US-0090–US-0095 (EPIC-0001, EPIC-0002, EPIC-0003 all complete)
-- **Stories planned next:** US-0017 (tournament lifecycle), US-0018 (activation)
+- **Develop tip:** `067ad16`+ (EPIC-0006 PR #36 + write-back #37 merged; session-8 docs on top)
+- **Pending PRs:** none for EPIC-0006 (merged). Session-9 close PR is the only open one.
+- **Stories done:** EPIC-0001, EPIC-0002, EPIC-0003 complete; **EPIC-0006 complete** (US-0049–US-0055, merged PR #36)
+- **Stories planned next:** EPIC-0004 (Pre-Round Setup, US-0030–0034), EPIC-0005 (Round Tracking — now has a real schema), EPIC-0007 (Leaderboard, consumes team_standings)
 
 ---
 
@@ -32,6 +32,9 @@ Session 7 — 2026-06-12
 | Worktree isolation for parallel builds | Prevents branch cross-contamination (occurred once in Phase 5) |
 | `workers: 1` for Playwright E2E | Single shared Supabase instance — parallel writes cause DB conflicts |
 | `SponsorBar` and `MapView` not yet wired to pages | Built and unit-tested; TC-0007 and TC-0014 deferred until they're added to a page |
+| **Canonical schema = epic0003 shape** | `players.id` is random + `players.user_id → auth.users`; team membership via `team_members(team_id, player_id)`; `teams` has NO team_size/team_number; auth via `players.user_id = auth.uid()`. The old initial_schema identity shape was retired (BUG-0017). |
+| **Scoring is trigger-driven in the DB** | `shots → hole_scores → team_hole_scores` via chained triggers (EPIC-0006). Round tracking (EPIC-0005) writes SHOTS ONLY — must not write hole_scores. stroke_count: in_play/sunk=1, mulligan=0, OOB=2. |
+| **Pre-launch migration-edit waiver** | BUG-0017 reconciliation EDITED existing migrations (no prod DB exists). Rule resumes post-launch. |
 
 ---
 
@@ -52,8 +55,8 @@ Session 7 — 2026-06-12
 | US       | US-0096        |
 | AC       | AC-0341        |
 | TASK     | TASK-0313      |
-| TC       | TC-0016        |
-| BUG      | BUG-0017       |
+| TC       | TC-0021        |
+| BUG      | BUG-0019       |
 | L        | L-0002         |
 
 ---
@@ -72,10 +75,13 @@ Session 7 — 2026-06-12
 
 EPIC-0001, EPIC-0002, EPIC-0003 all **complete** and merged to main.
 
+EPIC-0006 (Scoring Engine) complete and merged.
+
 Next up:
-- **Merge PR #32** (fix/sync-main-into-develop → develop) — then merge PR #31 (develop → main)
-- **US-0017** — tournament lifecycle (draft → active → completed state machine)
-- **US-0018** — tournament activation (admin triggers activation)
+- **EPIC-0004 — Pre-Round Setup** (US-0030–0034): tournament home, bag confirm, round create. Depends on EPIC-0002/0003 (done).
+- **EPIC-0005 — Round Tracking** (US-0035–0048): now has a canonical schema foundation (`20260612000003_round_tracking.sql`). Per the EPIC-0006 contract, it writes SHOTS ONLY; hole_scores is trigger-derived.
+- **EPIC-0007 — Leaderboard** (US-0056–0064): consumes the `team_standings` / `team_hole_vs_par` views shipped in EPIC-0006; must add public/anon RLS visibility for those views (deferred from EPIC-0006).
+- **Latent follow-up:** `searchPlayersAction` was fixed to `full_name`; audit other EPIC-0003 actions for stale `players.name` references.
 
 ## Known Issues / Gotchas (additions from Session 7)
 
@@ -106,3 +112,13 @@ Next up:
 - **gh pr review --approve on own PR:** `GraphQL: Review Can not approve your own pull request` — skip self-approval, merge directly
 - **git stash -u:** use `-u` (include untracked) when untracked worktree dirs block rebase
 - **Worktree cleanup:** `git worktree remove --force` after PR merge; never delete branch while worktree holds it
+
+## Known Patterns / Gotchas (additions from Session 9 — EPIC-0006 + schema reconciliation)
+
+- **Scoring migrations:** `20260612000002_auth_reconciliation.sql` (re-keyed user_roles + fdgolf_is_teammate + round/scoring RLS), `20260612000003_round_tracking.sql` (rounds/shots/hole_scores/team_hole_scores re-based on epic0003), `20260612010001–05` (scoring fns/triggers/views/tests).
+- **Auth helpers:** `fdgolf_is_admin()`/`fdgolf_is_organizer_for()` live in initial_schema, key on `user_roles.user_id = auth.uid()`; `fdgolf_is_teammate()` lives in `…000002` (needs team_members). All `SECURITY DEFINER` + `SET search_path = public, pg_temp`.
+- **RLS identity pattern:** resolve via `player_id IN (SELECT id FROM players WHERE user_id = auth.uid())`; team visibility via `team_members`, NOT `tournament_registrations.team_id` (that column does not exist).
+- **`roles.ts` organizer insert** now writes `user_id` (resolved from `players.user_id`) and rejects unclaimed players (`user_id IS NULL`).
+- **pgTAP scoring tests:** `cd fdgolf-app && supabase test db` (or `npm run test:db`); helpers in `tests` schema (`tests.seed_tournament`, `tests.add_member`, `tests.add_shot`). 32 assertions.
+- **Branch base trap:** the epic0006 work was based on a local-only merge commit (`9c053ef`) not on origin/develop — a `git rebase origin/develop` replayed the whole divergent history. Fix: cherry-pick `<base>..<tip>` onto a fresh branch off `origin/develop` (clean when base code == develop code).
+- **`tournaments.club_id`** was a stale `seed-dev.sql` reference — removed (clubs link via `tournament_clubs`, not a single FK).

@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 9 — 2026-06-13
+
+### What Was Done
+
+- Built & merged EPIC-0006 Scoring Engine (US-0049–0055, PR #36): chained-trigger pipeline shots→hole_scores→team_hole_scores, to-par standings views, 32 pgTAP tests
+- Fixed BUG-0017 (db reset schema divergence) + BUG-0018 (Critical: admin auth broken under epic0003 schema) via full Option-A reconciliation — collapsed to canonical epic0003 chain, re-keyed user_roles to user_id, rewrote all RLS helpers/predicates
+- Re-based round-tracking + scoring base tables onto epic0003 model (EPIC-0005 foundation); db reset green, 32/32 pgTAP, 444/444 vitest, Lens-reviewed; write-back PR #37
+
+---
+
 ## Session 7 — 2026-06-12
 
 ### What Was Done
