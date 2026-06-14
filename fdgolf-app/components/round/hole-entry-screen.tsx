@@ -81,7 +81,7 @@ export function HoleEntryScreen({ roundId, hole, clubs, shotNumber }: Props) {
               {hole.strokeIndex ? ` · SI ${hole.strokeIndex}` : ''}
             </p>
             {hole.yardage && (
-              <p className="text-lg font-bold text-blue-400">~{hole.yardage} yds to pin</p>
+              <p className="text-lg font-bold text-blue-400">~{hole.yardage} yds (hole length)</p>
             )}
           </div>
         </div>
