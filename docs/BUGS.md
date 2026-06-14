@@ -612,3 +612,34 @@ Blocks: EPIC-0006 rebase onto the canonical schema (`feature/epic0006-scoring`).
 Verified fix (feature/nextjs-16-upgrade): `eslint-config-next@16.2.9` installed alongside
 `next@16.2.9` — the vulnerable `glob@10.x` dep is replaced. ESLint config migrated to flat
 config format (`eslint.config.mjs`) to satisfy ESLint 9.x requirements.
+
+---
+
+BUG-0019: HoleEntryScreen displays static hole yardage as "yds to pin" — not live GPS distance
+Severity: Medium
+Related Story: US-0034
+Related Task: TASK-0124
+Status: Open
+Fix Branch: feature/US-0030-0034-epic0004-pre-round
+Lesson Encoded: No
+
+`components/round/hole-entry-screen.tsx` (line 83-85) renders:
+  `<p className="text-lg font-bold text-blue-400">~{hole.yardage} yds to pin</p>`
+where `hole.yardage` comes from `tees[0].yardage` — the nominal tee-to-green distance stored in
+the database, not a haversine calculation from the player's current GPS position to the pin.
+
+AC-0134 requires "Distance-to-pin displayed (approx prefix)" and the spec section 4 states
+"distance-to-pin calculated from player GPS vs pin coords." The implementation correctly uses the
+`~` approx prefix but the underlying number is the static hole yardage, making it inaccurate once
+the player has moved away from the tee box. If a player is 50 yds from the pin, the display will
+still show the original ~382 yds (or similar) — potentially leading to incorrect club selection.
+
+The full GPS-computed haversine distance is planned for TASK-0131 (US-0035, EPIC-0005). Until
+then the label should make clear this is hole yardage, not live distance, e.g. "~382 yds (hole)"
+or the display should be suppressed when no GPS fix is available. The current label actively
+misleads players into thinking it is a live distance measurement.
+
+Fix: Either (a) change the label to "~{hole.yardage} yds (hole length)" to distinguish from GPS
+distance; or (b) suppress the yardage display entirely until TASK-0131 (US-0035) wires the
+haversine live-distance. The CTA already captures GPS, so option (b) is clean and avoids
+a false sense of precision.
