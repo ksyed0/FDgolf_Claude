@@ -6,7 +6,7 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 10 — 2026-06-14
+Session 11 — 2026-06-16
 
 ---
 
@@ -16,9 +16,9 @@ Session 10 — 2026-06-14
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `c295e59` (plan + spec for EPIC-0004 on local develop; plan commits rebased onto `3b17a8b`)
-- **Pending PRs:** PR #42 (EPIC-0004 feature — auto-merge queued on CI), PR #43 (EPIC-0004 RELEASE_PLAN write-back — auto-merge queued)
-- **Stories done:** EPIC-0001, EPIC-0002, EPIC-0003 complete; **EPIC-0006 complete** (US-0049–US-0055); **EPIC-0004 complete** (US-0030–0034, PR #42 auto-merge queued)
+- **Develop tip:** post-merge of PRs #42–#44 (EPIC-0004 complete)
+- **Pending PRs:** PR #45 (map guard + Grante Ridge seed — auto-merge queued)
+- **Stories done:** EPIC-0001, EPIC-0002, EPIC-0003 complete; **EPIC-0006 complete** (US-0049–US-0055); **EPIC-0004 complete** (US-0030–0034, merged PR #42)
 - **Stories planned next:** EPIC-0005 (Round Tracking — canonical schema in place, shots-only, triggers derive hole_scores), EPIC-0007 (Leaderboard, needs public/anon RLS on team_standings views)
 
 ---
@@ -82,6 +82,13 @@ Next up:
 - **EPIC-0005 — Round Tracking** (US-0035–0048): canonical schema in place (`20260612000003_round_tracking.sql`). Writes SHOTS ONLY; `hole_scores` and `team_hole_scores` are trigger-derived (EPIC-0006 contract). HoleEntryScreen (US-0034) hands off via `/round/[roundId]/shot/new?lat=&lng=&club=`. `bag_clubs` and `first_player_id` now on rounds row for EPIC-0005 to read.
 - **EPIC-0007 — Leaderboard** (US-0056–0064): consumes `team_standings` / `team_hole_vs_par` views from EPIC-0006; must add public/anon RLS visibility for those views (deferred from EPIC-0006).
 - **Latent follow-up:** `searchPlayersAction` was fixed to `full_name`; audit other EPIC-0003 actions for stale `players.name` references.
+
+## Known Patterns / Gotchas (additions from Session 11)
+
+- **HoleEntryScreen map guard:** Map section is only rendered when `hole.pinLat != null && hole.pinLng != null`. No fallback coordinates — hiding the map is correct UX when pin coords haven't been entered. Pin/tee GPS columns stay in schema (nullable) for future use.
+- **Admin holes navigation:** There is NO standalone `/admin/holes` route. Holes are exclusively edited via `Venues → [Venue] → [Course] → HoleEditor` (`app/admin/venues/[venueId]/courses/[courseId]/page.tsx`). The old redirect at `tournaments/[slug]/course/page.tsx` just shows a "moved to Venues" notice.
+- **Grante Ridge seed (migration 20260616000001):** Inserts venue `00000000-0000-0000-0000-000000000001` + course `00000000-0000-0000-0000-000000000002` (Ruby Course, 18 holes, par 70). Uses fixed UUIDs + `ON CONFLICT DO NOTHING` — idempotent on `db reset`. Blue 5747 / White 5300 / Red 4649 yds.
+- **holes.handicap column:** Stores the stroke index (SI) from the scorecard — the integer 1–18 ranking of hole difficulty. Verified via `saveHolesAction` which maps the `handicap` field.
 
 ## Known Patterns / Gotchas (additions from Session 10)
 
