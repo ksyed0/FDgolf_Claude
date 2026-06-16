@@ -3,6 +3,17 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 11 — 2026-06-16
+
+### What Was Done
+
+- Guarded HoleEntryScreen map: removed Toronto fallback coords; map is now hidden when `hole.pinLat`/`hole.pinLng` are null; updated test to assert map absent (not present with fallback)
+- Added Grante Ridge Golf Club seed migration (`20260616000001_grante_ridge_seed.sql`): venue, Ruby Course (18 holes, par 70), all holes with par, stroke index, Blue/White/Red tee yardages from official scorecard; idempotent via `ON CONFLICT DO NOTHING`
+- Confirmed admin "Holes" standalone menu doesn't exist — holes already exclusively editable through Venues → Course → HoleEditor; no change needed
+- PR #45 opened and auto-merge queued; 510/510 tests passing
+
+---
+
 ## Session 10 — 2026-06-14
 
 ### What Was Done
