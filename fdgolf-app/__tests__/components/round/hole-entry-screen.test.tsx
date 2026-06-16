@@ -98,11 +98,9 @@ describe('HoleEntryScreen', () => {
     expect(screen.queryByText('7 Iron')).not.toBeInTheDocument()
   })
 
-  it('falls back to pin coords when pinLat/pinLng are null', () => {
+  it('hides the map when pinLat/pinLng are null', () => {
     const holeNoPins = { ...HOLE, pinLat: null, pinLng: null }
     render(<HoleEntryScreen roundId="r1" hole={holeNoPins} clubs={CLUBS} shotNumber={1} />)
-    const map = screen.getByTestId('map')
-    expect(map).toHaveAttribute('data-lat', '43.65')
-    expect(map).toHaveAttribute('data-lng', '-79.38')
+    expect(screen.queryByTestId('map')).not.toBeInTheDocument()
   })
 })

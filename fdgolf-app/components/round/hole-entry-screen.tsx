@@ -62,15 +62,14 @@ export function HoleEntryScreen({ roundId, hole, clubs, shotNumber }: Props) {
     )
   }
 
-  const mapLat = hole.pinLat ?? 43.65
-  const mapLng = hole.pinLng ?? -79.38
-
   return (
     <div className="flex min-h-screen flex-col bg-slate-900 text-white">
-      {/* Map — top ~40% */}
-      <div className="h-[40vh] w-full">
-        <MapView lat={mapLat} lng={mapLng} zoom={17} />
-      </div>
+      {/* Map — only rendered when pin coordinates are available */}
+      {hole.pinLat != null && hole.pinLng != null && (
+        <div className="h-[40vh] w-full">
+          <MapView lat={hole.pinLat} lng={hole.pinLng} zoom={17} />
+        </div>
+      )}
 
       {/* Controls */}
       <div className="flex flex-col gap-3 p-4">
