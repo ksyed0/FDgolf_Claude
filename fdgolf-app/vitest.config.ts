@@ -38,6 +38,9 @@ export default defineConfig({
         'app/admin/tournaments/[slug]/teams/page.tsx', // Server Component, integration-tested
         'app/profile/page.tsx', // Server Component, integration-tested
         'app/register/[slug]/page.tsx', // Server Component, integration-tested
+        'app/round/[roundId]/hole/[n]/page.tsx', // Server Component, integration/smoke-tested
+        'app/round/[roundId]/hole/[n]/summary/page.tsx', // Server Component, integration/smoke-tested
+        'app/round/[roundId]/complete/page.tsx', // Server Component, integration/smoke-tested
         '**/*.config.*',
         '**/node_modules/**',
         '**/.next/**',

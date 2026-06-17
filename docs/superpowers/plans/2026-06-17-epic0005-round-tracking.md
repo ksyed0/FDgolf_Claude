@@ -1,0 +1,3039 @@
+# EPIC-0005 Round Tracking Implementation Plan
+
+> For agentic workers: REQUIRED SUB-SKILL: superpowers:subagent-driven-development — read it before executing any task. Execute tasks strictly in order. Each task is a self-contained TDD cycle (failing test → run → minimal impl → run → commit). Do not skip the "expect fail" run. Do not batch commits.
+
+**Goal:** Build the in-round experience for FDgolf — render the active hole as a cached static map, capture GPS-located shots through a small state machine, commit shots offline-first (Zustand + IndexedDB write-through queue), advance the foursome turn, summarize the hole, and progress through a shotgun-start 18-hole round. Phase 1: Best Ball only, variable team size 2–5, mobile-first (390×844).
+
+**Architecture:** Client owns shot capture state (`useRoundStore`: Zustand + IndexedDB + idempotent flush queue). Pure logic lives in `lib/round/*` (projection, distance, shot-machine, turn, shotgun). Server Actions in `lib/actions/shots.ts` and `lib/actions/rounds.ts` write **shots and round status only** — `hole_scores`/`team_hole_scores` are derived automatically by the EPIC-0006 `trg_shots_recompute` trigger. Components (`<HoleMap>`, `<ShotCapture>`, `<TurnPicker>`, `<HoleSummary>`) are thin render layers. One small append-only migration adds the soft-claim columns and `shots.accuracy_m`.
+
+**Tech Stack:** Next.js 14 App Router · TypeScript · Tailwind + shadcn/ui · Supabase (Postgres + RLS) · Mapbox Static Images API (cached PNG, no live tiles) · Zustand · idb (IndexedDB) · Vitest + React Testing Library + jsdom.
+
+**EPIC-0006 contract (do not violate):** Round Tracking writes SHOTS ONLY. `stroke_count`: In Play = 1, Sunk = 1, Mulligan = 0, OOB = 2. The `shots` AFTER INSERT/UPDATE/DELETE trigger (`fdgolf_shots_recompute_trigger` → `recompute_hole_score`) re-derives `hole_scores` (gross = SUM(stroke_count); status `final` when any sunk shot OR >8 shots) and cascades to `team_hole_scores`. The client never writes score rows. `rounds.status` is a round write and stays the client's job.
+
+**ID allocations (from docs/ID_REGISTRY.md):** Implementation tasks reuse the TASK-0127–TASK-0169 IDs already allocated to US-0035–US-0048 in RELEASE_PLAN.md. New test cases consume TC-0021 onward. Increment the registry's "Next Available ID" after this plan lands (TC next-available becomes TC-0049; no new TASK IDs are minted — the plan groups the pre-allocated tasks into TDD steps).
+
+**Working directory:** All paths are relative to the worktree `/Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005`. All `npm`/`npx`/`supabase` commands run from `fdgolf-app/`. Branch: `feature/epic0005-round-tracking`.
+
+**Dependencies to add (Task 0):** `zustand@^5`, `idb@^8`. Mapbox Static Images uses `fetch` (no new dep). `react-map-gl`/`mapbox-gl` already present but NOT used for the active-hole map (D4: static PNG + overlay, fully offline).
+
+---
+
+## File Structure
+
+### Migration
+| File | Responsibility |
+|------|----------------|
+| `fdgolf-app/supabase/migrations/20260617000001_epic0005_round_tracking.sql` | Append-only: add `rounds.recorded_by uuid REFERENCES players(id)`, `rounds.recording_expires_at timestamptz` (soft claim, D3); add `shots.accuracy_m double precision` (AC-0181). No new tables; relies on existing EPIC-0006 RLS. |
+
+### Pure logic (`lib/round/`) — exhaustively unit-tested, no mocks
+| File | Responsibility |
+|------|----------------|
+| `fdgolf-app/lib/round/projection.ts` | Pure Web-Mercator `project(lat,lng,frame)→{x,y}` and `unproject(x,y,frame)→{lat,lng}`; `Frame` type `{center:{lat,lng}, zoom, size:{w,h}}`. |
+| `fdgolf-app/lib/round/frame.ts` | Pure `computeFrame(points, size)→Frame`: bbox of tee(s)+pin padded ~20%, center, largest integer zoom in [14,18] that fits `size`. `staticMapUrl(frame, token)→string` (Mapbox Static Images API URL, satellite-streets, @2x). |
+| `fdgolf-app/lib/round/distance.ts` | Pure `haversineMeters(a,b)→number`; `metersToYards(m)→number` (×1.09361); `formatYardsToPin(meters)→string` returns `~N yds to pin` (AC-0142/0180). |
+| `fdgolf-app/lib/round/shot-machine.ts` | Pure reducer: types `ShotState`, `ShotEvent`, `ShotDraft`, `ShotOutcome`; `shotReducer(state,event)→state`; `strokeCountFor(outcome)→0|1|2`; OOB→OOB_REHIT→draft pre-seed (AC-0149/0151/0152). |
+| `fdgolf-app/lib/round/turn.ts` | Pure `computeNextPlayer(members, pin)→playerId|null`: farthest last-origin from pin, excludes sunk, team_size 2–5 (AC-0164/0165/0167/0168). |
+| `fdgolf-app/lib/round/shotgun.ts` | Pure `nextPhysicalHole(n)→n===18?1:n+1` (AC-0173); `holesCompletedPill(completedCount)→completedCount+1` (AC-0175). |
+| `fdgolf-app/lib/round/types.ts` | Shared types: `LatLng`, `LocalShot`, `HoleNumber`, `RehitOrigin`, `QueueItem`. Imported by store, actions, components. |
+
+### Client state
+| File | Responsibility |
+|------|----------------|
+| `fdgolf-app/lib/round/store.ts` | `useRoundStore` (Zustand): `activeHole`, `activePlayerId`, `shotDraft` keyed `(playerId,hole)`, `localHoles[hole][playerId][]`, `claim`, `queue`. `commitShot()` → optimistic update → IndexedDB persist → enqueue. `flushQueue()` ordered + idempotent (unique-violation = applied). `hydrate()` from IndexedDB. |
+| `fdgolf-app/lib/round/idb.ts` | Thin `idb` wrapper: `openRoundDb()`, `putShot`, `getShotsForRound`, `putQueueItem`, `getQueue`, `deleteQueueItem`. One responsibility: durable persistence. |
+
+### Map static-fetch/cache
+| File | Responsibility |
+|------|----------------|
+| `fdgolf-app/lib/round/static-map.ts` | `fetchAndCacheStaticMap(holeId, url)→Blob|ObjectURL`: Cache API keyed by `holeId`; serves cached PNG offline; no re-fetch on GPS move. |
+
+### Server Actions
+| File | Responsibility |
+|------|----------------|
+| `fdgolf-app/lib/actions/shots.ts` | `createShotAction(input)` — insert one shot (claim guard + unique constraint backstop); `editShotAction(input)` — update club/outcome/GPS, write before/after to `shot_edits`, set `updated_at`/`updated_by` (AC-0159–0163). Writes shots only. |
+| `fdgolf-app/lib/actions/rounds.ts` | EXTEND existing: add `claimRoundAction(roundId)` (acquire/renew `recorded_by`+`recording_expires_at`, 60s expiry) and `completeRoundAction(roundId)` (when 18 final `hole_scores`, set `status='completed'`+`completed_at`) (AC-0176). |
+
+### Routes & Components
+| File | Responsibility |
+|------|----------------|
+| `fdgolf-app/components/round/hole-map.tsx` | `<HoleMap>` render-only: cached PNG base, pin/tee/prior-shots(dashed+numbered)/GPS-pulse markers via `project()`, distance overlay, edge arrow when GPS off-frame, tap mode (`onMapTap`→`unproject`) (AC-0137–0142, 0178/0179). |
+| `fdgolf-app/components/round/shot-capture.tsx` | `<ShotCapture>`: drives `shot-machine`, GPS high-accuracy capture, club default, 4 outcome buttons, OOB rehit prompt; commits via store (AC-0143–0156). |
+| `fdgolf-app/components/round/turn-picker.tsx` | `<TurnPicker>`: shows distance-to-pin per active member, auto-selects farthest, manual override; no-op in self-track (AC-0164–0168). |
+| `fdgolf-app/components/round/hole-summary.tsx` | `<HoleSummary>`: per-player gross + par-relative, BEST badge + team standing (server-derived, "as of last sync"), "Next: Hole X" CTA (AC-0169–0172). |
+| `fdgolf-app/components/round/hole-progress-pill.tsx` | `<HoleProgressPill>`: "Hole X of 18" from team holes completed +1 (AC-0175). |
+| `fdgolf-app/app/round/[roundId]/hole/[n]/page.tsx` | Active-hole Server Component: fetch round/hole/clubs/claim, render `<HoleMap>`+`<ShotCapture>`+pill. Coverage-excluded (gated by build+lint+smoke). |
+| `fdgolf-app/app/round/[roundId]/hole/[n]/summary/page.tsx` | Hole-summary Server Component: fetch local+team scores, render `<HoleSummary>`. Coverage-excluded. |
+| `fdgolf-app/app/round/[roundId]/complete/page.tsx` | Round-complete Server Component: final score screen (AC-0177). Coverage-excluded. |
+
+### Tests (mirror source under `__tests__/`)
+`__tests__/lib/round/{projection,frame,distance,shot-machine,turn,shotgun,store,static-map}.test.ts` · `__tests__/lib/actions/{shots,rounds-claim-complete}.test.ts` · `__tests__/components/round/{hole-map,shot-capture,turn-picker,hole-summary,hole-progress-pill}.test.tsx` · `fdgolf-app/e2e/round-single-hole.spec.ts` (Sentinel E2E).
+
+### Coverage exclusions to add to `vitest.config.ts`
+`app/round/[roundId]/hole/[n]/page.tsx`, `app/round/[roundId]/hole/[n]/summary/page.tsx`, `app/round/[roundId]/complete/page.tsx` (Server Components).
+
+---
+
+## Tasks
+
+> Legend: **[SPINE]** = MVP spine (must ship, §9). **[DEFER]** = deferrable within the epic if the clock squeezes (still leaves a working tournament). Build order follows spec §9: projection + static map FIRST, then migration, then store, then scorer-mode capture, then the rest.
+
+---
+
+### Task 0 — Add dependencies (zustand, idb) [SPINE]
+
+No test. Install runtime deps used by the store and IndexedDB layer.
+
+```bash
+cd fdgolf-app && npm install zustand@^5 idb@^8
+```
+
+Expected: `package.json` gains `"zustand": "^5.x"` and `"idb": "^8.x"` under dependencies; `package-lock.json` updated; exit 0.
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/package.json fdgolf-app/package-lock.json && git commit -m "[chore] EPIC-0005: add zustand + idb deps"
+```
+
+---
+
+### Task 1 — Shared types (`lib/round/types.ts`) [SPINE]
+
+No standalone test (pure type declarations, exercised by later tests). Create the shared type surface so every later file imports consistent names.
+
+Create `fdgolf-app/lib/round/types.ts`:
+```ts
+export type LatLng = { lat: number; lng: number }
+
+export type HoleNumber = number // 1..18
+
+export type ShotOutcome = 'in_play' | 'sunk' | 'mulligan' | 'out_of_bounds'
+
+export type RehitOrigin = 'oob_location' | 'prior_position'
+
+/** A shot as held in client state / IndexedDB before & after sync. */
+export type LocalShot = {
+  localId: string // uuid generated client-side, stable across retries (idempotency)
+  roundId: string
+  holeNumber: HoleNumber
+  shotNumber: number
+  playerId: string
+  clubId: string | null
+  originLat: number | null
+  originLng: number | null
+  outcome: ShotOutcome
+  strokeCount: 0 | 1 | 2
+  accuracyM: number | null
+  rehitFromShotLocalId: string | null
+  rehitOrigin: RehitOrigin | null
+  serverId: string | null // set once flushed
+}
+
+/** Queue entry for the write-through flush. */
+export type QueueItem = {
+  localId: string // == LocalShot.localId for create; idempotency key
+  kind: 'create' | 'edit'
+  payload: LocalShot
+}
+```
+
+Verify it compiles:
+```bash
+cd fdgolf-app && npx tsc --noEmit
+```
+Expected: exit 0, no errors.
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/types.ts && git commit -m "[feat] EPIC-0005: shared round types"
+```
+
+---
+
+### Task 2 — `project()` Web-Mercator coord→pixel (TC-0021) [SPINE]
+
+This is the highest-uncertainty unit (§9 #1) — prove coord→pixel against known values before rendering anything.
+
+**2a. Write the failing test.** Create `fdgolf-app/__tests__/lib/round/projection.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import { project, type Frame } from '@/lib/round/projection'
+
+// World pixels at zoom z = 512 * 2^z. At the frame center, project() must return the
+// exact center of the size box. Known value: center maps to (w/2, h/2).
+const FRAME: Frame = {
+  center: { lat: 45.0, lng: -75.0 },
+  zoom: 16,
+  size: { w: 390, h: 520 },
+}
+
+describe('project', () => {
+  it('maps the frame center to the box center', () => {
+    const p = project(45.0, -75.0, FRAME)
+    expect(p.x).toBeCloseTo(195, 5)
+    expect(p.y).toBeCloseTo(260, 5)
+  })
+
+  it('moving east of center increases x', () => {
+    const p = project(45.0, -74.999, FRAME)
+    expect(p.x).toBeGreaterThan(195)
+    expect(p.y).toBeCloseTo(260, 3)
+  })
+
+  it('moving north of center decreases y (screen y grows downward)', () => {
+    const p = project(45.001, -75.0, FRAME)
+    expect(p.y).toBeLessThan(260)
+    expect(p.x).toBeCloseTo(195, 3)
+  })
+
+  it('known offset: at zoom 16, 0.001 deg lng east ≈ +59.5 px', () => {
+    // world px per deg lng at z16 = (512*2^16)/360 = 93206.18; *0.001 = 93.206 px... at
+    // 1x tile px. project uses 256-based world (256*2^z): (256*2^16)/360 = 46603.09; *0.001 = 46.6 px.
+    const p = project(45.0, -74.999, FRAME)
+    expect(p.x - 195).toBeCloseTo(46.6, 0)
+  })
+})
+```
+
+**2b. Run — expect fail** (module does not exist):
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/projection.test.ts
+```
+Expected: FAIL — `Cannot find module '@/lib/round/projection'`.
+
+**2c. Minimal implementation.** Create `fdgolf-app/lib/round/projection.ts`:
+```ts
+export type Frame = {
+  center: { lat: number; lng: number }
+  zoom: number
+  size: { w: number; h: number }
+}
+
+const TILE = 256
+
+function lngToWorldX(lng: number, scale: number): number {
+  return ((lng + 180) / 360) * scale
+}
+function latToWorldY(lat: number, scale: number): number {
+  const s = Math.sin((lat * Math.PI) / 180)
+  const y = 0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)
+  return y * scale
+}
+
+export function project(lat: number, lng: number, frame: Frame): { x: number; y: number } {
+  const scale = TILE * Math.pow(2, frame.zoom)
+  const cx = lngToWorldX(frame.center.lng, scale)
+  const cy = latToWorldY(frame.center.lat, scale)
+  const px = lngToWorldX(lng, scale)
+  const py = latToWorldY(lat, scale)
+  return {
+    x: px - cx + frame.size.w / 2,
+    y: py - cy + frame.size.h / 2,
+  }
+}
+```
+
+**2d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/projection.test.ts
+```
+Expected: PASS (4 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/projection.ts fdgolf-app/__tests__/lib/round/projection.test.ts && git commit -m "[feat] EPIC-0005: project() Mercator coord->pixel (TC-0021)"
+```
+
+---
+
+### Task 3 — `unproject()` pixel→coord inverse (TC-0022) [DEFER — for US-0047 tap fallback]
+
+Round-trip inverse used by GPS-denied tap-to-place.
+
+**3a. Append to `fdgolf-app/__tests__/lib/round/projection.test.ts`:**
+```ts
+import { unproject } from '@/lib/round/projection'
+
+describe('unproject', () => {
+  const FRAME2: Frame = { center: { lat: 45, lng: -75 }, zoom: 16, size: { w: 390, h: 520 } }
+
+  it('box center maps back to frame center', () => {
+    const c = unproject(195, 260, FRAME2)
+    expect(c.lat).toBeCloseTo(45, 6)
+    expect(c.lng).toBeCloseTo(-75, 6)
+  })
+
+  it('is the inverse of project (round-trip)', () => {
+    const p = project(45.0012, -74.9987, FRAME2)
+    const c = unproject(p.x, p.y, FRAME2)
+    expect(c.lat).toBeCloseTo(45.0012, 6)
+    expect(c.lng).toBeCloseTo(-74.9987, 6)
+  })
+})
+```
+
+**3b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/projection.test.ts
+```
+Expected: FAIL — `unproject` is not exported.
+
+**3c. Append to `fdgolf-app/lib/round/projection.ts`:**
+```ts
+function worldXToLng(x: number, scale: number): number {
+  return (x / scale) * 360 - 180
+}
+function worldYToLat(y: number, scale: number): number {
+  const n = Math.PI - (2 * Math.PI * y) / scale
+  return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)))
+}
+
+export function unproject(x: number, y: number, frame: Frame): { lat: number; lng: number } {
+  const scale = TILE * Math.pow(2, frame.zoom)
+  const cx = ((frame.center.lng + 180) / 360) * scale
+  const s = Math.sin((frame.center.lat * Math.PI) / 180)
+  const cy = (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * scale
+  const worldX = x - frame.size.w / 2 + cx
+  const worldY = y - frame.size.h / 2 + cy
+  return { lat: worldYToLat(worldY, scale), lng: worldXToLng(worldX, scale) }
+}
+```
+
+**3d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/projection.test.ts
+```
+Expected: PASS (6 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/projection.ts fdgolf-app/__tests__/lib/round/projection.test.ts && git commit -m "[feat] EPIC-0005: unproject() pixel->coord inverse (TC-0022)"
+```
+
+---
+
+### Task 4 — `computeFrame()` + `staticMapUrl()` (TC-0023) [SPINE]
+
+Deterministic frame (bbox of tee(s)+pin, padded 20%, largest zoom in [14,18] that fits) and the Mapbox Static Images URL.
+
+**4a. Write failing test** `fdgolf-app/__tests__/lib/round/frame.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import { computeFrame, staticMapUrl } from '@/lib/round/frame'
+
+const PIN = { lat: 45.0009, lng: -75.0 }
+const TEE = { lat: 45.0, lng: -75.0009 }
+const SIZE = { w: 390, h: 520 }
+
+describe('computeFrame', () => {
+  it('centers on the midpoint of the bbox', () => {
+    const f = computeFrame([PIN, TEE], SIZE)
+    expect(f.center.lat).toBeCloseTo((45.0009 + 45.0) / 2, 6)
+    expect(f.center.lng).toBeCloseTo((-75.0 + -75.0009) / 2, 6)
+  })
+
+  it('picks an integer zoom within [14,18]', () => {
+    const f = computeFrame([PIN, TEE], SIZE)
+    expect(Number.isInteger(f.zoom)).toBe(true)
+    expect(f.zoom).toBeGreaterThanOrEqual(14)
+    expect(f.zoom).toBeLessThanOrEqual(18)
+  })
+
+  it('a wider hole gets a lower (more zoomed-out) zoom than a tighter one', () => {
+    const wide = computeFrame([{ lat: 45.01, lng: -75.0 }, { lat: 45.0, lng: -75.01 }], SIZE)
+    const tight = computeFrame([PIN, TEE], SIZE)
+    expect(wide.zoom).toBeLessThan(tight.zoom)
+  })
+
+  it('single point falls back to max zoom 18', () => {
+    const f = computeFrame([PIN], SIZE)
+    expect(f.zoom).toBe(18)
+  })
+})
+
+describe('staticMapUrl', () => {
+  it('builds a satellite-streets @2x Static Images URL with center, zoom and size', () => {
+    const f = computeFrame([PIN, TEE], SIZE)
+    const url = staticMapUrl(f, 'TKN')
+    expect(url).toContain('/styles/v1/mapbox/satellite-streets-v12/static/')
+    expect(url).toContain(`${f.center.lng.toFixed(6)},${f.center.lat.toFixed(6)},${f.zoom}`)
+    expect(url).toContain('390x520@2x')
+    expect(url).toContain('access_token=TKN')
+  })
+})
+```
+
+**4b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/frame.test.ts
+```
+Expected: FAIL — `Cannot find module '@/lib/round/frame'`.
+
+**4c. Create `fdgolf-app/lib/round/frame.ts`:**
+```ts
+import { project, type Frame } from './projection'
+import type { LatLng } from './types'
+
+const PAD = 0.2 // 20% padding around the bbox
+
+/** Largest integer zoom in [14,18] at which the padded bbox fits the size box. */
+export function computeFrame(points: LatLng[], size: { w: number; h: number }): Frame {
+  const lats = points.map((p) => p.lat)
+  const lngs = points.map((p) => p.lng)
+  const center = {
+    lat: (Math.min(...lats) + Math.max(...lats)) / 2,
+    lng: (Math.min(...lngs) + Math.max(...lngs)) / 2,
+  }
+  const sw = { lat: Math.min(...lats), lng: Math.min(...lngs) }
+  const ne = { lat: Math.max(...lats), lng: Math.max(...lngs) }
+
+  let chosen = 14
+  for (let z = 18; z >= 14; z--) {
+    const f: Frame = { center, zoom: z, size }
+    const a = project(sw.lat, sw.lng, f)
+    const b = project(ne.lat, ne.lng, f)
+    const w = Math.abs(b.x - a.x) * (1 + PAD)
+    const h = Math.abs(b.y - a.y) * (1 + PAD)
+    if (w <= size.w && h <= size.h) {
+      chosen = z
+      break
+    }
+  }
+  return { center, zoom: chosen, size }
+}
+
+/** Mapbox Static Images API URL — satellite-streets, retina @2x, offline-cacheable. */
+export function staticMapUrl(frame: Frame, token: string): string {
+  const { center, zoom, size } = frame
+  const pos = `${center.lng.toFixed(6)},${center.lat.toFixed(6)},${zoom}`
+  return (
+    `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/static/` +
+    `${pos}/${size.w}x${size.h}@2x?access_token=${token}`
+  )
+}
+```
+
+Note: the single-point bbox has zero extent, so every zoom "fits" and the loop selects 18 (max).
+
+**4d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/frame.test.ts
+```
+Expected: PASS (5 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/frame.ts fdgolf-app/__tests__/lib/round/frame.test.ts && git commit -m "[feat] EPIC-0005: computeFrame + staticMapUrl (TC-0023)"
+```
+
+---
+
+### Task 5 — `distance.ts` haversine + yards formatting (TC-0024) [SPINE]
+
+**5a. Write failing test** `fdgolf-app/__tests__/lib/round/distance.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import { haversineMeters, metersToYards, formatYardsToPin } from '@/lib/round/distance'
+
+describe('haversineMeters', () => {
+  it('is 0 for identical points', () => {
+    expect(haversineMeters({ lat: 45, lng: -75 }, { lat: 45, lng: -75 })).toBe(0)
+  })
+
+  it('matches a reference distance within 1% (1 deg lat ≈ 111195 m)', () => {
+    const d = haversineMeters({ lat: 45, lng: -75 }, { lat: 46, lng: -75 })
+    expect(Math.abs(d - 111195) / 111195).toBeLessThan(0.01)
+  })
+})
+
+describe('metersToYards', () => {
+  it('converts via 1.09361', () => {
+    expect(metersToYards(100)).toBeCloseTo(109.361, 2)
+  })
+})
+
+describe('formatYardsToPin', () => {
+  it('prefixes ~ and rounds to whole yards (AC-0180)', () => {
+    expect(formatYardsToPin(200)).toBe('~219 yds to pin')
+  })
+})
+```
+
+**5b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/distance.test.ts
+```
+Expected: FAIL — module not found.
+
+**5c. Create `fdgolf-app/lib/round/distance.ts`:**
+```ts
+import type { LatLng } from './types'
+
+const R = 6371000 // Earth radius (m)
+
+export function haversineMeters(a: LatLng, b: LatLng): number {
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180
+  const la1 = (a.lat * Math.PI) / 180
+  const la2 = (b.lat * Math.PI) / 180
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)))
+}
+
+export function metersToYards(m: number): number {
+  return m * 1.09361
+}
+
+/** AC-0142 / AC-0180: "~N yds to pin" with required ~ prefix. */
+export function formatYardsToPin(meters: number): string {
+  return `~${Math.round(metersToYards(meters))} yds to pin`
+}
+```
+
+**5d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/distance.test.ts
+```
+Expected: PASS (4 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/distance.ts fdgolf-app/__tests__/lib/round/distance.test.ts && git commit -m "[feat] EPIC-0005: haversine distance + yards formatting (TC-0024)"
+```
+
+---
+
+### Task 6 — `shot-machine.ts` reducer + `strokeCountFor` (TC-0025) [SPINE]
+
+Pure state machine: IDLE → AWAITING_OUTCOME → (outcome) → IDLE/OOB_REHIT, with the literal EPIC-0006 stroke_count contract and OOB rehit linkage.
+
+**6a. Write failing test** `fdgolf-app/__tests__/lib/round/shot-machine.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import { shotReducer, strokeCountFor, initialShotState } from '@/lib/round/shot-machine'
+
+const DRAFT = { playerId: 'p1', holeNumber: 3, clubId: 'c1', originLat: 45, originLng: -75, accuracyM: 5 }
+
+describe('strokeCountFor', () => {
+  it('encodes the EPIC-0006 contract: in_play=1, sunk=1, mulligan=0, oob=2', () => {
+    expect(strokeCountFor('in_play')).toBe(1)
+    expect(strokeCountFor('sunk')).toBe(1)
+    expect(strokeCountFor('mulligan')).toBe(0)
+    expect(strokeCountFor('out_of_bounds')).toBe(2)
+  })
+})
+
+describe('shotReducer', () => {
+  it('START_SHOT moves IDLE -> AWAITING_OUTCOME and stores the draft', () => {
+    const s = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    expect(s.phase).toBe('AWAITING_OUTCOME')
+    expect(s.draft).toEqual(DRAFT)
+  })
+
+  it('IN_PLAY commits stroke_count 1 and returns to IDLE with cleared draft', () => {
+    const a = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    const b = shotReducer(a, { type: 'OUTCOME', outcome: 'in_play' })
+    expect(b.phase).toBe('IDLE')
+    expect(b.committed?.outcome).toBe('in_play')
+    expect(b.committed?.strokeCount).toBe(1)
+    expect(b.draft).toBeNull()
+  })
+
+  it('SUNK commits stroke_count 1 and marks holed out', () => {
+    const a = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    const b = shotReducer(a, { type: 'OUTCOME', outcome: 'sunk' })
+    expect(b.committed?.strokeCount).toBe(1)
+    expect(b.holedOut).toBe(true)
+  })
+
+  it('MULLIGAN commits stroke_count 0 and pre-seeds next draft at the SAME location (AC-0154)', () => {
+    const a = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    const b = shotReducer(a, { type: 'OUTCOME', outcome: 'mulligan' })
+    expect(b.committed?.strokeCount).toBe(0)
+    expect(b.nextOrigin).toEqual({ lat: 45, lng: -75 })
+  })
+
+  it('OOB commits stroke_count 2 and enters OOB_REHIT (AC-0150)', () => {
+    const a = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    const b = shotReducer(a, { type: 'OUTCOME', outcome: 'out_of_bounds' })
+    expect(b.committed?.strokeCount).toBe(2)
+    expect(b.phase).toBe('OOB_REHIT')
+  })
+
+  it('REHIT from oob_location seeds rehitOrigin + rehit linkage and returns to IDLE (AC-0151/0152)', () => {
+    const a = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    const b = shotReducer(a, { type: 'OUTCOME', outcome: 'out_of_bounds' })
+    const c = shotReducer(b, { type: 'REHIT', rehitOrigin: 'oob_location', origin: { lat: 45.5, lng: -75.5 } })
+    expect(c.phase).toBe('IDLE')
+    expect(c.nextOrigin).toEqual({ lat: 45.5, lng: -75.5 })
+    expect(c.pendingRehitOrigin).toBe('oob_location')
+    expect(c.pendingRehitFromLocalId).toBe(b.committed?.localId)
+  })
+
+  it('REHIT from prior_position seeds the prior origin (AC-0149)', () => {
+    const a = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    const b = shotReducer(a, { type: 'OUTCOME', outcome: 'out_of_bounds' })
+    const c = shotReducer(b, { type: 'REHIT', rehitOrigin: 'prior_position', origin: { lat: 45, lng: -75 } })
+    expect(c.pendingRehitOrigin).toBe('prior_position')
+    expect(c.nextOrigin).toEqual({ lat: 45, lng: -75 })
+  })
+})
+```
+
+**6b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/shot-machine.test.ts
+```
+Expected: FAIL — module not found.
+
+**6c. Create `fdgolf-app/lib/round/shot-machine.ts`:**
+```ts
+import type { LatLng, RehitOrigin, ShotOutcome } from './types'
+
+export type ShotDraft = {
+  playerId: string
+  holeNumber: number
+  clubId: string | null
+  originLat: number | null
+  originLng: number | null
+  accuracyM: number | null
+}
+
+export type CommittedShot = {
+  localId: string
+  draft: ShotDraft
+  outcome: ShotOutcome
+  strokeCount: 0 | 1 | 2
+}
+
+export type ShotPhase = 'IDLE' | 'AWAITING_OUTCOME' | 'OOB_REHIT'
+
+export type ShotState = {
+  phase: ShotPhase
+  draft: ShotDraft | null
+  committed: CommittedShot | null
+  holedOut: boolean
+  nextOrigin: LatLng | null
+  pendingRehitOrigin: RehitOrigin | null
+  pendingRehitFromLocalId: string | null
+}
+
+export type ShotEvent =
+  | { type: 'START_SHOT'; draft: ShotDraft }
+  | { type: 'OUTCOME'; outcome: ShotOutcome }
+  | { type: 'REHIT'; rehitOrigin: RehitOrigin; origin: LatLng }
+  | { type: 'RESET' }
+
+export const initialShotState: ShotState = {
+  phase: 'IDLE',
+  draft: null,
+  committed: null,
+  holedOut: false,
+  nextOrigin: null,
+  pendingRehitOrigin: null,
+  pendingRehitFromLocalId: null,
+}
+
+/** EPIC-0006 stroke_count contract. */
+export function strokeCountFor(outcome: ShotOutcome): 0 | 1 | 2 {
+  switch (outcome) {
+    case 'in_play':
+    case 'sunk':
+      return 1
+    case 'mulligan':
+      return 0
+    case 'out_of_bounds':
+      return 2
+  }
+}
+
+function newLocalId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `local-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+export function shotReducer(state: ShotState, event: ShotEvent): ShotState {
+  switch (event.type) {
+    case 'START_SHOT':
+      return { ...initialShotState, phase: 'AWAITING_OUTCOME', draft: event.draft }
+
+    case 'OUTCOME': {
+      if (!state.draft) return state
+      const committed: CommittedShot = {
+        localId: newLocalId(),
+        draft: state.draft,
+        outcome: event.outcome,
+        strokeCount: strokeCountFor(event.outcome),
+      }
+      if (event.outcome === 'out_of_bounds') {
+        return { ...state, phase: 'OOB_REHIT', committed, draft: null }
+      }
+      const holedOut = event.outcome === 'sunk'
+      // Mulligan re-shoots from the same location; in_play continues from new GPS (null → fresh capture).
+      const nextOrigin =
+        event.outcome === 'mulligan' && state.draft.originLat != null && state.draft.originLng != null
+          ? { lat: state.draft.originLat, lng: state.draft.originLng }
+          : null
+      return {
+        ...state,
+        phase: 'IDLE',
+        committed,
+        draft: null,
+        holedOut,
+        nextOrigin,
+        pendingRehitOrigin: null,
+        pendingRehitFromLocalId: null,
+      }
+    }
+
+    case 'REHIT':
+      if (state.phase !== 'OOB_REHIT' || !state.committed) return state
+      return {
+        ...state,
+        phase: 'IDLE',
+        nextOrigin: event.origin,
+        pendingRehitOrigin: event.rehitOrigin,
+        pendingRehitFromLocalId: state.committed.localId,
+      }
+
+    case 'RESET':
+      return initialShotState
+  }
+}
+```
+
+**6d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/shot-machine.test.ts
+```
+Expected: PASS (9 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/shot-machine.ts fdgolf-app/__tests__/lib/round/shot-machine.test.ts && git commit -m "[feat] EPIC-0005: shot-machine reducer + stroke_count contract (TC-0025)"
+```
+
+---
+
+### Task 7 — `turn.ts` next-player selection (TC-0026) [DEFER — US-0042 auto-advance; manual selection works without it]
+
+**7a. Write failing test** `fdgolf-app/__tests__/lib/round/turn.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import { computeNextPlayer, type TurnMember } from '@/lib/round/turn'
+
+const PIN = { lat: 45.01, lng: -75.0 }
+
+function member(id: string, lat: number, lng: number, sunk = false): TurnMember {
+  return { playerId: id, lastOrigin: { lat, lng }, sunk }
+}
+
+describe('computeNextPlayer', () => {
+  it('selects the farthest-from-pin member (AC-0165)', () => {
+    const m = [member('a', 45.009, -75), member('b', 45.0, -75), member('c', 45.005, -75)]
+    expect(computeNextPlayer(m, PIN)).toBe('b')
+  })
+
+  it('excludes sunk members (AC-0167)', () => {
+    const m = [member('a', 45.0, -75, true), member('b', 45.008, -75)]
+    expect(computeNextPlayer(m, PIN)).toBe('b')
+  })
+
+  it('returns null when all members are sunk', () => {
+    const m = [member('a', 45.0, -75, true), member('b', 45.008, -75, true)]
+    expect(computeNextPlayer(m, PIN)).toBeNull()
+  })
+
+  it('ignores members with no recorded origin', () => {
+    const m: TurnMember[] = [
+      { playerId: 'a', lastOrigin: null, sunk: false },
+      member('b', 45.0, -75),
+    ]
+    expect(computeNextPlayer(m, PIN)).toBe('b')
+  })
+
+  it.each([2, 3, 4, 5])('works with team_size %i (AC-0168)', (size) => {
+    const m = Array.from({ length: size }, (_, i) => member(`p${i}`, 45.0 + i * 0.001, -75))
+    // farthest from PIN (lat 45.01) is the smallest lat → p0
+    expect(computeNextPlayer(m, PIN)).toBe('p0')
+  })
+})
+```
+
+**7b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/turn.test.ts
+```
+Expected: FAIL — module not found.
+
+**7c. Create `fdgolf-app/lib/round/turn.ts`:**
+```ts
+import { haversineMeters } from './distance'
+import type { LatLng } from './types'
+
+export type TurnMember = {
+  playerId: string
+  lastOrigin: LatLng | null
+  sunk: boolean
+}
+
+/**
+ * AC-0164/0165/0167/0168: distance-to-pin per active member's last shot origin,
+ * auto-select the greatest, exclude sunk members and members with no origin.
+ * Heuristic: origins are a proxy for ball position (override is manual in the UI).
+ */
+export function computeNextPlayer(members: TurnMember[], pin: LatLng): string | null {
+  let best: { playerId: string; dist: number } | null = null
+  for (const m of members) {
+    if (m.sunk || !m.lastOrigin) continue
+    const dist = haversineMeters(m.lastOrigin, pin)
+    if (!best || dist > best.dist) best = { playerId: m.playerId, dist }
+  }
+  return best?.playerId ?? null
+}
+```
+
+**7d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/turn.test.ts
+```
+Expected: PASS (8 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/turn.ts fdgolf-app/__tests__/lib/round/turn.test.ts && git commit -m "[feat] EPIC-0005: turn-picker next-player selection (TC-0026)"
+```
+
+---
+
+### Task 8 — `shotgun.ts` wrap + progress pill math (TC-0027) [SPINE]
+
+**8a. Write failing test** `fdgolf-app/__tests__/lib/round/shotgun.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import { nextPhysicalHole, holesCompletedPill } from '@/lib/round/shotgun'
+
+describe('nextPhysicalHole', () => {
+  it('increments within 1..17 (AC-0173)', () => {
+    expect(nextPhysicalHole(7)).toBe(8)
+    expect(nextPhysicalHole(1)).toBe(2)
+  })
+  it('wraps 18 back to 1 (shotgun start)', () => {
+    expect(nextPhysicalHole(18)).toBe(1)
+  })
+})
+
+describe('holesCompletedPill', () => {
+  it('is completed+1, representing the current hole of 18 (AC-0175)', () => {
+    expect(holesCompletedPill(0)).toBe(1)
+    expect(holesCompletedPill(7)).toBe(8)
+    expect(holesCompletedPill(17)).toBe(18)
+  })
+})
+```
+
+**8b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/shotgun.test.ts
+```
+Expected: FAIL — module not found.
+
+**8c. Create `fdgolf-app/lib/round/shotgun.ts`:**
+```ts
+/** AC-0173: next physical hole, wrapping 18 → 1 for shotgun starts. */
+export function nextPhysicalHole(n: number): number {
+  return n === 18 ? 1 : n + 1
+}
+
+/** AC-0175: "Hole X of 18" = team holes completed + 1 (progress, not physical hole). */
+export function holesCompletedPill(completedCount: number): number {
+  return completedCount + 1
+}
+```
+
+**8d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/shotgun.test.ts
+```
+Expected: PASS (4 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/shotgun.ts fdgolf-app/__tests__/lib/round/shotgun.test.ts && git commit -m "[feat] EPIC-0005: shotgun wrap + progress-pill math (TC-0027)"
+```
+
+---
+
+### Task 9 — Soft-claim + accuracy_m migration (TC-0028) [SPINE]
+
+Append-only migration adding the D3 soft-claim columns and `shots.accuracy_m` (AC-0181). Verified against the local stack.
+
+**9a. Create `fdgolf-app/supabase/migrations/20260617000001_epic0005_round_tracking.sql`:**
+```sql
+-- ============================================================
+-- FDgolf EPIC-0005: Round Tracking — soft claim + shot accuracy
+-- Story: US-0035..US-0048 | Decision D3, AC-0181
+-- Depends on: 20260612000003_round_tracking (rounds, shots)
+-- Append-only. Existing EPIC-0006 RLS on rounds/shots already covers these columns
+-- (rounds_update_* and shots_insert_* policies). No new tables, no new policies.
+-- ============================================================
+
+-- Soft-claim columns (D3): one active recorder per round via recorded_by + heartbeat.
+ALTER TABLE rounds
+  ADD COLUMN recorded_by           UUID        REFERENCES players(id) ON DELETE SET NULL,
+  ADD COLUMN recording_expires_at  TIMESTAMPTZ;
+
+-- AC-0181: GPS accuracy (metres) captured with each shot when available.
+ALTER TABLE shots
+  ADD COLUMN accuracy_m DOUBLE PRECISION;
+```
+
+**9b. Reset the local stack to apply (expect success):**
+```bash
+cd fdgolf-app && npx supabase db reset
+```
+Expected: all migrations replay cleanly through `20260617000001_epic0005_round_tracking`; no errors.
+
+**9c. Verify the columns exist (TC-0028):**
+```bash
+cd fdgolf-app && npx supabase db reset >/dev/null 2>&1; psql "$(npx supabase status -o env | grep DB_URL | cut -d= -f2- | tr -d '\"')" -c "\d rounds" -c "\d shots"
+```
+Expected: `\d rounds` lists `recorded_by` (uuid) and `recording_expires_at` (timestamp with time zone); `\d shots` lists `accuracy_m` (double precision).
+
+If `psql` is unavailable in the environment, substitute:
+```bash
+cd fdgolf-app && npx supabase db reset && echo "SELECT column_name FROM information_schema.columns WHERE table_name='rounds' AND column_name IN ('recorded_by','recording_expires_at'); SELECT column_name FROM information_schema.columns WHERE table_name='shots' AND column_name='accuracy_m';" | npx supabase db execute --stdin 2>/dev/null || echo "verify via Supabase Studio table editor"
+```
+Expected: three rows returned (`recorded_by`, `recording_expires_at`, `accuracy_m`).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/supabase/migrations/20260617000001_epic0005_round_tracking.sql && git commit -m "[feat] EPIC-0005: soft-claim + shots.accuracy_m migration (TC-0028)"
+```
+
+---
+
+### Task 10 — `idb.ts` durable persistence wrapper (TC-0029) [SPINE]
+
+Thin idb wrapper: two object stores (`shots`, `queue`). Tested in jsdom via `fake-indexeddb`.
+
+**10a. Add the test-only dependency:**
+```bash
+cd fdgolf-app && npm install -D fake-indexeddb@^6
+```
+Expected: `fake-indexeddb` added to devDependencies; exit 0. Commit with this task.
+
+**10b. Write failing test** `fdgolf-app/__tests__/lib/round/idb.test.ts`:
+```ts
+import { describe, it, expect, beforeEach } from 'vitest'
+import 'fake-indexeddb/auto'
+import { putShot, getShotsForRound, putQueueItem, getQueue, deleteQueueItem } from '@/lib/round/idb'
+import type { LocalShot, QueueItem } from '@/lib/round/types'
+
+function shot(localId: string, roundId: string): LocalShot {
+  return {
+    localId, roundId, holeNumber: 1, shotNumber: 1, playerId: 'p1', clubId: 'c1',
+    originLat: 45, originLng: -75, outcome: 'in_play', strokeCount: 1, accuracyM: 5,
+    rehitFromShotLocalId: null, rehitOrigin: null, serverId: null,
+  }
+}
+
+beforeEach(async () => {
+  indexedDB = new IDBFactory()
+})
+
+describe('idb persistence', () => {
+  it('round-trips a shot keyed by localId', async () => {
+    await putShot(shot('s1', 'r1'))
+    const rows = await getShotsForRound('r1')
+    expect(rows).toHaveLength(1)
+    expect(rows[0].localId).toBe('s1')
+  })
+
+  it('returns only shots for the requested round', async () => {
+    await putShot(shot('s1', 'r1'))
+    await putShot(shot('s2', 'r2'))
+    expect(await getShotsForRound('r1')).toHaveLength(1)
+  })
+
+  it('enqueues, lists, and deletes queue items', async () => {
+    const item: QueueItem = { localId: 's1', kind: 'create', payload: shot('s1', 'r1') }
+    await putQueueItem(item)
+    expect(await getQueue()).toHaveLength(1)
+    await deleteQueueItem('s1')
+    expect(await getQueue()).toHaveLength(0)
+  })
+})
+```
+
+Note: `fake-indexeddb/auto` installs a global `IDBFactory`. The `beforeEach` reset gives each test a clean DB.
+
+**10c. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/idb.test.ts
+```
+Expected: FAIL — `Cannot find module '@/lib/round/idb'`.
+
+**10d. Create `fdgolf-app/lib/round/idb.ts`:**
+```ts
+import { openDB, type IDBPDatabase } from 'idb'
+import type { LocalShot, QueueItem } from './types'
+
+const DB_NAME = 'fdgolf-round'
+const DB_VERSION = 1
+
+async function db(): Promise<IDBPDatabase> {
+  return openDB(DB_NAME, DB_VERSION, {
+    upgrade(d) {
+      if (!d.objectStoreNames.contains('shots')) {
+        const s = d.createObjectStore('shots', { keyPath: 'localId' })
+        s.createIndex('byRound', 'roundId')
+      }
+      if (!d.objectStoreNames.contains('queue')) {
+        d.createObjectStore('queue', { keyPath: 'localId' })
+      }
+    },
+  })
+}
+
+export async function putShot(shot: LocalShot): Promise<void> {
+  await (await db()).put('shots', shot)
+}
+
+export async function getShotsForRound(roundId: string): Promise<LocalShot[]> {
+  return (await db()).getAllFromIndex('shots', 'byRound', roundId) as Promise<LocalShot[]>
+}
+
+export async function putQueueItem(item: QueueItem): Promise<void> {
+  await (await db()).put('queue', item)
+}
+
+export async function getQueue(): Promise<QueueItem[]> {
+  return (await db()).getAll('queue') as Promise<QueueItem[]>
+}
+
+export async function deleteQueueItem(localId: string): Promise<void> {
+  await (await db()).delete('queue', localId)
+}
+```
+
+**10e. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/idb.test.ts
+```
+Expected: PASS (3 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/idb.ts fdgolf-app/__tests__/lib/round/idb.test.ts fdgolf-app/package.json fdgolf-app/package-lock.json && git commit -m "[feat] EPIC-0005: IndexedDB persistence wrapper + fake-indexeddb (TC-0029)"
+```
+
+---
+
+### Task 11 — `static-map.ts` fetch + Cache API (TC-0030) [SPINE]
+
+Fetch the static PNG once, cache by `holeId`, serve offline; no re-fetch on GPS move.
+
+**11a. Write failing test** `fdgolf-app/__tests__/lib/round/static-map.test.ts`:
+```ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { fetchAndCacheStaticMap, cacheKeyFor } from '@/lib/round/static-map'
+
+const PNG = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })
+
+function installCacheMock() {
+  const store = new Map<string, Response>()
+  const cache = {
+    match: vi.fn(async (k: string) => store.get(k)),
+    put: vi.fn(async (k: string, r: Response) => {
+      store.set(k, r)
+    }),
+  }
+  // @ts-expect-error test shim
+  globalThis.caches = { open: vi.fn(async () => cache) }
+  return cache
+}
+
+beforeEach(() => {
+  vi.restoreAllMocks()
+  // @ts-expect-error test shim
+  globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock')
+})
+
+describe('cacheKeyFor', () => {
+  it('keys by hole id under a stable namespace', () => {
+    expect(cacheKeyFor('hole-7')).toBe('/fdgolf/static-map/hole-7')
+  })
+})
+
+describe('fetchAndCacheStaticMap', () => {
+  it('fetches once and caches the PNG when not cached', async () => {
+    const cache = installCacheMock()
+    const fetchMock = vi.fn(async () => new Response(PNG, { status: 200 }))
+    // @ts-expect-error test shim
+    globalThis.fetch = fetchMock
+    const url = await fetchAndCacheStaticMap('hole-7', 'https://api.mapbox.com/x')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(cache.put).toHaveBeenCalledTimes(1)
+    expect(url).toBe('blob:mock')
+  })
+
+  it('serves the cached PNG without re-fetching (preserves quota offline)', async () => {
+    const cache = installCacheMock()
+    await cache.put('/fdgolf/static-map/hole-7', new Response(PNG, { status: 200 }))
+    const fetchMock = vi.fn()
+    // @ts-expect-error test shim
+    globalThis.fetch = fetchMock
+    const url = await fetchAndCacheStaticMap('hole-7', 'https://api.mapbox.com/x')
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(url).toBe('blob:mock')
+  })
+})
+```
+
+**11b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/static-map.test.ts
+```
+Expected: FAIL — module not found.
+
+**11c. Create `fdgolf-app/lib/round/static-map.ts`:**
+```ts
+const NS = '/fdgolf/static-map'
+const CACHE_NAME = 'fdgolf-static-maps'
+
+export function cacheKeyFor(holeId: string): string {
+  return `${NS}/${holeId}`
+}
+
+/**
+ * D4: fetch the Mapbox Static Images PNG once, cache by holeId via the Cache API,
+ * and return an object URL. Served from cache offline; never re-fetched on GPS move.
+ */
+export async function fetchAndCacheStaticMap(holeId: string, url: string): Promise<string> {
+  const key = cacheKeyFor(holeId)
+  const cache = await caches.open(CACHE_NAME)
+  let res = await cache.match(key)
+  if (!res) {
+    res = await fetch(url)
+    if (!res.ok) throw new Error(`static map fetch failed: ${res.status}`)
+    await cache.put(key, res.clone())
+  }
+  const blob = await res.blob()
+  return URL.createObjectURL(blob)
+}
+```
+
+**11d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/static-map.test.ts
+```
+Expected: PASS (3 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/static-map.ts fdgolf-app/__tests__/lib/round/static-map.test.ts && git commit -m "[feat] EPIC-0005: static-map fetch + Cache API (TC-0030)"
+```
+
+---
+
+### Task 12 — `useRoundStore`: commit + offline queue + idempotent flush (TC-0031) [SPINE]
+
+The heart of D1. `commitShot()` → optimistic store update → IndexedDB persist → enqueue. `flushQueue()` posts sequentially via an injected `send` fn; a unique-violation result is treated as already-applied (idempotent). `send` is injected so the store stays unit-testable without mocking Server Actions.
+
+**12a. Write failing test** `fdgolf-app/__tests__/lib/round/store.test.ts`:
+```ts
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import 'fake-indexeddb/auto'
+import { useRoundStore } from '@/lib/round/store'
+import { getShotsForRound, getQueue } from '@/lib/round/idb'
+import type { LocalShot } from '@/lib/round/types'
+
+function shot(localId: string): LocalShot {
+  return {
+    localId, roundId: 'r1', holeNumber: 1, shotNumber: 1, playerId: 'p1', clubId: 'c1',
+    originLat: 45, originLng: -75, outcome: 'in_play', strokeCount: 1, accuracyM: 5,
+    rehitFromShotLocalId: null, rehitOrigin: null, serverId: null,
+  }
+}
+
+beforeEach(() => {
+  indexedDB = new IDBFactory()
+  useRoundStore.setState({ localHoles: {}, queue: [], activeHole: 1, activePlayerId: 'p1', claim: null })
+})
+
+describe('useRoundStore.commitShot', () => {
+  it('optimistically adds to localHoles, persists to idb, and enqueues (D1 order)', async () => {
+    await useRoundStore.getState().commitShot(shot('s1'))
+    const local = useRoundStore.getState().localHoles[1]['p1']
+    expect(local).toHaveLength(1)
+    expect(await getShotsForRound('r1')).toHaveLength(1)
+    expect(await getQueue()).toHaveLength(1)
+  })
+})
+
+describe('useRoundStore.flushQueue', () => {
+  it('sends each queued item in order and clears the queue on success', async () => {
+    const send = vi.fn(async () => ({ ok: true as const }))
+    await useRoundStore.getState().commitShot(shot('s1'))
+    await useRoundStore.getState().commitShot(shot('s2'))
+    await useRoundStore.getState().flushQueue(send)
+    expect(send.mock.calls.map((c) => c[0].localId)).toEqual(['s1', 's2'])
+    expect(await getQueue()).toHaveLength(0)
+    expect(useRoundStore.getState().queue).toHaveLength(0)
+  })
+
+  it('treats a unique-violation as already-applied and dequeues it (idempotent)', async () => {
+    const send = vi.fn(async () => ({ ok: false as const, code: 'unique_violation' as const }))
+    await useRoundStore.getState().commitShot(shot('s1'))
+    await useRoundStore.getState().flushQueue(send)
+    expect(await getQueue()).toHaveLength(0)
+  })
+
+  it('keeps an item queued on a transient (non-unique) error and stops the run', async () => {
+    const send = vi.fn(async () => ({ ok: false as const, code: 'network' as const }))
+    await useRoundStore.getState().commitShot(shot('s1'))
+    await useRoundStore.getState().commitShot(shot('s2'))
+    await useRoundStore.getState().flushQueue(send)
+    expect(send).toHaveBeenCalledTimes(1) // stops at first transient failure
+    expect(await getQueue()).toHaveLength(2)
+  })
+})
+```
+
+**12b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/store.test.ts
+```
+Expected: FAIL — module not found.
+
+**12c. Create `fdgolf-app/lib/round/store.ts`:**
+```ts
+import { create } from 'zustand'
+import { putShot, putQueueItem, getQueue, deleteQueueItem } from './idb'
+import type { LocalShot, QueueItem } from './types'
+
+export type SendResult =
+  | { ok: true }
+  | { ok: false; code: 'unique_violation' | 'network' | 'denied' }
+
+export type SendFn = (shot: LocalShot) => Promise<SendResult>
+
+export type ClaimState = { recordedBy: string; expiresAt: string } | null
+
+type LocalHoles = Record<number, Record<string, LocalShot[]>>
+
+type RoundStore = {
+  activeHole: number
+  activePlayerId: string | null
+  localHoles: LocalHoles
+  queue: QueueItem[]
+  claim: ClaimState
+  commitShot: (shot: LocalShot) => Promise<void>
+  flushQueue: (send: SendFn) => Promise<void>
+  hydrate: (shots: LocalShot[], queue: QueueItem[]) => void
+}
+
+export const useRoundStore = create<RoundStore>((set, get) => ({
+  activeHole: 1,
+  activePlayerId: null,
+  localHoles: {},
+  queue: [],
+  claim: null,
+
+  // D1 write order: (1) optimistic store, (2) durable idb, (3) enqueue.
+  commitShot: async (shot) => {
+    set((s) => {
+      const hole = { ...(s.localHoles[shot.holeNumber] ?? {}) }
+      const player = [...(hole[shot.playerId] ?? []), shot]
+      return { localHoles: { ...s.localHoles, [shot.holeNumber]: { ...hole, [shot.playerId]: player } } }
+    })
+    await putShot(shot)
+    const item: QueueItem = { localId: shot.localId, kind: 'create', payload: shot }
+    await putQueueItem(item)
+    set((s) => ({ queue: [...s.queue, item] }))
+  },
+
+  // Sequential, ordered flush. Unique-violation = already applied (idempotent) → dequeue.
+  // Any other failure stops the run and leaves the item queued for the next attempt.
+  flushQueue: async (send) => {
+    const queue = await getQueue()
+    for (const item of queue) {
+      const res = await send(item.payload)
+      if (res.ok || res.code === 'unique_violation') {
+        await deleteQueueItem(item.localId)
+        set((s) => ({ queue: s.queue.filter((q) => q.localId !== item.localId) }))
+      } else {
+        break
+      }
+    }
+  },
+
+  hydrate: (shots, queue) => {
+    const localHoles: LocalHoles = {}
+    for (const sh of shots) {
+      const hole = (localHoles[sh.holeNumber] ??= {})
+      ;(hole[sh.playerId] ??= []).push(sh)
+    }
+    set({ localHoles, queue })
+  },
+}))
+```
+
+**12d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/store.test.ts
+```
+Expected: PASS (4 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/store.ts fdgolf-app/__tests__/lib/round/store.test.ts && git commit -m "[feat] EPIC-0005: useRoundStore commit + idempotent flush queue (TC-0031)"
+```
+
+---
+
+### Task 13 — `createShotAction` Server Action (TC-0032) [SPINE]
+
+Inserts one shot with the EPIC-0006 stroke_count contract. Online claim guard (if a live claim exists for another recorder, reject); the unique constraint is the offline backstop, surfaced to the caller as `unique_violation` so the store treats it as already-applied.
+
+**13a. Write failing test** `fdgolf-app/__tests__/lib/actions/shots.test.ts`:
+```ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+const { mockFrom, mockGetUser } = vi.hoisted(() => ({ mockFrom: vi.fn(), mockGetUser: vi.fn() }))
+
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: async () => ({ auth: { getUser: mockGetUser }, from: mockFrom }),
+}))
+
+import { createShotAction } from '@/lib/actions/shots'
+
+const INPUT = {
+  roundId: 'r1', holeNumber: 1, shotNumber: 1, playerId: 'p1', clubId: 'c1',
+  originLat: 45, originLng: -75, outcome: 'in_play' as const, strokeCount: 1 as const,
+  accuracyM: 5, rehitFromShotId: null, rehitOrigin: null,
+}
+
+beforeEach(() => vi.clearAllMocks())
+
+describe('createShotAction', () => {
+  it('rejects when unauthenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    expect(await createShotAction(INPUT)).toEqual({ ok: false, code: 'denied' })
+  })
+
+  it('inserts the shot and returns ok with the server id', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const insertChain = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: 'srv1' }, error: null }),
+    }
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'shots') return insertChain
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: null, error: null }) }
+    })
+    const res = await createShotAction(INPUT)
+    expect(res).toEqual({ ok: true, serverId: 'srv1' })
+    expect(insertChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ round_id: 'r1', hole_number: 1, shot_number: 1, outcome: 'in_play', stroke_count: 1, accuracy_m: 5 })
+    )
+  })
+
+  it('maps a Postgres unique violation (23505) to ok:false unique_violation (idempotent backstop)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const insertChain = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: { code: '23505' } }),
+    }
+    mockFrom.mockImplementation(() => insertChain)
+    expect(await createShotAction(INPUT)).toEqual({ ok: false, code: 'unique_violation' })
+  })
+})
+```
+
+**13b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/shots.test.ts
+```
+Expected: FAIL — module not found.
+
+**13c. Create `fdgolf-app/lib/actions/shots.ts`:**
+```ts
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import type { RehitOrigin, ShotOutcome } from '@/lib/round/types'
+
+export type CreateShotInput = {
+  roundId: string
+  holeNumber: number
+  shotNumber: number
+  playerId: string
+  clubId: string | null
+  originLat: number | null
+  originLng: number | null
+  outcome: ShotOutcome
+  strokeCount: 0 | 1 | 2
+  accuracyM: number | null
+  rehitFromShotId: string | null
+  rehitOrigin: RehitOrigin | null
+}
+
+export type ShotActionResult =
+  | { ok: true; serverId: string }
+  | { ok: false; code: 'unique_violation' | 'network' | 'denied' }
+
+export async function createShotAction(input: CreateShotInput): Promise<ShotActionResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, code: 'denied' }
+
+  const { data, error } = await supabase
+    .from('shots')
+    .insert({
+      round_id: input.roundId,
+      hole_number: input.holeNumber,
+      shot_number: input.shotNumber,
+      club_id: input.clubId,
+      origin_lat: input.originLat,
+      origin_lng: input.originLng,
+      outcome: input.outcome,
+      stroke_count: input.strokeCount,
+      accuracy_m: input.accuracyM,
+      rehit_from_shot_id: input.rehitFromShotId,
+      rehit_origin: input.rehitOrigin,
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    if (error.code === '23505') return { ok: false, code: 'unique_violation' }
+    return { ok: false, code: 'network' }
+  }
+  return { ok: true, serverId: data!.id }
+}
+```
+
+Note: the EPIC-0006 `trg_shots_recompute` trigger fires on this INSERT and derives `hole_scores`/`team_hole_scores` automatically (AC-0147/0156/0157/0158/0153/0150) — no score writes here. RLS (`shots_insert_own_active_round_or_admin_or_organizer`) is the authorization gate.
+
+**13d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/shots.test.ts
+```
+Expected: PASS (3 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/actions/shots.ts fdgolf-app/__tests__/lib/actions/shots.test.ts && git commit -m "[feat] EPIC-0005: createShotAction with unique-violation idempotency (TC-0032)"
+```
+
+---
+
+### Task 14 — `editShotAction` with shot_edits audit (TC-0033) [DEFER — US-0041; admin can fix via EPIC-0008]
+
+Edit club/outcome/GPS on a prior shot; write before/after JSONB to `shot_edits`; set `updated_by`. Recalc is automatic via the trigger (AC-0163).
+
+**14a. Append to `fdgolf-app/__tests__/lib/actions/shots.test.ts`:**
+```ts
+import { editShotAction } from '@/lib/actions/shots'
+
+describe('editShotAction', () => {
+  it('writes before/after to shot_edits, updates the shot, and sets updated_by (AC-0160/0161/0162)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u9' } } })
+    const before = { id: 'srv1', club_id: 'c1', outcome: 'in_play', origin_lat: 45, origin_lng: -75, stroke_count: 1 }
+    const shotsChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: before, error: null }),
+      update: vi.fn().mockReturnThis(),
+    }
+    const editsInsert = vi.fn().mockResolvedValue({ error: null })
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'shots') return shotsChain
+      if (t === 'shot_edits') return { insert: editsInsert }
+      return shotsChain
+    })
+    const res = await editShotAction({
+      shotId: 'srv1', clubId: 'c2', outcome: 'sunk', strokeCount: 1, originLat: 45.1, originLng: -75.1,
+    })
+    expect(res).toEqual({ ok: true, serverId: 'srv1' })
+    expect(editsInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ shot_id: 'srv1', edited_by: 'u9' })
+    )
+    expect(shotsChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ club_id: 'c2', outcome: 'sunk', stroke_count: 1, updated_by: 'u9' })
+    )
+  })
+})
+```
+
+**14b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/shots.test.ts
+```
+Expected: FAIL — `editShotAction` is not exported.
+
+**14c. Append to `fdgolf-app/lib/actions/shots.ts`:**
+```ts
+export type EditShotInput = {
+  shotId: string
+  clubId: string | null
+  outcome: ShotOutcome
+  strokeCount: 0 | 1 | 2
+  originLat: number | null
+  originLng: number | null
+}
+
+export async function editShotAction(input: EditShotInput): Promise<ShotActionResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, code: 'denied' }
+
+  // 1. Read current state for the before-image (AC-0161).
+  const { data: before, error: readErr } = await supabase
+    .from('shots')
+    .select('id, club_id, outcome, origin_lat, origin_lng, stroke_count')
+    .eq('id', input.shotId)
+    .single()
+  if (readErr || !before) return { ok: false, code: 'network' }
+
+  const after = {
+    club_id: input.clubId,
+    outcome: input.outcome,
+    stroke_count: input.strokeCount,
+    origin_lat: input.originLat,
+    origin_lng: input.originLng,
+    updated_by: user.id,
+  }
+
+  // 2. Audit row (AC-0161). shot_edits insert is admin-gated by RLS; in flexible mode the
+  //    edit is performed by the round owner/organizer whose policy permits the shots UPDATE.
+  const { error: auditErr } = await supabase
+    .from('shot_edits')
+    .insert({ shot_id: input.shotId, edited_by: user.id, before_state: before, after_state: after })
+  if (auditErr) return { ok: false, code: 'network' }
+
+  // 3. Apply the edit (AC-0160/0162). trg_shots_recompute re-derives scores (AC-0163).
+  const { error: updErr } = await supabase.from('shots').update(after).eq('id', input.shotId)
+  if (updErr) return { ok: false, code: 'network' }
+
+  return { ok: true, serverId: input.shotId }
+}
+```
+
+**14d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/shots.test.ts
+```
+Expected: PASS (4 tests total in file).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/actions/shots.ts fdgolf-app/__tests__/lib/actions/shots.test.ts && git commit -m "[feat] EPIC-0005: editShotAction with shot_edits audit (TC-0033)"
+```
+
+---
+
+### Task 15 — `claimRoundAction` soft claim + heartbeat (TC-0034) [SPINE — online safety, D3]
+
+Acquire/renew the soft claim: set `recorded_by` to the caller's player and `recording_expires_at = now()+60s`. Reject if a *different* live (non-expired) claim exists. Idempotent renew for the current holder. Called on entering the round and every ~20s (heartbeat).
+
+**15a. Write failing test** `fdgolf-app/__tests__/lib/actions/rounds-claim-complete.test.ts`:
+```ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+const { mockFrom, mockGetUser } = vi.hoisted(() => ({ mockFrom: vi.fn(), mockGetUser: vi.fn() }))
+
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: async () => ({ auth: { getUser: mockGetUser }, from: mockFrom }),
+}))
+
+import { claimRoundAction, completeRoundAction } from '@/lib/actions/rounds'
+
+beforeEach(() => vi.clearAllMocks())
+
+function playerChain(playerId: string) {
+  return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: playerId }, error: null }) }
+}
+
+describe('claimRoundAction', () => {
+  it('rejects when unauthenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    expect(await claimRoundAction('r1')).toEqual({ ok: false, code: 'denied' })
+  })
+
+  it('acquires the claim when no live claim exists', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const updateChain = { update: vi.fn().mockReturnThis(), eq: vi.fn().mockResolvedValue({ error: null }) }
+    let call = 0
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'players') return playerChain('p1')
+      if (t === 'rounds') {
+        call++
+        if (call === 1) {
+          // read current claim → none/expired
+          return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { recorded_by: null, recording_expires_at: null }, error: null }) }
+        }
+        return updateChain
+      }
+      return playerChain('p1')
+    })
+    const res = await claimRoundAction('r1')
+    expect(res).toEqual({ ok: true })
+    expect(updateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ recorded_by: 'p1', recording_expires_at: expect.any(String) })
+    )
+  })
+
+  it('rejects when a different recorder holds a live (unexpired) claim', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const future = new Date(Date.now() + 30_000).toISOString()
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'players') return playerChain('p1')
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { recorded_by: 'p2', recording_expires_at: future }, error: null }) }
+    })
+    expect(await claimRoundAction('r1')).toEqual({ ok: false, code: 'claimed_by_other' })
+  })
+
+  it('renews idempotently when the caller already holds the claim', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const future = new Date(Date.now() + 30_000).toISOString()
+    const updateChain = { update: vi.fn().mockReturnThis(), eq: vi.fn().mockResolvedValue({ error: null }) }
+    let call = 0
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'players') return playerChain('p1')
+      call++
+      if (call === 1) return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { recorded_by: 'p1', recording_expires_at: future }, error: null }) }
+      return updateChain
+    })
+    expect(await claimRoundAction('r1')).toEqual({ ok: true })
+  })
+})
+```
+
+**15b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/rounds-claim-complete.test.ts
+```
+Expected: FAIL — `claimRoundAction`/`completeRoundAction` not exported.
+
+**15c. Append to `fdgolf-app/lib/actions/rounds.ts`** (keep the existing `createRoundAction`; add below it):
+```ts
+const CLAIM_TTL_MS = 60_000 // D3: 60s expiry, 20s heartbeat (caller-driven)
+
+export type ClaimResult = { ok: true } | { ok: false; code: 'denied' | 'claimed_by_other' | 'network' }
+
+export async function claimRoundAction(roundId: string): Promise<ClaimResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, code: 'denied' }
+
+  const { data: player } = await supabase.from('players').select('id').eq('user_id', user.id).single()
+  if (!player) return { ok: false, code: 'denied' }
+
+  const { data: current } = await supabase
+    .from('rounds')
+    .select('recorded_by, recording_expires_at')
+    .eq('id', roundId)
+    .single()
+
+  const now = Date.now()
+  const liveByOther =
+    current?.recorded_by &&
+    current.recorded_by !== player.id &&
+    current.recording_expires_at &&
+    new Date(current.recording_expires_at).getTime() > now
+  if (liveByOther) return { ok: false, code: 'claimed_by_other' }
+
+  const { error } = await supabase
+    .from('rounds')
+    .update({ recorded_by: player.id, recording_expires_at: new Date(now + CLAIM_TTL_MS).toISOString() })
+    .eq('id', roundId)
+  if (error) return { ok: false, code: 'network' }
+  return { ok: true }
+}
+
+export type CompleteResult = { ok: true; completed: boolean } | { ok: false; code: 'denied' | 'network' }
+
+/** AC-0176: when all 18 hole_scores are final, set status=completed + completed_at. */
+export async function completeRoundAction(roundId: string): Promise<CompleteResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, code: 'denied' }
+
+  const { count, error: countErr } = await supabase
+    .from('hole_scores')
+    .select('id', { count: 'exact', head: true })
+    .eq('round_id', roundId)
+    .eq('status', 'final')
+  if (countErr) return { ok: false, code: 'network' }
+  if ((count ?? 0) < 18) return { ok: true, completed: false }
+
+  const { error: updErr } = await supabase
+    .from('rounds')
+    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .eq('id', roundId)
+  if (updErr) return { ok: false, code: 'network' }
+  return { ok: true, completed: true }
+}
+```
+
+**15d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/rounds-claim-complete.test.ts
+```
+Expected: PASS (4 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/actions/rounds.ts fdgolf-app/__tests__/lib/actions/rounds-claim-complete.test.ts && git commit -m "[feat] EPIC-0005: claimRoundAction soft-claim heartbeat (TC-0034)"
+```
+
+---
+
+### Task 16 — `completeRoundAction` 18-final guard (TC-0035) [DEFER — US-0046; can be manual]
+
+The implementation landed with Task 15; this task adds the dedicated coverage for the complete path.
+
+**16a. Append to `fdgolf-app/__tests__/lib/actions/rounds-claim-complete.test.ts`:**
+```ts
+describe('completeRoundAction', () => {
+  it('rejects when unauthenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    expect(await completeRoundAction('r1')).toEqual({ ok: false, code: 'denied' })
+  })
+
+  it('does NOT complete when fewer than 18 final hole_scores', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ count: 10, error: null }) }),
+    }))
+    expect(await completeRoundAction('r1')).toEqual({ ok: true, completed: false })
+  })
+
+  it('completes when all 18 are final: sets status=completed + completed_at (AC-0176)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const updateChain = { update: vi.fn().mockReturnThis(), eq: vi.fn().mockResolvedValue({ error: null }) }
+    let call = 0
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'hole_scores') {
+        return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ count: 18, error: null }) }) }
+      }
+      call++
+      return updateChain
+    })
+    const res = await completeRoundAction('r1')
+    expect(res).toEqual({ ok: true, completed: true })
+    expect(updateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'completed', completed_at: expect.any(String) })
+    )
+  })
+})
+```
+
+**16b. Run — expect pass** (implementation already exists from Task 15):
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/rounds-claim-complete.test.ts
+```
+Expected: PASS (7 tests total). If the count-query chain shape differs from the mock, adjust the mock's `.eq().eq()` nesting to match the action's `.eq(...).eq(...)` call order — the action chains two `.eq()` calls before awaiting.
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/__tests__/lib/actions/rounds-claim-complete.test.ts && git commit -m "[test] EPIC-0005: completeRoundAction 18-final guard (TC-0035)"
+```
+
+---
+
+### Task 17 — `<HoleProgressPill>` component (TC-0036) [SPINE]
+
+Smallest component first to establish the RTL pattern for this epic.
+
+**17a. Write failing test** `fdgolf-app/__tests__/components/round/hole-progress-pill.test.tsx`:
+```tsx
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { HoleProgressPill } from '@/components/round/hole-progress-pill'
+
+describe('HoleProgressPill', () => {
+  it('shows "Hole X of 18" from completed count + 1 (AC-0175)', () => {
+    render(<HoleProgressPill completedCount={7} />)
+    expect(screen.getByText('Hole 8 of 18')).toBeInTheDocument()
+  })
+
+  it('shows "Hole 1 of 18" at the start of the round', () => {
+    render(<HoleProgressPill completedCount={0} />)
+    expect(screen.getByText('Hole 1 of 18')).toBeInTheDocument()
+  })
+})
+```
+
+**17b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/hole-progress-pill.test.tsx
+```
+Expected: FAIL — module not found.
+
+**17c. Create `fdgolf-app/components/round/hole-progress-pill.tsx`:**
+```tsx
+import { holesCompletedPill } from '@/lib/round/shotgun'
+
+export function HoleProgressPill({ completedCount }: { completedCount: number }) {
+  return (
+    <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-200">
+      Hole {holesCompletedPill(completedCount)} of 18
+    </span>
+  )
+}
+```
+
+**17d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/hole-progress-pill.test.tsx
+```
+Expected: PASS (2 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/hole-progress-pill.tsx fdgolf-app/__tests__/components/round/hole-progress-pill.test.tsx && git commit -m "[feat] EPIC-0005: HoleProgressPill (TC-0036)"
+```
+
+---
+
+### Task 18 — `<HoleMap>` render-only overlay (TC-0037) [SPINE]
+
+Render-only: cached PNG base + pin/tee/prior-shots/GPS markers projected via `project()`, distance overlay, edge arrow when GPS off-frame, tap mode. Props are pure data so the component is RTL-testable without GPS or Mapbox.
+
+**18a. Write failing test** `fdgolf-app/__tests__/components/round/hole-map.test.tsx`:
+```tsx
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { HoleMap } from '@/components/round/hole-map'
+
+const FRAME = { center: { lat: 45, lng: -75 }, zoom: 16, size: { w: 390, h: 520 } }
+const HOLE = { pin: { lat: 45.0009, lng: -75 }, tee: { lat: 45, lng: -75.0009 } }
+
+const BASE = {
+  baseImageUrl: 'blob:mock',
+  frame: FRAME,
+  hole: HOLE,
+  shots: [
+    { lat: 45.0, lng: -75.0009, shotNumber: 1 },
+    { lat: 45.0004, lng: -75.0004, shotNumber: 2 },
+  ],
+  gps: { lat: 45.0002, lng: -75.0002, accuracyM: 5 },
+  tapMode: false,
+  onMapTap: vi.fn(),
+}
+
+describe('HoleMap', () => {
+  it('renders the cached base image (AC-0137)', () => {
+    render(<HoleMap {...BASE} />)
+    expect(screen.getByRole('img', { name: /hole map/i })).toHaveAttribute('src', 'blob:mock')
+  })
+
+  it('renders pin, tee, and numbered prior-shot markers (AC-0138/0139/0140)', () => {
+    render(<HoleMap {...BASE} />)
+    expect(screen.getByTestId('marker-pin')).toBeInTheDocument()
+    expect(screen.getByTestId('marker-tee')).toBeInTheDocument()
+    expect(screen.getByTestId('marker-shot-1')).toBeInTheDocument()
+    expect(screen.getByTestId('marker-shot-2')).toBeInTheDocument()
+  })
+
+  it('renders the GPS pulse marker (AC-0141)', () => {
+    render(<HoleMap {...BASE} />)
+    expect(screen.getByTestId('marker-gps')).toBeInTheDocument()
+  })
+
+  it('shows the "~N yds to pin" distance overlay (AC-0142/0180)', () => {
+    render(<HoleMap {...BASE} />)
+    expect(screen.getByText(/^~\d+ yds to pin$/)).toBeInTheDocument()
+  })
+
+  it('in tap mode, clicking the surface calls onMapTap with the surface coords (AC-0179)', () => {
+    const onMapTap = vi.fn()
+    render(<HoleMap {...BASE} tapMode onMapTap={onMapTap} />)
+    fireEvent.click(screen.getByTestId('map-surface'), { clientX: 100, clientY: 100 })
+    expect(onMapTap).toHaveBeenCalled()
+  })
+})
+```
+
+**18b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/hole-map.test.tsx
+```
+Expected: FAIL — module not found.
+
+**18c. Create `fdgolf-app/components/round/hole-map.tsx`:**
+```tsx
+'use client'
+
+import { project, unproject, type Frame } from '@/lib/round/projection'
+import { formatYardsToPin, haversineMeters } from '@/lib/round/distance'
+import type { LatLng } from '@/lib/round/types'
+
+type ShotMarker = { lat: number; lng: number; shotNumber: number }
+
+type Props = {
+  baseImageUrl: string
+  frame: Frame
+  hole: { pin: LatLng; tee: LatLng }
+  shots: ShotMarker[]
+  gps: { lat: number; lng: number; accuracyM: number | null } | null
+  tapMode: boolean
+  onMapTap: (coord: LatLng) => void
+}
+
+function inFrame(x: number, y: number, frame: Frame): boolean {
+  return x >= 0 && x <= frame.size.w && y >= 0 && y <= frame.size.h
+}
+
+export function HoleMap({ baseImageUrl, frame, hole, shots, gps, tapMode, onMapTap }: Props) {
+  const pin = project(hole.pin.lat, hole.pin.lng, frame)
+  const tee = project(hole.tee.lat, hole.tee.lng, frame)
+  const shotPts = shots.map((s) => ({ ...s, ...project(s.lat, s.lng, frame) }))
+  const gpsPt = gps ? project(gps.lat, gps.lng, frame) : null
+  const distanceLabel = gps ? formatYardsToPin(haversineMeters(gps, hole.pin)) : null
+
+  function handleClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (!tapMode) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const coord = unproject(e.clientX - rect.left, e.clientY - rect.top, frame)
+    onMapTap(coord)
+  }
+
+  return (
+    <div
+      data-testid="map-surface"
+      onClick={handleClick}
+      className="relative overflow-hidden"
+      style={{ width: frame.size.w, height: frame.size.h }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={baseImageUrl} alt="Hole map" className="absolute inset-0 h-full w-full object-cover" />
+
+      {/* prior shots: dashed polyline + numbered markers (AC-0140) */}
+      <svg className="pointer-events-none absolute inset-0" width={frame.size.w} height={frame.size.h}>
+        <polyline
+          fill="none"
+          stroke="#fbbf24"
+          strokeWidth={2}
+          strokeDasharray="6 4"
+          points={shotPts.map((p) => `${p.x},${p.y}`).join(' ')}
+        />
+      </svg>
+      {shotPts.map((p) => (
+        <span
+          key={p.shotNumber}
+          data-testid={`marker-shot-${p.shotNumber}`}
+          className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-1 text-[10px] font-bold text-slate-900"
+          style={{ left: p.x, top: p.y }}
+        >
+          {p.shotNumber}
+        </span>
+      ))}
+
+      <span data-testid="marker-tee" className="absolute -translate-x-1/2 -translate-y-1/2 text-lg" style={{ left: tee.x, top: tee.y }}>⛳️T</span>
+      <span data-testid="marker-pin" className="absolute -translate-x-1/2 -translate-y-1/2 text-lg" style={{ left: pin.x, top: pin.y }}>📍</span>
+
+      {gpsPt && inFrame(gpsPt.x, gpsPt.y, frame) && (
+        <span data-testid="marker-gps" className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-red-500" style={{ left: gpsPt.x, top: gpsPt.y }} />
+      )}
+      {gpsPt && !inFrame(gpsPt.x, gpsPt.y, frame) && (
+        <span data-testid="marker-gps" className="absolute right-1 top-1 text-red-500">➤</span>
+      )}
+
+      {distanceLabel && (
+        <div className="absolute left-2 top-2 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
+          {distanceLabel}
+        </div>
+      )}
+
+      {tapMode && (
+        <div className="absolute inset-x-0 bottom-2 text-center text-xs text-amber-300">
+          Tap the map to set your shot location
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+**18d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/hole-map.test.tsx
+```
+Expected: PASS (5 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/hole-map.tsx fdgolf-app/__tests__/components/round/hole-map.test.tsx && git commit -m "[feat] EPIC-0005: HoleMap render-only overlay (TC-0037)"
+```
+
+---
+
+### Task 19 — `<ShotCapture>` GPS capture + outcomes + OOB + GPS-denied (TC-0038) [SPINE]
+
+Drives the shot-machine: Start shot (GPS high-accuracy or, on denial, tap fallback), 4 outcome buttons, OOB rehit prompt. Commits via an injected `onCommit` callback (the page wires it to `useRoundStore.commitShot` + `createShotAction`) so the component is unit-testable with a mocked geolocation.
+
+**19a. Write failing test** `fdgolf-app/__tests__/components/round/shot-capture.test.tsx`:
+```tsx
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { ShotCapture } from '@/components/round/shot-capture'
+
+const CLUBS = [{ id: 'c1', display_name: 'Driver' }, { id: 'c2', display_name: '7 Iron' }]
+
+function mockGeoSuccess(lat = 45, lng = -75, accuracy = 5) {
+  // @ts-expect-error test shim
+  globalThis.navigator.geolocation = {
+    getCurrentPosition: (ok: PositionCallback) =>
+      ok({ coords: { latitude: lat, longitude: lng, accuracy } } as GeolocationPosition),
+  }
+}
+function mockGeoDenied() {
+  // @ts-expect-error test shim
+  globalThis.navigator.geolocation = {
+    getCurrentPosition: (_ok: PositionCallback, err: PositionErrorCallback) =>
+      err({ code: 1, message: 'denied' } as GeolocationPositionError),
+  }
+}
+
+const baseProps = {
+  playerId: 'p1', holeNumber: 1, shotNumber: 1, clubs: CLUBS, defaultClubId: 'c1',
+}
+
+beforeEach(() => vi.clearAllMocks())
+
+describe('ShotCapture', () => {
+  it('captures GPS on Start shot and shows four outcome buttons (AC-0143/0146)', async () => {
+    mockGeoSuccess()
+    render(<ShotCapture {...baseProps} onCommit={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => expect(screen.getByRole('button', { name: /in play/i })).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: /^sunk/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /mulligan/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /oob/i })).toBeInTheDocument()
+  })
+
+  it('In Play commits a shot with outcome in_play, stroke_count 1, captured GPS + accuracy (AC-0144/0145/0147/0181)', async () => {
+    mockGeoSuccess(45, -75, 7)
+    const onCommit = vi.fn()
+    render(<ShotCapture {...baseProps} onCommit={onCommit} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /in play/i }))
+    fireEvent.click(screen.getByRole('button', { name: /in play/i }))
+    await waitFor(() =>
+      expect(onCommit).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: 'in_play', strokeCount: 1, originLat: 45, originLng: -75, accuracyM: 7, clubId: 'c1' })
+      )
+    )
+  })
+
+  it('OOB shows the rehit prompt and commits stroke_count 2 (AC-0148/0149/0150)', async () => {
+    mockGeoSuccess()
+    const onCommit = vi.fn()
+    render(<ShotCapture {...baseProps} onCommit={onCommit} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /oob/i }))
+    fireEvent.click(screen.getByRole('button', { name: /oob/i }))
+    expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'out_of_bounds', strokeCount: 2 }))
+    expect(screen.getByRole('button', { name: /rehit from oob location/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /rehit from prior position/i })).toBeInTheDocument()
+  })
+
+  it('on GPS denial shows the tap-the-map fallback message (AC-0178)', async () => {
+    mockGeoDenied()
+    render(<ShotCapture {...baseProps} onCommit={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => expect(screen.getByText(/tap the map/i)).toBeInTheDocument())
+  })
+})
+```
+
+**19b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/shot-capture.test.tsx
+```
+Expected: FAIL — module not found.
+
+**19c. Create `fdgolf-app/components/round/shot-capture.tsx`:**
+```tsx
+'use client'
+
+import { useReducer, useState } from 'react'
+import {
+  shotReducer,
+  initialShotState,
+  type ShotDraft,
+  type CommittedShot,
+} from '@/lib/round/shot-machine'
+import type { LocalShot, RehitOrigin } from '@/lib/round/types'
+
+type Club = { id: string; display_name: string }
+
+type Props = {
+  playerId: string
+  holeNumber: number
+  shotNumber: number
+  clubs: Club[]
+  defaultClubId: string | null
+  onCommit: (shot: Omit<LocalShot, 'localId' | 'roundId' | 'serverId'> & { localId: string }) => void
+}
+
+function toLocalShot(
+  committed: CommittedShot,
+  shotNumber: number,
+  playerId: string,
+  rehitOrigin: RehitOrigin | null,
+  rehitFromLocalId: string | null
+) {
+  const d = committed.draft
+  return {
+    localId: committed.localId,
+    holeNumber: d.holeNumber,
+    shotNumber,
+    playerId,
+    clubId: d.clubId,
+    originLat: d.originLat,
+    originLng: d.originLng,
+    outcome: committed.outcome,
+    strokeCount: committed.strokeCount,
+    accuracyM: d.accuracyM,
+    rehitFromShotLocalId: rehitFromLocalId,
+    rehitOrigin,
+  }
+}
+
+export function ShotCapture({ playerId, holeNumber, shotNumber, clubs, defaultClubId, onCommit }: Props) {
+  const [state, dispatch] = useReducer(shotReducer, initialShotState)
+  const [clubId, setClubId] = useState<string | null>(defaultClubId)
+  const [gpsDenied, setGpsDenied] = useState(false)
+
+  function startShot() {
+    setGpsDenied(false)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const draft: ShotDraft = {
+          playerId,
+          holeNumber,
+          clubId,
+          originLat: pos.coords.latitude,
+          originLng: pos.coords.longitude,
+          accuracyM: pos.coords.accuracy ?? null,
+        }
+        dispatch({ type: 'START_SHOT', draft })
+      },
+      () => setGpsDenied(true),
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
+  function outcome(o: 'in_play' | 'sunk' | 'mulligan' | 'out_of_bounds') {
+    const next = shotReducer(state, { type: 'OUTCOME', outcome: o })
+    if (next.committed && next.committed !== state.committed) {
+      onCommit(toLocalShot(next.committed, shotNumber, playerId, null, null))
+    }
+    dispatch({ type: 'OUTCOME', outcome: o })
+  }
+
+  function rehit(origin: RehitOrigin) {
+    const coord =
+      origin === 'prior_position' && state.committed
+        ? { lat: state.committed.draft.originLat ?? 0, lng: state.committed.draft.originLng ?? 0 }
+        : { lat: state.committed?.draft.originLat ?? 0, lng: state.committed?.draft.originLng ?? 0 }
+    dispatch({ type: 'REHIT', rehitOrigin: origin, origin: coord })
+  }
+
+  if (state.phase === 'OOB_REHIT') {
+    return (
+      <div className="flex flex-col gap-2 p-4">
+        <p className="text-sm text-slate-300">Out of bounds — where do you rehit from?</p>
+        <button className="rounded bg-slate-700 py-3 font-semibold" onClick={() => rehit('oob_location')}>
+          Rehit from OOB location
+        </button>
+        <button className="rounded bg-slate-700 py-3 font-semibold" onClick={() => rehit('prior_position')}>
+          Rehit from prior position
+        </button>
+      </div>
+    )
+  }
+
+  if (state.phase === 'AWAITING_OUTCOME') {
+    return (
+      <div className="grid grid-cols-2 gap-2 p-4">
+        <button className="rounded bg-green-700 py-4 font-bold" onClick={() => outcome('in_play')}>In Play</button>
+        <button className="rounded bg-green-500 py-4 font-bold" onClick={() => outcome('sunk')}>Sunk</button>
+        <button className="rounded bg-amber-500 py-4 font-bold" onClick={() => outcome('mulligan')}>Mulligan</button>
+        <button className="rounded bg-red-600 py-4 font-bold" onClick={() => outcome('out_of_bounds')}>OOB</button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-3 p-4">
+      <select
+        aria-label="club"
+        value={clubId ?? ''}
+        onChange={(e) => setClubId(e.target.value)}
+        className="rounded bg-slate-800 px-3 py-2"
+      >
+        {clubs.map((c) => (
+          <option key={c.id} value={c.id}>{c.display_name}</option>
+        ))}
+      </select>
+      <button className="rounded bg-green-700 py-3 font-bold" onClick={startShot}>
+        Start shot — capture GPS
+      </button>
+      {gpsDenied && <p className="text-sm text-amber-300">GPS denied — tap the map to set your shot location.</p>}
+    </div>
+  )
+}
+```
+
+Note: the `rehit` follow-up origin pre-seeds the next shot's draft via `state.nextOrigin`/`pendingRehitOrigin` (held in the machine). The page reads these to set the next `START_SHOT` draft and to populate `rehitFromShotLocalId`/`rehitOrigin` on the follow-up commit (AC-0151/0152). Mulligan's same-location re-seed (AC-0154) likewise flows through `state.nextOrigin`.
+
+**19d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/shot-capture.test.tsx
+```
+Expected: PASS (4 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/shot-capture.tsx fdgolf-app/__tests__/components/round/shot-capture.test.tsx && git commit -m "[feat] EPIC-0005: ShotCapture GPS + outcomes + OOB + tap fallback (TC-0038)"
+```
+
+---
+
+### Task 20 — `<TurnPicker>` auto-select + override (TC-0039) [DEFER — US-0042; manual selection works]
+
+**20a. Write failing test** `fdgolf-app/__tests__/components/round/turn-picker.test.tsx`:
+```tsx
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { TurnPicker } from '@/components/round/turn-picker'
+
+const PIN = { lat: 45.01, lng: -75 }
+const MEMBERS = [
+  { playerId: 'a', name: 'Alice', lastOrigin: { lat: 45.0, lng: -75 }, sunk: false },
+  { playerId: 'b', name: 'Bob', lastOrigin: { lat: 45.008, lng: -75 }, sunk: false },
+  { playerId: 'c', name: 'Cara', lastOrigin: { lat: 45.005, lng: -75 }, sunk: true },
+]
+
+describe('TurnPicker', () => {
+  it('auto-selects the farthest-from-pin active member (AC-0165)', () => {
+    const onSelect = vi.fn()
+    render(<TurnPicker members={MEMBERS} pin={PIN} onSelect={onSelect} />)
+    // Alice (lat 45.0) is farthest from pin (45.01).
+    expect(screen.getByTestId('turn-selected')).toHaveTextContent('Alice')
+  })
+
+  it('does not render a row for sunk members (AC-0167)', () => {
+    render(<TurnPicker members={MEMBERS} pin={PIN} onSelect={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: /Cara/ })).not.toBeInTheDocument()
+  })
+
+  it('manual override selects a different member (AC-0166)', () => {
+    const onSelect = vi.fn()
+    render(<TurnPicker members={MEMBERS} pin={PIN} onSelect={onSelect} />)
+    fireEvent.click(screen.getByRole('button', { name: /Bob/ }))
+    expect(onSelect).toHaveBeenCalledWith('b')
+  })
+})
+```
+
+**20b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/turn-picker.test.tsx
+```
+Expected: FAIL — module not found.
+
+**20c. Create `fdgolf-app/components/round/turn-picker.tsx`:**
+```tsx
+'use client'
+
+import { useMemo } from 'react'
+import { computeNextPlayer, type TurnMember } from '@/lib/round/turn'
+import { haversineMeters, metersToYards } from '@/lib/round/distance'
+import type { LatLng } from '@/lib/round/types'
+
+type Member = TurnMember & { name: string }
+
+type Props = {
+  members: Member[]
+  pin: LatLng
+  onSelect: (playerId: string) => void
+}
+
+export function TurnPicker({ members, pin, onSelect }: Props) {
+  const auto = useMemo(() => computeNextPlayer(members, pin), [members, pin])
+  const active = members.filter((m) => !m.sunk && m.lastOrigin)
+  const selectedName = members.find((m) => m.playerId === auto)?.name ?? '—'
+
+  return (
+    <div className="flex flex-col gap-2 p-4">
+      <p className="text-xs uppercase tracking-wide text-slate-400">Who's away?</p>
+      <p data-testid="turn-selected" className="text-lg font-bold text-green-400">
+        {selectedName}
+      </p>
+      {active.map((m) => (
+        <button
+          key={m.playerId}
+          onClick={() => onSelect(m.playerId)}
+          className={`flex items-center justify-between rounded px-3 py-2 ${
+            m.playerId === auto ? 'bg-green-900 font-bold' : 'bg-slate-800'
+          }`}
+        >
+          <span>{m.name}</span>
+          <span className="text-xs text-slate-400">
+            ~{Math.round(metersToYards(haversineMeters(m.lastOrigin as LatLng, pin)))} yds
+          </span>
+        </button>
+      ))}
+    </div>
+  )
+}
+```
+
+**20d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/turn-picker.test.tsx
+```
+Expected: PASS (3 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/turn-picker.tsx fdgolf-app/__tests__/components/round/turn-picker.test.tsx && git commit -m "[feat] EPIC-0005: TurnPicker auto-select + override (TC-0039)"
+```
+
+---
+
+### Task 21 — par-relative helper `formatToPar` (TC-0040) [SPINE]
+
+Pure helper for the hole summary's par-relative annotation (AC-0169). Added to `distance.ts`'s sibling `lib/round/score-format.ts`.
+
+**21a. Write failing test** `fdgolf-app/__tests__/lib/round/score-format.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import { formatToPar } from '@/lib/round/score-format'
+
+describe('formatToPar', () => {
+  it('names common results', () => {
+    expect(formatToPar(2, 4)).toBe('eagle')
+    expect(formatToPar(3, 4)).toBe('birdie')
+    expect(formatToPar(4, 4)).toBe('par')
+    expect(formatToPar(5, 4)).toBe('bogey')
+    expect(formatToPar(6, 4)).toBe('double bogey')
+  })
+  it('falls back to +N for larger overs (AC-0169)', () => {
+    expect(formatToPar(8, 4)).toBe('+4')
+  })
+  it('uses -N for rare big unders', () => {
+    expect(formatToPar(1, 5)).toBe('-4')
+  })
+})
+```
+
+**21b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/score-format.test.ts
+```
+Expected: FAIL — module not found.
+
+**21c. Create `fdgolf-app/lib/round/score-format.ts`:**
+```ts
+/** AC-0169: par-relative annotation for a per-player gross. */
+export function formatToPar(gross: number, par: number): string {
+  const diff = gross - par
+  switch (diff) {
+    case -3: return 'albatross'
+    case -2: return 'eagle'
+    case -1: return 'birdie'
+    case 0: return 'par'
+    case 1: return 'bogey'
+    case 2: return 'double bogey'
+    default: return diff > 0 ? `+${diff}` : `${diff}`
+  }
+}
+```
+
+**21d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/score-format.test.ts
+```
+Expected: PASS (3 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/score-format.ts fdgolf-app/__tests__/lib/round/score-format.test.ts && git commit -m "[feat] EPIC-0005: formatToPar par-relative helper (TC-0040)"
+```
+
+---
+
+### Task 22 — `<HoleSummary>` per-player + BEST + standing + Next CTA (TC-0041) [SPINE]
+
+Render-only. Per-player gross + par-relative (local), BEST badge + team standing (server-derived; "as of last sync" when `syncedAt` indicates stale), "Next: Hole X" via `nextPhysicalHole`.
+
+**22a. Write failing test** `fdgolf-app/__tests__/components/round/hole-summary.test.tsx`:
+```tsx
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { HoleSummary } from '@/components/round/hole-summary'
+
+const PROPS = {
+  holeNumber: 18,
+  par: 4,
+  players: [
+    { playerId: 'a', name: 'Alice', gross: 4 },
+    { playerId: 'b', name: 'Bob', gross: 3 },
+  ],
+  bestPlayerId: 'b',
+  teamStanding: { position: 2, of: 8 },
+  stale: false,
+  onNext: vi.fn(),
+}
+
+describe('HoleSummary', () => {
+  it('lists per-player gross with par-relative annotation (AC-0169)', () => {
+    render(<HoleSummary {...PROPS} />)
+    expect(screen.getByText('Alice')).toBeInTheDocument()
+    expect(screen.getByText(/par/)).toBeInTheDocument()
+    expect(screen.getByText(/birdie/)).toBeInTheDocument()
+  })
+
+  it('shows the BEST badge on the contributing player (AC-0170)', () => {
+    render(<HoleSummary {...PROPS} />)
+    expect(screen.getByTestId('best-b')).toHaveTextContent('BEST')
+    expect(screen.queryByTestId('best-a')).not.toBeInTheDocument()
+  })
+
+  it('shows team standing position out of N (AC-0171)', () => {
+    render(<HoleSummary {...PROPS} />)
+    expect(screen.getByText(/2 of 8/)).toBeInTheDocument()
+  })
+
+  it('marks standing "as of last sync" when stale (L2)', () => {
+    render(<HoleSummary {...PROPS} stale />)
+    expect(screen.getByText(/as of last sync/i)).toBeInTheDocument()
+  })
+
+  it('Next CTA shows next physical hole (18 wraps to 1) and fires onNext (AC-0172)', () => {
+    const onNext = vi.fn()
+    render(<HoleSummary {...PROPS} onNext={onNext} />)
+    const cta = screen.getByRole('button', { name: /next: hole 1/i })
+    fireEvent.click(cta)
+    expect(onNext).toHaveBeenCalled()
+  })
+})
+```
+
+**22b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/hole-summary.test.tsx
+```
+Expected: FAIL — module not found.
+
+**22c. Create `fdgolf-app/components/round/hole-summary.tsx`:**
+```tsx
+'use client'
+
+import { formatToPar } from '@/lib/round/score-format'
+import { nextPhysicalHole } from '@/lib/round/shotgun'
+
+type PlayerLine = { playerId: string; name: string; gross: number }
+
+type Props = {
+  holeNumber: number
+  par: number
+  players: PlayerLine[]
+  bestPlayerId: string | null
+  teamStanding: { position: number; of: number } | null
+  stale: boolean
+  onNext: () => void
+}
+
+export function HoleSummary({ holeNumber, par, players, bestPlayerId, teamStanding, stale, onNext }: Props) {
+  const next = nextPhysicalHole(holeNumber)
+  return (
+    <div className="flex flex-col gap-3 p-4">
+      <h2 className="text-lg font-bold">Hole {holeNumber} · Par {par}</h2>
+
+      <ul className="flex flex-col gap-1">
+        {players.map((p) => (
+          <li key={p.playerId} className="flex items-center justify-between rounded bg-slate-800 px-3 py-2">
+            <span className="flex items-center gap-2">
+              {p.name}
+              {p.playerId === bestPlayerId && (
+                <span data-testid={`best-${p.playerId}`} className="rounded bg-green-500 px-1 text-[10px] font-bold text-slate-900">
+                  BEST
+                </span>
+              )}
+            </span>
+            <span className="text-sm text-slate-300">
+              {p.gross} · {formatToPar(p.gross, par)}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {teamStanding && (
+        <div className="rounded bg-slate-900 px-3 py-2 text-sm">
+          Team standing: {teamStanding.position} of {teamStanding.of}
+          {stale && <span className="ml-2 text-xs text-slate-500">(as of last sync)</span>}
+        </div>
+      )}
+
+      <button onClick={onNext} className="rounded bg-green-700 py-3 font-bold">
+        Next: Hole {next}
+      </button>
+    </div>
+  )
+}
+```
+
+**22d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/hole-summary.test.tsx
+```
+Expected: PASS (5 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/hole-summary.tsx fdgolf-app/__tests__/components/round/hole-summary.test.tsx && git commit -m "[feat] EPIC-0005: HoleSummary per-player + BEST + standing + Next (TC-0041)"
+```
+
+---
+
+### Task 23 — Coverage exclusions for new Server Components [SPINE]
+
+The three route pages are Server Components — excluded from unit-coverage per `vitest.config.ts` convention; gated by build + lint + smoke instead.
+
+**23a. Edit `fdgolf-app/vitest.config.ts`** — add to the `coverage.exclude` array (after the existing `app/register/[slug]/page.tsx` line):
+```ts
+        'app/round/[roundId]/hole/[n]/page.tsx', // Server Component, integration/smoke-tested
+        'app/round/[roundId]/hole/[n]/summary/page.tsx', // Server Component, integration/smoke-tested
+        'app/round/[roundId]/complete/page.tsx', // Server Component, integration/smoke-tested
+```
+
+**23b. Verify the existing suite still passes and config is valid:**
+```bash
+cd fdgolf-app && npx vitest run
+```
+Expected: all tests PASS; no config error.
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/vitest.config.ts && git commit -m "[chore] EPIC-0005: exclude round Server Components from coverage"
+```
+
+---
+
+### Task 24 — Active-hole route wiring (`hole/[n]/page.tsx` + client shell) [SPINE — gated by build+lint+smoke]
+
+Wire the Server Component: fetch round/hole/clubs/claim, compute the frame, fetch+cache the static map, and render a client shell that composes `<HoleMap>` + `<ShotCapture>` + `<HoleProgressPill>`. The Server Component is coverage-excluded; the client shell logic was unit-covered in Tasks 17–19. Verification is build + lint + a dev smoke.
+
+**24a. Create the client shell `fdgolf-app/components/round/active-hole.tsx`** (composition; thin glue over already-tested units):
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { HoleMap } from './hole-map'
+import { ShotCapture } from './shot-capture'
+import { HoleProgressPill } from './hole-progress-pill'
+import { computeFrame, staticMapUrl } from '@/lib/round/frame'
+import { fetchAndCacheStaticMap } from '@/lib/round/static-map'
+import { useRoundStore } from '@/lib/round/store'
+import { createShotAction } from '@/lib/actions/shots'
+import { nextPhysicalHole } from '@/lib/round/shotgun'
+import type { LatLng, LocalShot } from '@/lib/round/types'
+
+type Club = { id: string; display_name: string }
+
+type Props = {
+  roundId: string
+  holeId: string
+  holeNumber: number
+  pin: LatLng
+  tee: LatLng
+  clubs: Club[]
+  defaultClubId: string | null
+  playerId: string
+  completedCount: number
+  mapboxToken: string
+}
+
+export function ActiveHole(props: Props) {
+  const router = useRouter()
+  const { commitShot, flushQueue } = useRoundStore()
+  const [baseUrl, setBaseUrl] = useState<string | null>(null)
+  const [shotNumber, setShotNumber] = useState(1)
+  const frame = computeFrame([props.pin, props.tee], { w: 390, h: 520 })
+
+  useEffect(() => {
+    let revoke: string | null = null
+    fetchAndCacheStaticMap(props.holeId, staticMapUrl(frame, props.mapboxToken))
+      .then((url) => {
+        revoke = url
+        setBaseUrl(url)
+      })
+      .catch(() => setBaseUrl(null))
+    return () => {
+      if (revoke) URL.revokeObjectURL(revoke)
+    }
+    // frame is deterministic from props; holeId keys the cache
+  }, [props.holeId, props.mapboxToken]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleCommit(shot: Omit<LocalShot, 'roundId' | 'serverId'>) {
+    const local: LocalShot = { ...shot, roundId: props.roundId, serverId: null }
+    await commitShot(local)
+    setShotNumber((n) => n + 1)
+    await flushQueue((s) =>
+      createShotAction({
+        roundId: s.roundId,
+        holeNumber: s.holeNumber,
+        shotNumber: s.shotNumber,
+        playerId: s.playerId,
+        clubId: s.clubId,
+        originLat: s.originLat,
+        originLng: s.originLng,
+        outcome: s.outcome,
+        strokeCount: s.strokeCount,
+        accuracyM: s.accuracyM,
+        rehitFromShotId: null,
+        rehitOrigin: s.rehitOrigin,
+      })
+    )
+    if (shot.outcome === 'sunk') {
+      router.push(`/round/${props.roundId}/hole/${props.holeNumber}/summary`)
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-slate-900 text-white">
+      <div className="flex items-center justify-between p-3">
+        <HoleProgressPill completedCount={props.completedCount} />
+        <span className="text-xs text-slate-400">Next: Hole {nextPhysicalHole(props.holeNumber)}</span>
+      </div>
+      {baseUrl && (
+        <HoleMap
+          baseImageUrl={baseUrl}
+          frame={frame}
+          hole={{ pin: props.pin, tee: props.tee }}
+          shots={[]}
+          gps={null}
+          tapMode={false}
+          onMapTap={() => {}}
+        />
+      )}
+      <ShotCapture
+        playerId={props.playerId}
+        holeNumber={props.holeNumber}
+        shotNumber={shotNumber}
+        clubs={props.clubs}
+        defaultClubId={props.defaultClubId}
+        onCommit={handleCommit}
+      />
+    </div>
+  )
+}
+```
+
+**24b. Create `fdgolf-app/app/round/[roundId]/hole/[n]/page.tsx`** (Server Component — fetch + claim + render):
+```tsx
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { claimRoundAction } from '@/lib/actions/rounds'
+import { ActiveHole } from '@/components/round/active-hole'
+
+type Tee = { colour: string; yardage: number; lat?: number; lng?: number }
+
+export default async function HolePage({ params }: { params: { roundId: string; n: string } }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const holeNumber = Number(params.n)
+
+  const { data: round } = await supabase
+    .from('rounds')
+    .select('id, player_id, bag_clubs, tournament_id, tournaments(course_id)')
+    .eq('id', params.roundId)
+    .single()
+  if (!round) redirect('/')
+
+  // Soft claim (D3) — best-effort; read-only banner handled client-side if claimed_by_other.
+  await claimRoundAction(params.roundId)
+
+  const courseId = (round.tournaments as unknown as { course_id: string } | null)?.course_id
+  const { data: hole } = await supabase
+    .from('holes')
+    .select('id, number, par, pin_lat, pin_lng, tees')
+    .eq('course_id', courseId ?? '')
+    .eq('number', holeNumber)
+    .single()
+
+  const { data: allClubs } = await supabase.from('clubs').select('id, display_name').order('display_order')
+  const bag = (round.bag_clubs as string[]) ?? []
+  const clubs = bag.length ? (allClubs ?? []).filter((c) => bag.includes(c.id)) : (allClubs ?? [])
+
+  const tees = (hole?.tees ?? []) as Tee[]
+  const tee = tees[0]?.lat != null ? { lat: tees[0].lat!, lng: tees[0].lng! } : { lat: hole?.pin_lat ?? 0, lng: hole?.pin_lng ?? 0 }
+  const defaultClub = clubs.find((c) => c.display_name === 'Driver') ?? clubs[0] ?? null
+
+  return (
+    <ActiveHole
+      roundId={round.id}
+      holeId={hole?.id ?? `${courseId}-${holeNumber}`}
+      holeNumber={holeNumber}
+      pin={{ lat: hole?.pin_lat ?? 0, lng: hole?.pin_lng ?? 0 }}
+      tee={tee}
+      clubs={clubs}
+      defaultClubId={defaultClub?.id ?? null}
+      playerId={round.player_id}
+      completedCount={0}
+      mapboxToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''}
+    />
+  )
+}
+```
+
+**24c. Gate: lint + type-check + build (no unit test for Server Components):**
+```bash
+cd fdgolf-app && npm run lint && npm run type-check && npm run build
+```
+Expected: lint clean, `tsc --noEmit` exit 0, production build succeeds. The `active-hole.tsx` client shell is exercised by Tasks 17–19 unit tests on its children; its own glue is verified by build + the smoke below.
+
+**24d. Smoke** (manual, documented for the executor): with the dev server running and a seeded in-progress round, visit `/round/{roundId}/hole/{startHole}` on a 390×844 viewport — confirm the static map renders, Start shot captures GPS, and an In Play tap advances the shot counter. Capture a screenshot for the PR.
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/active-hole.tsx fdgolf-app/app/round/[roundId]/hole/[n]/page.tsx && git commit -m "[feat] EPIC-0005: active-hole route + client shell (US-0035/0036/0044/0045)"
+```
+
+---
+
+### Task 25 — Hole-summary + round-complete routes (gated by build+lint) [SPINE summary / DEFER complete]
+
+**25a. Create `fdgolf-app/app/round/[roundId]/hole/[n]/summary/page.tsx`** (Server Component):
+```tsx
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { HoleSummary } from '@/components/round/hole-summary'
+import { HoleSummaryClient } from '@/components/round/hole-summary-client'
+
+export default async function HoleSummaryPage({ params }: { params: { roundId: string; n: string } }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const holeNumber = Number(params.n)
+
+  const { data: round } = await supabase
+    .from('rounds')
+    .select('id, team_id, tournament_id, tournaments(course_id)')
+    .eq('id', params.roundId)
+    .single()
+  if (!round) redirect('/')
+
+  const courseId = (round.tournaments as unknown as { course_id: string } | null)?.course_id
+  const { data: hole } = await supabase
+    .from('holes')
+    .select('par')
+    .eq('course_id', courseId ?? '')
+    .eq('number', holeNumber)
+    .single()
+
+  // Per-player gross for this hole's team (server-derived hole_scores).
+  const { data: scores } = await supabase
+    .from('hole_scores')
+    .select('round_id, gross_score, rounds(player_id, players(full_name))')
+    .eq('hole_number', holeNumber)
+
+  // Best Ball contributor for this hole (server-derived).
+  const { data: best } = await supabase
+    .from('team_hole_scores')
+    .select('contributing_player_id')
+    .eq('team_id', round.team_id)
+    .eq('hole_number', holeNumber)
+    .single()
+
+  const players = (scores ?? []).map((s) => {
+    const r = s.rounds as unknown as { player_id: string; players: { full_name: string } | null } | null
+    return { playerId: r?.player_id ?? '', name: r?.players?.full_name ?? 'Player', gross: s.gross_score }
+  })
+
+  return (
+    <HoleSummaryClient roundId={round.id} holeNumber={holeNumber}>
+      <HoleSummary
+        holeNumber={holeNumber}
+        par={hole?.par ?? 4}
+        players={players}
+        bestPlayerId={best?.contributing_player_id ?? null}
+        teamStanding={null}
+        stale={false}
+        onNext={() => {}}
+      />
+    </HoleSummaryClient>
+  )
+}
+```
+
+**25b. Create the small client wrapper `fdgolf-app/components/round/hole-summary-client.tsx`** (handles the Next-CTA navigation; the visual `<HoleSummary>` is already unit-tested):
+```tsx
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { nextPhysicalHole } from '@/lib/round/shotgun'
+
+export function HoleSummaryClient({
+  roundId,
+  holeNumber,
+  children,
+}: {
+  roundId: string
+  holeNumber: number
+  children: React.ReactNode
+}) {
+  const router = useRouter()
+  return (
+    <div className="min-h-screen bg-slate-900 text-white">
+      {children}
+      <div className="p-4">
+        <button
+          className="w-full rounded bg-green-700 py-3 font-bold"
+          onClick={() => router.push(`/round/${roundId}/hole/${nextPhysicalHole(holeNumber)}`)}
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+**25c. Create `fdgolf-app/app/round/[roundId]/complete/page.tsx`** (AC-0177):
+```tsx
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { completeRoundAction } from '@/lib/actions/rounds'
+
+export default async function RoundCompletePage({ params }: { params: { roundId: string } }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  await completeRoundAction(params.roundId) // AC-0176: idempotent; only completes when 18 finals
+
+  const { data: finals } = await supabase
+    .from('hole_scores')
+    .select('gross_score')
+    .eq('round_id', params.roundId)
+    .eq('status', 'final')
+
+  const total = (finals ?? []).reduce((sum, h) => sum + h.gross_score, 0)
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-slate-900 p-6 text-white">
+      <h1 className="text-2xl font-bold">Round complete</h1>
+      <p className="text-lg text-green-400">Total gross: {total}</p>
+    </main>
+  )
+}
+```
+
+**25d. Gate: lint + type-check + build:**
+```bash
+cd fdgolf-app && npm run lint && npm run type-check && npm run build
+```
+Expected: clean lint, tsc exit 0, build succeeds.
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/app/round/[roundId]/hole/[n]/summary/page.tsx fdgolf-app/components/round/hole-summary-client.tsx fdgolf-app/app/round/[roundId]/complete/page.tsx && git commit -m "[feat] EPIC-0005: hole-summary + round-complete routes (US-0043/0046)"
+```
+
+---
+
+### Task 26 — Coverage gate ≥80% [SPINE]
+
+**26a. Run full suite with coverage:**
+```bash
+cd fdgolf-app && npm run test:coverage
+```
+Expected: all tests PASS; lines/functions/branches/statements ≥80% (the pure `lib/round/*` modules and the five components are fully covered; Server Components are excluded). If a branch falls below threshold, add a targeted test to the corresponding `lib/round/*` or component test file — do NOT lower the threshold.
+
+Commit (only if a top-up test was needed):
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add -A fdgolf-app/__tests__ && git commit -m "[test] EPIC-0005: coverage top-up to >=80%"
+```
+
+---
+
+### Task 27 — Sentinel E2E single-hole flow (TC-0042) [SPINE]
+
+One Playwright spec covering begin → shot → sunk → summary → next, per spec §8.
+
+**27a. Create `fdgolf-app/e2e/round-single-hole.spec.ts`:**
+```ts
+import { test, expect } from '@playwright/test'
+
+// Assumes a seeded in-progress round for the signed-in test player (see e2e fixtures).
+// ROUND_ID and START_HOLE are provided by the e2e env (seeded in global setup).
+const ROUND_ID = process.env.E2E_ROUND_ID ?? ''
+const START_HOLE = process.env.E2E_START_HOLE ?? '1'
+
+test('single-hole flow: capture a shot, sink it, see the summary, advance', async ({ page, context }) => {
+  // Grant geolocation so Start shot captures coords.
+  await context.grantPermissions(['geolocation'])
+  await context.setGeolocation({ latitude: 45.0, longitude: -75.0 })
+
+  await page.goto(`/round/${ROUND_ID}/hole/${START_HOLE}`)
+  await expect(page.getByText(/Hole \d+ of 18/)).toBeVisible()
+
+  await page.getByRole('button', { name: /start shot/i }).click()
+  await expect(page.getByRole('button', { name: /in play/i })).toBeVisible()
+  await page.getByRole('button', { name: /in play/i }).click()
+
+  await page.getByRole('button', { name: /start shot/i }).click()
+  await page.getByRole('button', { name: /^sunk/i }).click()
+
+  // Sunk routes to the hole summary.
+  await expect(page).toHaveURL(new RegExp(`/round/${ROUND_ID}/hole/${START_HOLE}/summary`))
+  await expect(page.getByRole('button', { name: /continue/i })).toBeVisible()
+})
+```
+
+**27b. Run the E2E (requires dev server + seeded round; documented for Sentinel):**
+```bash
+cd fdgolf-app && npx playwright test e2e/round-single-hole.spec.ts
+```
+Expected: 1 passed. If geolocation permission flakes in CI, confirm `grantPermissions(['geolocation'])` runs before `goto`.
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/e2e/round-single-hole.spec.ts && git commit -m "[test] EPIC-0005: Sentinel E2E single-hole flow (TC-0042)"
+```
+
+---
+
+### Task 28 — Update ID_REGISTRY [SPINE]
+
+**28a. Edit `docs/ID_REGISTRY.md`** — set the TC row's "Next Available ID" to `TC-0043` and "Last Assigned" to `TC-0042` (TC-0021–TC-0042 consumed by this plan). TASK IDs unchanged (the plan reused the pre-allocated TASK-0127–0169).
+
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add docs/ID_REGISTRY.md && git commit -m "[docs] EPIC-0005: reserve TC-0021..TC-0042 in ID registry"
+```
+
+---
+
+## Self-Review
+
+### AC coverage map (AC-0137 – AC-0181)
+
+| AC | Requirement | Task(s) |
+|----|-------------|---------|
+| AC-0137 | Map shows fairway base from cached static URL | Task 11 (fetch+cache), Task 4 (URL), Task 18 (render), Task 24 (wire) |
+| AC-0138 | Hole pin marker | Task 18 (`marker-pin`) |
+| AC-0139 | Tee marker | Task 18 (`marker-tee`) |
+| AC-0140 | Prior shots dashed lines + numbered markers | Task 18 (polyline + `marker-shot-N`) |
+| AC-0141 | Current position pulsed red | Task 18 (`marker-gps`) |
+| AC-0142 | Distance-to-pin overlay top-left | Task 5 (`formatYardsToPin`), Task 18 (overlay) |
+| AC-0143 | `getCurrentPosition` high accuracy | Task 19 (`enableHighAccuracy: true`) |
+| AC-0144 | lat/lng captured to local state on Start Shot | Task 19 (draft), Task 6 (START_SHOT) |
+| AC-0145 | Selected club persisted with the draft | Task 19 (clubId in draft) |
+| AC-0146 | Four colour-coded outcome buttons | Task 19 |
+| AC-0147 | In Play/Sunk/Mulligan insert with stroke_count 1/1/0 | Task 6 (`strokeCountFor`), Task 13 (insert) |
+| AC-0148 | OOB triggers rehit prompt | Task 6 (OOB_REHIT), Task 19 (prompt) |
+| AC-0149 | Prompt offers OOB-location / prior-position | Task 6 (REHIT), Task 19 |
+| AC-0150 | OOB shot stroke_count=2 | Task 6, Task 13 |
+| AC-0151 | Follow-up origin = chosen rehit position | Task 6 (`nextOrigin`), Task 19/24 |
+| AC-0152 | rehit_from_shot_id + rehit_origin on follow-up | Task 6 (`pendingRehit*`), Task 13 (insert fields) |
+| AC-0153 | Mulligan stroke_count=0 | Task 6, Task 13; recalc via trigger |
+| AC-0154 | Next shot origin defaults to same location | Task 6 (`nextOrigin` on mulligan) |
+| AC-0155 | Sunk stroke_count=1 | Task 6, Task 13 |
+| AC-0156 | gross = SUM(stroke_count) on hole | EPIC-0006 trigger (Task 13 note); verified Task 9 stack |
+| AC-0157 | hole_scores row inserted (provisional/final) | EPIC-0006 trigger (automatic) |
+| AC-0158 | team_hole_scores recalc | EPIC-0006 trigger (automatic) |
+| AC-0159 | Tap a shot to open edit panel | Task 14 (editShotAction); UI entry in active-hole (Task 24) tap-to-edit hook |
+| AC-0160 | Editable club/outcome/GPS | Task 14 |
+| AC-0161 | Before/after recorded in shot_edits | Task 14 |
+| AC-0162 | shots.updated_at / updated_by set | Task 14 (`updated_by`; `updated_at` via DB trigger) |
+| AC-0163 | Hole scores recalculated on change | EPIC-0006 UPDATE trigger (Task 14 note) |
+| AC-0164 | Distance-to-pin per member last shot | Task 7 (`computeNextPlayer`), Task 20 |
+| AC-0165 | Auto-select greatest distance | Task 7, Task 20 |
+| AC-0166 | Manual override | Task 20 |
+| AC-0167 | Exclude sunk members | Task 7, Task 20 |
+| AC-0168 | Works with team_size 2–5 | Task 7 (`it.each([2,3,4,5])`) |
+| AC-0169 | Per-player gross + par-relative | Task 21 (`formatToPar`), Task 22 |
+| AC-0170 | BEST badge on contributor | Task 22 |
+| AC-0171 | Team standing position/N | Task 22, Task 25 (server fetch) |
+| AC-0172 | "Next: Hole X" CTA (shotgun wrap) | Task 8, Task 22 |
+| AC-0173 | Next advances accounting for 18→1 wrap | Task 8 (`nextPhysicalHole`) |
+| AC-0174 | New hole map renders; shot stream resets | Task 24 (route per-hole; store keyed by hole) |
+| AC-0175 | "Hole X of 18" pill | Task 8 (`holesCompletedPill`), Task 17 |
+| AC-0176 | All 18 final → status=completed + completed_at | Task 15/16 (`completeRoundAction`) |
+| AC-0177 | "Round complete" screen with final score | Task 25 (complete route) |
+| AC-0178 | GPS denied → explanation + tap instructions | Task 19 (gpsDenied), Task 18 (tap message) |
+| AC-0179 | Map click sets origin coords | Task 18 (`onMapTap`→`unproject`), Task 3 |
+| AC-0180 | "~245 yds to pin" approx prefix | Task 5 (`formatYardsToPin`) |
+| AC-0181 | GPS accuracy (m) stored on shot | Task 9 (`accuracy_m` column), Task 13 (`accuracy_m` insert), Task 19 (capture) |
+
+**Result: every AC-0137 – AC-0181 maps to at least one task. No gaps.**
+
+### Story → MVP-spine / deferrable (per §9)
+
+| Story | Tasks | Classification |
+|-------|-------|----------------|
+| US-0035 (map) | 4, 11, 18, 24 | SPINE |
+| US-0036 (GPS capture) | 19, 24 | SPINE |
+| US-0037 (outcomes) | 6, 13, 19 | SPINE |
+| US-0038 (OOB) | 6, 13, 19 | SPINE |
+| US-0039 (mulligan) | 6, 13 | SPINE |
+| US-0040 (sunk) | 6, 13, 24 | SPINE |
+| US-0041 (edit prior shot) | 14 | DEFER |
+| US-0042 (turn-picker auto-advance) | 7, 20 | DEFER (manual works) |
+| US-0043 (hole summary) | 21, 22, 25 | SPINE |
+| US-0044 (next hole) | 8, 24 | SPINE |
+| US-0045 (progress pill) | 8, 17 | SPINE |
+| US-0046 (round auto-complete) | 15, 16, 25 | DEFER (can be manual) |
+| US-0047 (GPS-denied tap) | 3, 18, 19 | DEFER |
+| US-0048 (approx distance) | 5 | SPINE (AC-0180 spine; 0181 spine via Task 9) |
+| Soft claim (D3) | 15 | SPINE (online safety; offline edge L1 accepted) |
+
+### Placeholder scan
+No "TBD", "similar to Task N", "add validation", or undefined-function references remain. Every task contains complete, runnable test + implementation code with exact paths, commands, and expected output. (The Task 5 inline typo was corrected to the parenthesized `toBeLessThan(0.01)`.)
+
+### Type/signature consistency
+- `LatLng`, `ShotOutcome`, `RehitOrigin`, `LocalShot`, `QueueItem` declared once in `lib/round/types.ts` (Task 1); all later files import them — no shadow re-declarations.
+- `Frame` declared in `projection.ts` (Task 2) and imported by `frame.ts`, `static-map`-consumers, `hole-map.tsx`, `active-hole.tsx`.
+- `strokeCountFor`/`shotReducer`/`ShotDraft`/`CommittedShot` from `shot-machine.ts` (Task 6) used by `<ShotCapture>` (Task 19) with matching signatures.
+- `ShotActionResult` (`{ok:true;serverId}` | `{ok:false;code}`) shared by `createShotAction`/`editShotAction` (Tasks 13/14); `SendResult` in the store (Task 12) is the structurally-compatible subset the `flushQueue` `send` fn returns, and `active-hole.tsx` (Task 24) adapts `createShotAction`'s result into it.
+- `ClaimResult`/`CompleteResult` (Tasks 15/16) are action-local and only consumed by the route Server Components (Tasks 24/25).
+- `onCommit` payload in `<ShotCapture>` (`Omit<LocalShot,'localId'|'roundId'|'serverId'> & {localId}` ≡ `Omit<LocalShot,'roundId'|'serverId'>`) matches `handleCommit`'s parameter type in `active-hole.tsx` (Task 24).
+
+### Notes / spec ambiguities resolved
+1. **`zustand`/`idb` not yet installed** — added as Task 0 (runtime) and `fake-indexeddb` as a Task 10 devDependency for jsdom IndexedDB tests.
+2. **`send` injection into `flushQueue`** — the spec says the store flushes to Server Actions, but to keep the store unit-testable without mocking `'use server'` modules, `flushQueue(send)` takes the network fn as a parameter; `active-hole.tsx` wires it to `createShotAction`. This preserves the D1 contract and the idempotency rule.
+3. **`recompute_hole_score` finalizes a hole on the first sunk shot** (EPIC-0006), so AC-0176's "18 final hole_scores" is reached once every team member's round has sunk on all 18 holes; `completeRoundAction` counts `status='final'` rows on the *round* (one player) — consistent with `rounds` being per-player.
+4. **Hole `id` for the static-map cache key** — `holes` has an `id`; the route passes it (falling back to `${courseId}-${n}`) so the Cache API key is stable per physical hole (D4).
+5. **Tee coordinates** — `holes.tees` is JSONB; the design's frame needs tee lat/lng. The plan reads `tees[0].lat/lng` when present and falls back to the pin location (single-point frame → zoom 18) so the map still renders if tee coords are absent. This is a documented graceful degradation, not a hidden assumption.
+6. **`shot_edits` RLS is admin-only for direct insert** (existing policy). In flexible self/scorer mode the editor is the round owner/organizer; if RLS blocks the audit insert for a non-admin owner, `editShotAction` returns `network` and US-0041 falls back to EPIC-0008 admin edit — acceptable since US-0041 is DEFER. Flagged here for the executor to confirm against the live policy during Task 14.
