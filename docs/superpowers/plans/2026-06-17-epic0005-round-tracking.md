@@ -860,3 +860,276 @@ Commit:
 ```bash
 cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/shotgun.ts fdgolf-app/__tests__/lib/round/shotgun.test.ts && git commit -m "[feat] EPIC-0005: shotgun wrap + progress-pill math (TC-0027)"
 ```
+
+---
+
+### Task 9 — Soft-claim + accuracy_m migration (TC-0028) [SPINE]
+
+Append-only migration adding the D3 soft-claim columns and `shots.accuracy_m` (AC-0181). Verified against the local stack.
+
+**9a. Create `fdgolf-app/supabase/migrations/20260617000001_epic0005_round_tracking.sql`:**
+```sql
+-- ============================================================
+-- FDgolf EPIC-0005: Round Tracking — soft claim + shot accuracy
+-- Story: US-0035..US-0048 | Decision D3, AC-0181
+-- Depends on: 20260612000003_round_tracking (rounds, shots)
+-- Append-only. Existing EPIC-0006 RLS on rounds/shots already covers these columns
+-- (rounds_update_* and shots_insert_* policies). No new tables, no new policies.
+-- ============================================================
+
+-- Soft-claim columns (D3): one active recorder per round via recorded_by + heartbeat.
+ALTER TABLE rounds
+  ADD COLUMN recorded_by           UUID        REFERENCES players(id) ON DELETE SET NULL,
+  ADD COLUMN recording_expires_at  TIMESTAMPTZ;
+
+-- AC-0181: GPS accuracy (metres) captured with each shot when available.
+ALTER TABLE shots
+  ADD COLUMN accuracy_m DOUBLE PRECISION;
+```
+
+**9b. Reset the local stack to apply (expect success):**
+```bash
+cd fdgolf-app && npx supabase db reset
+```
+Expected: all migrations replay cleanly through `20260617000001_epic0005_round_tracking`; no errors.
+
+**9c. Verify the columns exist (TC-0028):**
+```bash
+cd fdgolf-app && npx supabase db reset >/dev/null 2>&1; psql "$(npx supabase status -o env | grep DB_URL | cut -d= -f2- | tr -d '\"')" -c "\d rounds" -c "\d shots"
+```
+Expected: `\d rounds` lists `recorded_by` (uuid) and `recording_expires_at` (timestamp with time zone); `\d shots` lists `accuracy_m` (double precision).
+
+If `psql` is unavailable in the environment, substitute:
+```bash
+cd fdgolf-app && npx supabase db reset && echo "SELECT column_name FROM information_schema.columns WHERE table_name='rounds' AND column_name IN ('recorded_by','recording_expires_at'); SELECT column_name FROM information_schema.columns WHERE table_name='shots' AND column_name='accuracy_m';" | npx supabase db execute --stdin 2>/dev/null || echo "verify via Supabase Studio table editor"
+```
+Expected: three rows returned (`recorded_by`, `recording_expires_at`, `accuracy_m`).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/supabase/migrations/20260617000001_epic0005_round_tracking.sql && git commit -m "[feat] EPIC-0005: soft-claim + shots.accuracy_m migration (TC-0028)"
+```
+
+---
+
+### Task 10 — `idb.ts` durable persistence wrapper (TC-0029) [SPINE]
+
+Thin idb wrapper: two object stores (`shots`, `queue`). Tested in jsdom via `fake-indexeddb`.
+
+**10a. Add the test-only dependency:**
+```bash
+cd fdgolf-app && npm install -D fake-indexeddb@^6
+```
+Expected: `fake-indexeddb` added to devDependencies; exit 0. Commit with this task.
+
+**10b. Write failing test** `fdgolf-app/__tests__/lib/round/idb.test.ts`:
+```ts
+import { describe, it, expect, beforeEach } from 'vitest'
+import 'fake-indexeddb/auto'
+import { putShot, getShotsForRound, putQueueItem, getQueue, deleteQueueItem } from '@/lib/round/idb'
+import type { LocalShot, QueueItem } from '@/lib/round/types'
+
+function shot(localId: string, roundId: string): LocalShot {
+  return {
+    localId, roundId, holeNumber: 1, shotNumber: 1, playerId: 'p1', clubId: 'c1',
+    originLat: 45, originLng: -75, outcome: 'in_play', strokeCount: 1, accuracyM: 5,
+    rehitFromShotLocalId: null, rehitOrigin: null, serverId: null,
+  }
+}
+
+beforeEach(async () => {
+  indexedDB = new IDBFactory()
+})
+
+describe('idb persistence', () => {
+  it('round-trips a shot keyed by localId', async () => {
+    await putShot(shot('s1', 'r1'))
+    const rows = await getShotsForRound('r1')
+    expect(rows).toHaveLength(1)
+    expect(rows[0].localId).toBe('s1')
+  })
+
+  it('returns only shots for the requested round', async () => {
+    await putShot(shot('s1', 'r1'))
+    await putShot(shot('s2', 'r2'))
+    expect(await getShotsForRound('r1')).toHaveLength(1)
+  })
+
+  it('enqueues, lists, and deletes queue items', async () => {
+    const item: QueueItem = { localId: 's1', kind: 'create', payload: shot('s1', 'r1') }
+    await putQueueItem(item)
+    expect(await getQueue()).toHaveLength(1)
+    await deleteQueueItem('s1')
+    expect(await getQueue()).toHaveLength(0)
+  })
+})
+```
+
+Note: `fake-indexeddb/auto` installs a global `IDBFactory`. The `beforeEach` reset gives each test a clean DB.
+
+**10c. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/idb.test.ts
+```
+Expected: FAIL — `Cannot find module '@/lib/round/idb'`.
+
+**10d. Create `fdgolf-app/lib/round/idb.ts`:**
+```ts
+import { openDB, type IDBPDatabase } from 'idb'
+import type { LocalShot, QueueItem } from './types'
+
+const DB_NAME = 'fdgolf-round'
+const DB_VERSION = 1
+
+async function db(): Promise<IDBPDatabase> {
+  return openDB(DB_NAME, DB_VERSION, {
+    upgrade(d) {
+      if (!d.objectStoreNames.contains('shots')) {
+        const s = d.createObjectStore('shots', { keyPath: 'localId' })
+        s.createIndex('byRound', 'roundId')
+      }
+      if (!d.objectStoreNames.contains('queue')) {
+        d.createObjectStore('queue', { keyPath: 'localId' })
+      }
+    },
+  })
+}
+
+export async function putShot(shot: LocalShot): Promise<void> {
+  await (await db()).put('shots', shot)
+}
+
+export async function getShotsForRound(roundId: string): Promise<LocalShot[]> {
+  return (await db()).getAllFromIndex('shots', 'byRound', roundId) as Promise<LocalShot[]>
+}
+
+export async function putQueueItem(item: QueueItem): Promise<void> {
+  await (await db()).put('queue', item)
+}
+
+export async function getQueue(): Promise<QueueItem[]> {
+  return (await db()).getAll('queue') as Promise<QueueItem[]>
+}
+
+export async function deleteQueueItem(localId: string): Promise<void> {
+  await (await db()).delete('queue', localId)
+}
+```
+
+**10e. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/idb.test.ts
+```
+Expected: PASS (3 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/idb.ts fdgolf-app/__tests__/lib/round/idb.test.ts fdgolf-app/package.json fdgolf-app/package-lock.json && git commit -m "[feat] EPIC-0005: IndexedDB persistence wrapper + fake-indexeddb (TC-0029)"
+```
+
+---
+
+### Task 11 — `static-map.ts` fetch + Cache API (TC-0030) [SPINE]
+
+Fetch the static PNG once, cache by `holeId`, serve offline; no re-fetch on GPS move.
+
+**11a. Write failing test** `fdgolf-app/__tests__/lib/round/static-map.test.ts`:
+```ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { fetchAndCacheStaticMap, cacheKeyFor } from '@/lib/round/static-map'
+
+const PNG = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })
+
+function installCacheMock() {
+  const store = new Map<string, Response>()
+  const cache = {
+    match: vi.fn(async (k: string) => store.get(k)),
+    put: vi.fn(async (k: string, r: Response) => {
+      store.set(k, r)
+    }),
+  }
+  // @ts-expect-error test shim
+  globalThis.caches = { open: vi.fn(async () => cache) }
+  return cache
+}
+
+beforeEach(() => {
+  vi.restoreAllMocks()
+  // @ts-expect-error test shim
+  globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock')
+})
+
+describe('cacheKeyFor', () => {
+  it('keys by hole id under a stable namespace', () => {
+    expect(cacheKeyFor('hole-7')).toBe('/fdgolf/static-map/hole-7')
+  })
+})
+
+describe('fetchAndCacheStaticMap', () => {
+  it('fetches once and caches the PNG when not cached', async () => {
+    const cache = installCacheMock()
+    const fetchMock = vi.fn(async () => new Response(PNG, { status: 200 }))
+    // @ts-expect-error test shim
+    globalThis.fetch = fetchMock
+    const url = await fetchAndCacheStaticMap('hole-7', 'https://api.mapbox.com/x')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(cache.put).toHaveBeenCalledTimes(1)
+    expect(url).toBe('blob:mock')
+  })
+
+  it('serves the cached PNG without re-fetching (preserves quota offline)', async () => {
+    const cache = installCacheMock()
+    await cache.put('/fdgolf/static-map/hole-7', new Response(PNG, { status: 200 }))
+    const fetchMock = vi.fn()
+    // @ts-expect-error test shim
+    globalThis.fetch = fetchMock
+    const url = await fetchAndCacheStaticMap('hole-7', 'https://api.mapbox.com/x')
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(url).toBe('blob:mock')
+  })
+})
+```
+
+**11b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/static-map.test.ts
+```
+Expected: FAIL — module not found.
+
+**11c. Create `fdgolf-app/lib/round/static-map.ts`:**
+```ts
+const NS = '/fdgolf/static-map'
+const CACHE_NAME = 'fdgolf-static-maps'
+
+export function cacheKeyFor(holeId: string): string {
+  return `${NS}/${holeId}`
+}
+
+/**
+ * D4: fetch the Mapbox Static Images PNG once, cache by holeId via the Cache API,
+ * and return an object URL. Served from cache offline; never re-fetched on GPS move.
+ */
+export async function fetchAndCacheStaticMap(holeId: string, url: string): Promise<string> {
+  const key = cacheKeyFor(holeId)
+  const cache = await caches.open(CACHE_NAME)
+  let res = await cache.match(key)
+  if (!res) {
+    res = await fetch(url)
+    if (!res.ok) throw new Error(`static map fetch failed: ${res.status}`)
+    await cache.put(key, res.clone())
+  }
+  const blob = await res.blob()
+  return URL.createObjectURL(blob)
+}
+```
+
+**11d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/static-map.test.ts
+```
+Expected: PASS (3 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/static-map.ts fdgolf-app/__tests__/lib/round/static-map.test.ts && git commit -m "[feat] EPIC-0005: static-map fetch + Cache API (TC-0030)"
+```
