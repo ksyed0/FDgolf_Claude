@@ -6,7 +6,7 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({ auth: { getUser: mockGetUser }, from: mockFrom }),
 }))
 
-import { createShotAction } from '@/lib/actions/shots'
+import { createShotAction, editShotAction } from '@/lib/actions/shots'
 
 const INPUT = {
   roundId: 'r1',
@@ -69,5 +69,46 @@ describe('createShotAction', () => {
     }
     mockFrom.mockImplementation(() => insertChain)
     expect(await createShotAction(INPUT)).toEqual({ ok: false, code: 'unique_violation' })
+  })
+})
+
+describe('editShotAction', () => {
+  it('writes before/after to shot_edits, updates the shot, and sets updated_by (AC-0160/0161/0162)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u9' } } })
+    const before = {
+      id: 'srv1',
+      club_id: 'c1',
+      outcome: 'in_play',
+      origin_lat: 45,
+      origin_lng: -75,
+      stroke_count: 1,
+    }
+    const shotsChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: before, error: null }),
+      update: vi.fn().mockReturnThis(),
+    }
+    const editsInsert = vi.fn().mockResolvedValue({ error: null })
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'shots') return shotsChain
+      if (t === 'shot_edits') return { insert: editsInsert }
+      return shotsChain
+    })
+    const res = await editShotAction({
+      shotId: 'srv1',
+      clubId: 'c2',
+      outcome: 'sunk',
+      strokeCount: 1,
+      originLat: 45.1,
+      originLng: -75.1,
+    })
+    expect(res).toEqual({ ok: true, serverId: 'srv1' })
+    expect(editsInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ shot_id: 'srv1', edited_by: 'u9' })
+    )
+    expect(shotsChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ club_id: 'c2', outcome: 'sunk', stroke_count: 1, updated_by: 'u9' })
+    )
   })
 })
