@@ -643,3 +643,82 @@ Fix: Either (a) change the label to "~{hole.yardage} yds (hole length)" to disti
 distance; or (b) suppress the yardage display entirely until TASK-0131 (US-0035) wires the
 haversine live-distance. The CTA already captures GPS, so option (b) is clean and avoids
 a false sense of precision.
+
+---
+
+BUG-0020: editShotAction fails for non-admin users — shot_edits INSERT is admin-only under RLS
+Severity: Medium
+Related Story: US-0041
+Related Task: TASK-0154
+Status: Open
+Fix Branch: (none yet)
+Lesson Encoded: No
+
+`lib/actions/shots.ts` (editShotAction) inserts a before/after audit row into `shot_edits`, but the
+existing RLS policy `shot_edits_insert_admin_only` has `WITH CHECK (fdgolf_is_admin())`. No organizer
+or round-owner INSERT policy exists, so every non-admin scorer edit fails at the audit-insert step and
+the action returns code `network`. In flexible self/scorer mode the editor is the round owner/organizer,
+who is not an admin — so in-round shot editing (US-0041) is non-functional for the intended user.
+
+This was a documented, accepted DEFER in the EPIC-0005 plan (Self-Review note #6): US-0041 falls back to
+EPIC-0008 admin edit. Logged here so it is tracked rather than silently deferred.
+
+Fix options:
+  (a) New append-only migration adding a `shot_edits` INSERT policy for the round owner and the
+      tournament organizer (e.g. `OR fdgolf_is_organizer_for(round->tournament)`), OR
+  (b) Perform the audit insert via the service-role client inside the Server Action (server-only),
+      keeping client RLS unchanged.
+Decision needed before US-0041 is promoted from DEFER to spine.
+
+---
+
+BUG-0021: Local `supabase db reset` fails on grante_ridge_seed — venues.country column missing
+Severity: Medium
+Related Story: (baseline / EPIC-0005 Task 9)
+Related Task: —
+Status: Open
+Fix Branch: (none yet)
+Lesson Encoded: No
+
+`npx supabase db reset` fails replaying `supabase/migrations/20260616000001_grante_ridge_seed.sql`
+with `column "country" of relation "venues" does not exist`. The seed (added in PR #45) references a
+`venues.country` column that does not exist in the canonical schema (BUG-0017 territory — venues/teams
+schema drift). This blocks a clean local stack reset, so EPIC-0005's migration (Task 9) had to be
+verified via direct `psql` instead of `db reset`. CI does not hit this (it does not run a full seed
+reset), so develop CI is green — this is a local-developer-environment blocker only.
+
+Fix: reconcile the Grante Ridge seed with the real venues schema — either add the missing column via an
+append-only migration ordered before the seed, or remove/adjust the `country` reference in the seed.
+
+---
+
+BUG-0022: EPIC-0005 round-tracking components built & tested but not wired into the active-hole route
+Severity: High
+Related Story: US-0035, US-0042, US-0043, US-0045, US-0046, US-0047, US-0048
+Related Task: TASK-0143 (route wiring)
+Status: Open
+Fix Branch: (none yet)
+Lesson Encoded: No
+
+The active-hole route (`app/round/[roundId]/hole/[n]/page.tsx` + `components/round/active-hole.tsx`)
+wires only the shot-capture spine (base map + pin + tee, ShotCapture, commit/flush, sunk → summary).
+Several components that exist and are fully unit-tested are passed stub props and therefore do not
+function in the live flow:
+
+  - `<HoleMap>` receives `shots={[]}`, `gps={null}`, `tapMode={false}`, `onMapTap={()=>{}}`:
+      → no prior-shot trail (AC-0140), no live GPS pulse (AC-0141), no distance overlay (AC-0142/0180),
+        no GPS-denied tap-to-place (AC-0178/0179, US-0047).
+  - `<HoleProgressPill>` receives `completedCount={0}` (hardcoded) → pill always shows "Hole 1 of 18"
+    (AC-0175, US-0045) — needs a real team-holes-completed query.
+  - `<TurnPicker>` is not rendered at all (US-0042, AC-0164–0168).
+  - Hole summary passes `teamStanding={null}` → no team standing (AC-0171, US-0043).
+  - No auto-navigation to `/complete` after hole 18 (AC-0176, US-0046); the screen works if reached.
+
+Root cause: integration was scoped to the MVP spine; overlay/turn/standing/progress/complete wiring
+were left as follow-ups. The unit tests pass because each component is exercised in isolation — the gap
+is purely route-level integration, which unit tests don't cover (no E2E fixture exists yet either, TC-0042).
+
+Fix: feed real data into the active-hole/summary routes — lift captured GPS from `<ShotCapture>` up to
+`<HoleMap>`, load prior shots for the trail, query team holes-completed for the pill, render `<TurnPicker>`,
+wire `tapMode`/`onMapTap` for GPS-denied entry, fetch team standing, and route to `/complete` after the
+18th final hole. Track as the EPIC-0005 integration follow-up (candidate for a dedicated story).

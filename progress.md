@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 13 — 2026-06-17
+
+### What Was Done
+
+- Executed EPIC-0005 (Round Tracking) plan via Conductor/DM_AGENT orchestration: Forge built Tasks 0–16 (pure logic, Zustand+IndexedDB store, Server Actions, migration), Pixel built Tasks 17–25 (components + routes), Lens reviewed (REQUEST_CHANGES → fixes → APPROVE), Sentinel added the E2E spec (TC-0042). Merged via PR #48; CI regression fixed via PR #49 (static-map test used a jsdom Blob body that lacks `.stream()` on CI Linux → switched to byte body). develop CI green. 593 unit tests, coverage ≥80%.
+- Lens fix round resolved 3 findings: OOB rehit linkage wired end-to-end (AC-0151/0152; root cause was a speculative reducer call minting a 2nd UUID), atomic `claimRoundAction` (closed TOCTOU race), `completeRoundAction` row-count guard.
+- Write-back to RELEASE_PLAN: EPIC-0005 = 6 stories Done (US-0036–0040, 0044 — the shot-capture spine), 8 In Progress (US-0035, 0041, 0042, 0043, 0045, 0046, 0047, 0048 — components built & unit-tested but not yet wired into the active-hole route). Filed BUG-0020 (editShot RLS), BUG-0021 (grante_ridge_seed local reset), BUG-0022 (route-integration gap: HoleMap overlays/GPS/tap, TurnPicker, progress count, team standing, round-complete nav). ID registry: BUG→0023, TC→0043.
+
+---
+
 ## Session 12 — 2026-06-17
 
 ### What Was Done

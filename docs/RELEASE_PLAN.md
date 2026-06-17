@@ -591,13 +591,14 @@ Acceptance Criteria:
 US-0035 (EPIC-0005): As a player, I want the active hole map view to show my shot trail, so that I can see where I've been and where the pin is.
 Priority: High
 Estimate: M
-Status: Planned
-Branch: feature/US-0035-active-map
+Status: In Progress
+Branch: feature/epic0005-round-tracking (PR #48)
+Note: Base map + pin + tee wired. <HoleMap> supports & tests the shot trail, GPS pulse, and distance overlay, but active-hole route passes shots=[]/gps=null — overlays not wired. See BUG-0022.
 Dependencies: US-0034, US-0014
 Acceptance Criteria:
-  - [ ] AC-0137: Map shows fairway base layer from cached Mapbox Static URL
-  - [ ] AC-0138: Hole pin marker rendered
-  - [ ] AC-0139: Tee marker rendered
+  - [x] AC-0137: Map shows fairway base layer from cached Mapbox Static URL
+  - [x] AC-0138: Hole pin marker rendered
+  - [x] AC-0139: Tee marker rendered
   - [ ] AC-0140: Prior shots rendered as dashed lines + numbered markers
   - [ ] AC-0141: Current player position pulsed in red
   - [ ] AC-0142: Distance-to-pin overlay top-left
@@ -607,66 +608,66 @@ Acceptance Criteria:
 US-0036 (EPIC-0005): As a player, I want to capture my GPS position when I take a shot, so that the system knows where I hit from.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0036-shot-gps
+Status: Done
+Branch: feature/epic0005-round-tracking (PR #48)
 Dependencies: US-0035
 Acceptance Criteria:
-  - [ ] AC-0143: navigator.geolocation.getCurrentPosition called with high accuracy
-  - [ ] AC-0144: lat/lng captured to local state on Start Shot tap
-  - [ ] AC-0145: Selected club persisted with the shot draft
+  - [x] AC-0143: navigator.geolocation.getCurrentPosition called with high accuracy
+  - [x] AC-0144: lat/lng captured to local state on Start Shot tap
+  - [x] AC-0145: Selected club persisted with the shot draft
 ```
 
 ```
 US-0037 (EPIC-0005): As a player, I want four outcome buttons after I hit a shot, so that I can record what happened.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0037-outcome-picker
+Status: Done
+Branch: feature/epic0005-round-tracking (PR #48)
 Dependencies: US-0036
 Acceptance Criteria:
-  - [ ] AC-0146: Four buttons: In Play (neutral green), Sunk (filled green), Mulligan (amber), OOB (red)
-  - [ ] AC-0147: In Play / Sunk / Mulligan tap inserts shots row with appropriate stroke_count (1 / 1 / 0)
-  - [ ] AC-0148: OOB tap triggers the OOB rehit prompt (US-0038)
+  - [x] AC-0146: Four buttons: In Play (neutral green), Sunk (filled green), Mulligan (amber), OOB (red)
+  - [x] AC-0147: In Play / Sunk / Mulligan tap inserts shots row with appropriate stroke_count (1 / 1 / 0)
+  - [x] AC-0148: OOB tap triggers the OOB rehit prompt (US-0038)
 ```
 
 ```
 US-0038 (EPIC-0005): As a player, I want to choose where my rehit comes from after OOB, so that the recorded GPS origin is accurate.
 Priority: High
 Estimate: M
-Status: Planned
-Branch: feature/US-0038-oob-rehit
+Status: Done
+Branch: feature/epic0005-round-tracking (PR #48)
 Dependencies: US-0037
 Acceptance Criteria:
-  - [ ] AC-0149: Prompt offers "Rehit from OOB location" or "Rehit from prior position"
-  - [ ] AC-0150: OOB shot inserted with stroke_count=2 (1 for shot + 1 penalty)
-  - [ ] AC-0151: Follow-up shot's origin_lat/lng set to chosen rehit position
-  - [ ] AC-0152: rehit_from_shot_id and rehit_origin set on the follow-up shot
+  - [x] AC-0149: Prompt offers "Rehit from OOB location" or "Rehit from prior position"
+  - [x] AC-0150: OOB shot inserted with stroke_count=2 (1 for shot + 1 penalty)
+  - [x] AC-0151: Follow-up shot's origin_lat/lng set to chosen rehit position
+  - [x] AC-0152: rehit_from_shot_id and rehit_origin set on the follow-up shot
 ```
 
 ```
 US-0039 (EPIC-0005): As a player, I want Mulligan to not count as a stroke, so that I can reshoot without penalty.
 Priority: Medium
 Estimate: S
-Status: Planned
-Branch: feature/US-0039-mulligan
+Status: Done
+Branch: feature/epic0005-round-tracking (PR #48)
 Dependencies: US-0037
 Acceptance Criteria:
-  - [ ] AC-0153: Mulligan outcome inserts shot with stroke_count=0
-  - [ ] AC-0154: Next shot's origin defaults to same location
+  - [x] AC-0153: Mulligan outcome inserts shot with stroke_count=0
+  - [x] AC-0154: Next shot's origin defaults to same location
 ```
 
 ```
 US-0040 (EPIC-0005): As a player, I want Shot Sunk to close the hole for me, so that the hole score is recorded and the turn moves on.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0040-shot-sunk
+Status: Done
+Branch: feature/epic0005-round-tracking (PR #48)
 Dependencies: US-0037
 Acceptance Criteria:
-  - [ ] AC-0155: Sunk outcome inserts shot with stroke_count=1
-  - [ ] AC-0156: Computes gross_score as sum of stroke_count on this hole
-  - [ ] AC-0157: Inserts/updates hole_scores row with status=provisional or final
-  - [ ] AC-0158: Triggers team_hole_scores recalc via EPIC-0006
+  - [x] AC-0155: Sunk outcome inserts shot with stroke_count=1
+  - [x] AC-0156: Computes gross_score as sum of stroke_count on this hole
+  - [x] AC-0157: Inserts/updates hole_scores row with status=provisional or final
+  - [x] AC-0158: Triggers team_hole_scores recalc via EPIC-0006
   > EPIC-0006 contract (2026-06-13, PR #36): hole_scores is now trigger-derived from shots by the
   > scoring engine. Round tracking writes SHOTS ONLY and must NOT write hole_scores directly —
   > AC-0156/0157 are satisfied automatically by the recompute trigger. stroke_count contract:
@@ -678,8 +679,9 @@ Acceptance Criteria:
 US-0041 (EPIC-0005): As a player, I want to edit any prior shot in this round, so that I can correct mistakes without admin help.
 Priority: High
 Estimate: M
-Status: Planned
-Branch: feature/US-0041-edit-shot
+Status: In Progress
+Branch: feature/epic0005-round-tracking (PR #48)
+Note: editShotAction implemented + tested, but shot_edits INSERT is admin-only under current RLS so non-admin scorer edits fail; tap-to-edit UI not wired. Deferred to EPIC-0008 admin edit. See BUG-0020.
 Dependencies: US-0040
 Acceptance Criteria:
   - [ ] AC-0159: Tap a shot in the map or hole summary to open the edit panel
@@ -693,8 +695,9 @@ Acceptance Criteria:
 US-0042 (EPIC-0005): As a player, I want the foursome turn picker to auto-select the next player by farthest from pin, so that the team plays in golf order without thinking.
 Priority: Medium
 Estimate: S
-Status: Planned
-Branch: feature/US-0042-turn-picker
+Status: In Progress
+Branch: feature/epic0005-round-tracking (PR #48)
+Note: computeNextPlayer logic + <TurnPicker> component built & tested (team_size 2-5), but not rendered in the active-hole route — manual play unaffected. See BUG-0022.
 Dependencies: US-0040, US-0029
 Acceptance Criteria:
   - [ ] AC-0164: After a shot is recorded, compute distance-to-pin for each team member's last unfinalized shot
@@ -708,34 +711,36 @@ Acceptance Criteria:
 US-0043 (EPIC-0005): As a player, I want a hole summary after all teammates hole out, so that I can see who scored what and our team total.
 Priority: High
 Estimate: M
-Status: Planned
-Branch: feature/US-0043-hole-summary
+Status: In Progress
+Branch: feature/epic0005-round-tracking (PR #48)
+Note: Summary page wires per-player gross, par-relative, BEST badge, and Next CTA. Team standing not wired (teamStanding=null). See BUG-0022.
 Dependencies: US-0040
 Acceptance Criteria:
-  - [ ] AC-0169: Per-player gross score listed with par-relative annotation (e.g., "bogey", "+2")
-  - [ ] AC-0170: "BEST" badge on the contributing player whose score won the hole
+  - [x] AC-0169: Per-player gross score listed with par-relative annotation (e.g., "bogey", "+2")
+  - [x] AC-0170: "BEST" badge on the contributing player whose score won the hole
   - [ ] AC-0171: Team standing pre-loaded (current position out of N)
-  - [ ] AC-0172: "Next: Hole X" CTA where X is the next physical hole (handles shotgun start wrap)
+  - [x] AC-0172: "Next: Hole X" CTA where X is the next physical hole (handles shotgun start wrap)
 ```
 
 ```
 US-0044 (EPIC-0005): As a player, I want to move to the next hole, so that play continues smoothly.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0044-next-hole
+Status: Done
+Branch: feature/epic0005-round-tracking (PR #48)
 Dependencies: US-0043
 Acceptance Criteria:
-  - [ ] AC-0173: Next advances to next physical hole accounting for 18-hole wrap from shotgun start
-  - [ ] AC-0174: New hole map renders; shot stream resets
+  - [x] AC-0173: Next advances to next physical hole accounting for 18-hole wrap from shotgun start
+  - [x] AC-0174: New hole map renders; shot stream resets
 ```
 
 ```
 US-0045 (EPIC-0005): As a player, I want a "Hole X of 18" pill, so that I can see tournament progress regardless of which physical hole I'm on.
 Priority: Medium
 Estimate: S
-Status: Planned
-Branch: feature/US-0045-progress-pill
+Status: In Progress
+Branch: feature/epic0005-round-tracking (PR #48)
+Note: <HoleProgressPill> + holesCompletedPill math built & tested and rendered, but the route passes completedCount=0 (stubbed) — needs real team-holes-completed query. See BUG-0022.
 Dependencies: US-0044
 Acceptance Criteria:
   - [ ] AC-0175: Pill shows holes completed by team (1-18) plus current hole
@@ -745,20 +750,22 @@ Acceptance Criteria:
 US-0046 (EPIC-0005): As a player, I want my round automatically marked complete when all 18 holes are scored, so that I'm not stuck in an "active" state.
 Priority: Medium
 Estimate: S
-Status: Planned
-Branch: feature/US-0046-round-complete
+Status: In Progress
+Branch: feature/epic0005-round-tracking (PR #48)
+Note: completeRoundAction (18-final guard) + /complete screen built & tested. AC-0176 fires on the complete page, but no auto-navigation to /complete after hole 18 is wired. See BUG-0022.
 Dependencies: US-0044
 Acceptance Criteria:
   - [ ] AC-0176: When all 18 hole_scores are final, rounds.status set to completed and completed_at set
-  - [ ] AC-0177: Player is shown a "Round complete" screen with final score
+  - [x] AC-0177: Player is shown a "Round complete" screen with final score
 ```
 
 ```
 US-0047 (EPIC-0005): As a player, I want manual coordinate entry if GPS permission is denied, so that I can still record shots.
 Priority: Medium
 Estimate: S
-Status: Planned
-Branch: feature/US-0047-gps-fallback
+Status: In Progress
+Branch: feature/epic0005-round-tracking (PR #48)
+Note: unproject() + <HoleMap> tap mode + <ShotCapture> gps-denied message built & tested, but active-hole passes tapMode=false/onMapTap=no-op — tap-to-place not wired. See BUG-0022.
 Dependencies: US-0036
 Acceptance Criteria:
   - [ ] AC-0178: If geolocation permission denied, show explanation and "Tap the map" instructions
@@ -769,12 +776,13 @@ Acceptance Criteria:
 US-0048 (EPIC-0005): As a player, I want distances shown as approximate, so that I'm not misled by GPS accuracy limits.
 Priority: Low
 Estimate: S
-Status: Planned
-Branch: feature/US-0048-approx-distances
+Status: In Progress
+Branch: feature/epic0005-round-tracking (PR #48)
+Note: formatYardsToPin ("~N yds to pin") built & tested and accuracy_m captured+stored on shots (AC-0181 done). The visible distance overlay depends on live GPS, which is not wired in the route yet (AC-0180). See BUG-0022.
 Dependencies: US-0035
 Acceptance Criteria:
   - [ ] AC-0180: Display format "~245 yds to pin" with the approx prefix
-  - [ ] AC-0181: GPS accuracy (in metres) stored on the shot record (optional column)
+  - [x] AC-0181: GPS accuracy (in metres) stored on the shot record (optional column)
 ```
 
 ---
