@@ -99,3 +99,43 @@ describe('claimRoundAction', () => {
     expect(await claimRoundAction('r1')).toEqual({ ok: true })
   })
 })
+
+describe('completeRoundAction', () => {
+  it('rejects when unauthenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    expect(await completeRoundAction('r1')).toEqual({ ok: false, code: 'denied' })
+  })
+
+  it('does NOT complete when fewer than 18 final hole_scores', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ count: 10, error: null }) }),
+    }))
+    expect(await completeRoundAction('r1')).toEqual({ ok: true, completed: false })
+  })
+
+  it('completes when all 18 are final: sets status=completed + completed_at (AC-0176)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const updateChain = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    }
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'hole_scores') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi
+            .fn()
+            .mockReturnValue({ eq: vi.fn().mockResolvedValue({ count: 18, error: null }) }),
+        }
+      }
+      return updateChain
+    })
+    const res = await completeRoundAction('r1')
+    expect(res).toEqual({ ok: true, completed: true })
+    expect(updateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'completed', completed_at: expect.any(String) })
+    )
+  })
+})
