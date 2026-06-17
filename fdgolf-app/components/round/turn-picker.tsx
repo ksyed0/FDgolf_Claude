@@ -20,7 +20,7 @@ export function TurnPicker({ members, pin, onSelect }: Props) {
 
   return (
     <div className="flex flex-col gap-2 p-4">
-      <p className="text-xs uppercase tracking-wide text-slate-400">Who's away?</p>
+      <p className="text-xs uppercase tracking-wide text-slate-400">Who&apos;s away?</p>
       <p data-testid="turn-selected" className="text-lg font-bold text-green-400">
         {selectedName}
       </p>
