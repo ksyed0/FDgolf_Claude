@@ -2214,3 +2214,302 @@ Commit:
 ```bash
 cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/shot-capture.tsx fdgolf-app/__tests__/components/round/shot-capture.test.tsx && git commit -m "[feat] EPIC-0005: ShotCapture GPS + outcomes + OOB + tap fallback (TC-0038)"
 ```
+
+---
+
+### Task 20 — `<TurnPicker>` auto-select + override (TC-0039) [DEFER — US-0042; manual selection works]
+
+**20a. Write failing test** `fdgolf-app/__tests__/components/round/turn-picker.test.tsx`:
+```tsx
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { TurnPicker } from '@/components/round/turn-picker'
+
+const PIN = { lat: 45.01, lng: -75 }
+const MEMBERS = [
+  { playerId: 'a', name: 'Alice', lastOrigin: { lat: 45.0, lng: -75 }, sunk: false },
+  { playerId: 'b', name: 'Bob', lastOrigin: { lat: 45.008, lng: -75 }, sunk: false },
+  { playerId: 'c', name: 'Cara', lastOrigin: { lat: 45.005, lng: -75 }, sunk: true },
+]
+
+describe('TurnPicker', () => {
+  it('auto-selects the farthest-from-pin active member (AC-0165)', () => {
+    const onSelect = vi.fn()
+    render(<TurnPicker members={MEMBERS} pin={PIN} onSelect={onSelect} />)
+    // Alice (lat 45.0) is farthest from pin (45.01).
+    expect(screen.getByTestId('turn-selected')).toHaveTextContent('Alice')
+  })
+
+  it('does not render a row for sunk members (AC-0167)', () => {
+    render(<TurnPicker members={MEMBERS} pin={PIN} onSelect={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: /Cara/ })).not.toBeInTheDocument()
+  })
+
+  it('manual override selects a different member (AC-0166)', () => {
+    const onSelect = vi.fn()
+    render(<TurnPicker members={MEMBERS} pin={PIN} onSelect={onSelect} />)
+    fireEvent.click(screen.getByRole('button', { name: /Bob/ }))
+    expect(onSelect).toHaveBeenCalledWith('b')
+  })
+})
+```
+
+**20b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/turn-picker.test.tsx
+```
+Expected: FAIL — module not found.
+
+**20c. Create `fdgolf-app/components/round/turn-picker.tsx`:**
+```tsx
+'use client'
+
+import { useMemo } from 'react'
+import { computeNextPlayer, type TurnMember } from '@/lib/round/turn'
+import { haversineMeters, metersToYards } from '@/lib/round/distance'
+import type { LatLng } from '@/lib/round/types'
+
+type Member = TurnMember & { name: string }
+
+type Props = {
+  members: Member[]
+  pin: LatLng
+  onSelect: (playerId: string) => void
+}
+
+export function TurnPicker({ members, pin, onSelect }: Props) {
+  const auto = useMemo(() => computeNextPlayer(members, pin), [members, pin])
+  const active = members.filter((m) => !m.sunk && m.lastOrigin)
+  const selectedName = members.find((m) => m.playerId === auto)?.name ?? '—'
+
+  return (
+    <div className="flex flex-col gap-2 p-4">
+      <p className="text-xs uppercase tracking-wide text-slate-400">Who's away?</p>
+      <p data-testid="turn-selected" className="text-lg font-bold text-green-400">
+        {selectedName}
+      </p>
+      {active.map((m) => (
+        <button
+          key={m.playerId}
+          onClick={() => onSelect(m.playerId)}
+          className={`flex items-center justify-between rounded px-3 py-2 ${
+            m.playerId === auto ? 'bg-green-900 font-bold' : 'bg-slate-800'
+          }`}
+        >
+          <span>{m.name}</span>
+          <span className="text-xs text-slate-400">
+            ~{Math.round(metersToYards(haversineMeters(m.lastOrigin as LatLng, pin)))} yds
+          </span>
+        </button>
+      ))}
+    </div>
+  )
+}
+```
+
+**20d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/turn-picker.test.tsx
+```
+Expected: PASS (3 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/turn-picker.tsx fdgolf-app/__tests__/components/round/turn-picker.test.tsx && git commit -m "[feat] EPIC-0005: TurnPicker auto-select + override (TC-0039)"
+```
+
+---
+
+### Task 21 — par-relative helper `formatToPar` (TC-0040) [SPINE]
+
+Pure helper for the hole summary's par-relative annotation (AC-0169). Added to `distance.ts`'s sibling `lib/round/score-format.ts`.
+
+**21a. Write failing test** `fdgolf-app/__tests__/lib/round/score-format.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import { formatToPar } from '@/lib/round/score-format'
+
+describe('formatToPar', () => {
+  it('names common results', () => {
+    expect(formatToPar(2, 4)).toBe('eagle')
+    expect(formatToPar(3, 4)).toBe('birdie')
+    expect(formatToPar(4, 4)).toBe('par')
+    expect(formatToPar(5, 4)).toBe('bogey')
+    expect(formatToPar(6, 4)).toBe('double bogey')
+  })
+  it('falls back to +N for larger overs (AC-0169)', () => {
+    expect(formatToPar(8, 4)).toBe('+4')
+  })
+  it('uses -N for rare big unders', () => {
+    expect(formatToPar(1, 5)).toBe('-4')
+  })
+})
+```
+
+**21b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/score-format.test.ts
+```
+Expected: FAIL — module not found.
+
+**21c. Create `fdgolf-app/lib/round/score-format.ts`:**
+```ts
+/** AC-0169: par-relative annotation for a per-player gross. */
+export function formatToPar(gross: number, par: number): string {
+  const diff = gross - par
+  switch (diff) {
+    case -3: return 'albatross'
+    case -2: return 'eagle'
+    case -1: return 'birdie'
+    case 0: return 'par'
+    case 1: return 'bogey'
+    case 2: return 'double bogey'
+    default: return diff > 0 ? `+${diff}` : `${diff}`
+  }
+}
+```
+
+**21d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/score-format.test.ts
+```
+Expected: PASS (3 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/score-format.ts fdgolf-app/__tests__/lib/round/score-format.test.ts && git commit -m "[feat] EPIC-0005: formatToPar par-relative helper (TC-0040)"
+```
+
+---
+
+### Task 22 — `<HoleSummary>` per-player + BEST + standing + Next CTA (TC-0041) [SPINE]
+
+Render-only. Per-player gross + par-relative (local), BEST badge + team standing (server-derived; "as of last sync" when `syncedAt` indicates stale), "Next: Hole X" via `nextPhysicalHole`.
+
+**22a. Write failing test** `fdgolf-app/__tests__/components/round/hole-summary.test.tsx`:
+```tsx
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { HoleSummary } from '@/components/round/hole-summary'
+
+const PROPS = {
+  holeNumber: 18,
+  par: 4,
+  players: [
+    { playerId: 'a', name: 'Alice', gross: 4 },
+    { playerId: 'b', name: 'Bob', gross: 3 },
+  ],
+  bestPlayerId: 'b',
+  teamStanding: { position: 2, of: 8 },
+  stale: false,
+  onNext: vi.fn(),
+}
+
+describe('HoleSummary', () => {
+  it('lists per-player gross with par-relative annotation (AC-0169)', () => {
+    render(<HoleSummary {...PROPS} />)
+    expect(screen.getByText('Alice')).toBeInTheDocument()
+    expect(screen.getByText(/par/)).toBeInTheDocument()
+    expect(screen.getByText(/birdie/)).toBeInTheDocument()
+  })
+
+  it('shows the BEST badge on the contributing player (AC-0170)', () => {
+    render(<HoleSummary {...PROPS} />)
+    expect(screen.getByTestId('best-b')).toHaveTextContent('BEST')
+    expect(screen.queryByTestId('best-a')).not.toBeInTheDocument()
+  })
+
+  it('shows team standing position out of N (AC-0171)', () => {
+    render(<HoleSummary {...PROPS} />)
+    expect(screen.getByText(/2 of 8/)).toBeInTheDocument()
+  })
+
+  it('marks standing "as of last sync" when stale (L2)', () => {
+    render(<HoleSummary {...PROPS} stale />)
+    expect(screen.getByText(/as of last sync/i)).toBeInTheDocument()
+  })
+
+  it('Next CTA shows next physical hole (18 wraps to 1) and fires onNext (AC-0172)', () => {
+    const onNext = vi.fn()
+    render(<HoleSummary {...PROPS} onNext={onNext} />)
+    const cta = screen.getByRole('button', { name: /next: hole 1/i })
+    fireEvent.click(cta)
+    expect(onNext).toHaveBeenCalled()
+  })
+})
+```
+
+**22b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/hole-summary.test.tsx
+```
+Expected: FAIL — module not found.
+
+**22c. Create `fdgolf-app/components/round/hole-summary.tsx`:**
+```tsx
+'use client'
+
+import { formatToPar } from '@/lib/round/score-format'
+import { nextPhysicalHole } from '@/lib/round/shotgun'
+
+type PlayerLine = { playerId: string; name: string; gross: number }
+
+type Props = {
+  holeNumber: number
+  par: number
+  players: PlayerLine[]
+  bestPlayerId: string | null
+  teamStanding: { position: number; of: number } | null
+  stale: boolean
+  onNext: () => void
+}
+
+export function HoleSummary({ holeNumber, par, players, bestPlayerId, teamStanding, stale, onNext }: Props) {
+  const next = nextPhysicalHole(holeNumber)
+  return (
+    <div className="flex flex-col gap-3 p-4">
+      <h2 className="text-lg font-bold">Hole {holeNumber} · Par {par}</h2>
+
+      <ul className="flex flex-col gap-1">
+        {players.map((p) => (
+          <li key={p.playerId} className="flex items-center justify-between rounded bg-slate-800 px-3 py-2">
+            <span className="flex items-center gap-2">
+              {p.name}
+              {p.playerId === bestPlayerId && (
+                <span data-testid={`best-${p.playerId}`} className="rounded bg-green-500 px-1 text-[10px] font-bold text-slate-900">
+                  BEST
+                </span>
+              )}
+            </span>
+            <span className="text-sm text-slate-300">
+              {p.gross} · {formatToPar(p.gross, par)}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {teamStanding && (
+        <div className="rounded bg-slate-900 px-3 py-2 text-sm">
+          Team standing: {teamStanding.position} of {teamStanding.of}
+          {stale && <span className="ml-2 text-xs text-slate-500">(as of last sync)</span>}
+        </div>
+      )}
+
+      <button onClick={onNext} className="rounded bg-green-700 py-3 font-bold">
+        Next: Hole {next}
+      </button>
+    </div>
+  )
+}
+```
+
+**22d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/hole-summary.test.tsx
+```
+Expected: PASS (5 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/hole-summary.tsx fdgolf-app/__tests__/components/round/hole-summary.test.tsx && git commit -m "[feat] EPIC-0005: HoleSummary per-player + BEST + standing + Next (TC-0041)"
+```
