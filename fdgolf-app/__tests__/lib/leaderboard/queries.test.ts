@@ -189,6 +189,7 @@ describe('getCurrentTeamForUser', () => {
         members: [{ name: 'Pat', company: 'Acme' }],
       },
     ]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ct = await getCurrentTeamForUser('t1', 'user-x', standings as any, rosters as any)
     expect(ct!.standing.teamId).toBe('a')
     expect(ct!.roster.teamId).toBe('a')

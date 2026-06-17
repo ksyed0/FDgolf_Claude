@@ -13,6 +13,7 @@ const mockSelect = vi.fn().mockReturnValue({ eq: mockEq })
 const mockFrom = vi.fn().mockReturnValue({ select: mockSelect })
 
 beforeEach(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(createClient).mockReturnValue({ from: mockFrom } as any)
 })
 

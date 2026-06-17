@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 
 // Stub the feed hook so the orchestrator test is deterministic.
 vi.mock('@/lib/leaderboard/use-leaderboard-feed', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useLeaderboardFeed: (_slug: string, initial: any, isPaused: boolean) => ({
     standings: initial,
     status: isPaused ? 'paused' : 'auto',
@@ -30,7 +31,9 @@ const ROSTERS = [
 const baseProps = {
   slug: 'cibc',
   tournamentId: 't1',
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialStandings: STANDINGS as any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rosters: ROSTERS as any,
   currentTeam: null,
   isPaused: false,
@@ -76,6 +79,7 @@ describe('LeaderboardClient', () => {
         members: [{ name: 'Pat', company: 'Acme' }],
       },
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     render(<LeaderboardClient {...baseProps} currentTeam={currentTeam as any} />)
     const card = screen.getByTestId('current-team-card')
     const list = screen.getByTestId('leaderboard-list')

@@ -36,9 +36,11 @@ export function useLeaderboardFeed(
   // Polling baseline (always on unless paused).
   useEffect(() => {
     if (isPaused) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus('paused')
       return
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStatus('auto')
     const id = setInterval(() => {
       void doRefetch()
