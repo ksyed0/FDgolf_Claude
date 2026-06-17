@@ -2513,3 +2513,432 @@ Commit:
 ```bash
 cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/hole-summary.tsx fdgolf-app/__tests__/components/round/hole-summary.test.tsx && git commit -m "[feat] EPIC-0005: HoleSummary per-player + BEST + standing + Next (TC-0041)"
 ```
+
+---
+
+### Task 23 — Coverage exclusions for new Server Components [SPINE]
+
+The three route pages are Server Components — excluded from unit-coverage per `vitest.config.ts` convention; gated by build + lint + smoke instead.
+
+**23a. Edit `fdgolf-app/vitest.config.ts`** — add to the `coverage.exclude` array (after the existing `app/register/[slug]/page.tsx` line):
+```ts
+        'app/round/[roundId]/hole/[n]/page.tsx', // Server Component, integration/smoke-tested
+        'app/round/[roundId]/hole/[n]/summary/page.tsx', // Server Component, integration/smoke-tested
+        'app/round/[roundId]/complete/page.tsx', // Server Component, integration/smoke-tested
+```
+
+**23b. Verify the existing suite still passes and config is valid:**
+```bash
+cd fdgolf-app && npx vitest run
+```
+Expected: all tests PASS; no config error.
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/vitest.config.ts && git commit -m "[chore] EPIC-0005: exclude round Server Components from coverage"
+```
+
+---
+
+### Task 24 — Active-hole route wiring (`hole/[n]/page.tsx` + client shell) [SPINE — gated by build+lint+smoke]
+
+Wire the Server Component: fetch round/hole/clubs/claim, compute the frame, fetch+cache the static map, and render a client shell that composes `<HoleMap>` + `<ShotCapture>` + `<HoleProgressPill>`. The Server Component is coverage-excluded; the client shell logic was unit-covered in Tasks 17–19. Verification is build + lint + a dev smoke.
+
+**24a. Create the client shell `fdgolf-app/components/round/active-hole.tsx`** (composition; thin glue over already-tested units):
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { HoleMap } from './hole-map'
+import { ShotCapture } from './shot-capture'
+import { HoleProgressPill } from './hole-progress-pill'
+import { computeFrame, staticMapUrl } from '@/lib/round/frame'
+import { fetchAndCacheStaticMap } from '@/lib/round/static-map'
+import { useRoundStore } from '@/lib/round/store'
+import { createShotAction } from '@/lib/actions/shots'
+import { nextPhysicalHole } from '@/lib/round/shotgun'
+import type { LatLng, LocalShot } from '@/lib/round/types'
+
+type Club = { id: string; display_name: string }
+
+type Props = {
+  roundId: string
+  holeId: string
+  holeNumber: number
+  pin: LatLng
+  tee: LatLng
+  clubs: Club[]
+  defaultClubId: string | null
+  playerId: string
+  completedCount: number
+  mapboxToken: string
+}
+
+export function ActiveHole(props: Props) {
+  const router = useRouter()
+  const { commitShot, flushQueue } = useRoundStore()
+  const [baseUrl, setBaseUrl] = useState<string | null>(null)
+  const [shotNumber, setShotNumber] = useState(1)
+  const frame = computeFrame([props.pin, props.tee], { w: 390, h: 520 })
+
+  useEffect(() => {
+    let revoke: string | null = null
+    fetchAndCacheStaticMap(props.holeId, staticMapUrl(frame, props.mapboxToken))
+      .then((url) => {
+        revoke = url
+        setBaseUrl(url)
+      })
+      .catch(() => setBaseUrl(null))
+    return () => {
+      if (revoke) URL.revokeObjectURL(revoke)
+    }
+    // frame is deterministic from props; holeId keys the cache
+  }, [props.holeId, props.mapboxToken]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleCommit(shot: Omit<LocalShot, 'roundId' | 'serverId'>) {
+    const local: LocalShot = { ...shot, roundId: props.roundId, serverId: null }
+    await commitShot(local)
+    setShotNumber((n) => n + 1)
+    await flushQueue((s) =>
+      createShotAction({
+        roundId: s.roundId,
+        holeNumber: s.holeNumber,
+        shotNumber: s.shotNumber,
+        playerId: s.playerId,
+        clubId: s.clubId,
+        originLat: s.originLat,
+        originLng: s.originLng,
+        outcome: s.outcome,
+        strokeCount: s.strokeCount,
+        accuracyM: s.accuracyM,
+        rehitFromShotId: null,
+        rehitOrigin: s.rehitOrigin,
+      })
+    )
+    if (shot.outcome === 'sunk') {
+      router.push(`/round/${props.roundId}/hole/${props.holeNumber}/summary`)
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-slate-900 text-white">
+      <div className="flex items-center justify-between p-3">
+        <HoleProgressPill completedCount={props.completedCount} />
+        <span className="text-xs text-slate-400">Next: Hole {nextPhysicalHole(props.holeNumber)}</span>
+      </div>
+      {baseUrl && (
+        <HoleMap
+          baseImageUrl={baseUrl}
+          frame={frame}
+          hole={{ pin: props.pin, tee: props.tee }}
+          shots={[]}
+          gps={null}
+          tapMode={false}
+          onMapTap={() => {}}
+        />
+      )}
+      <ShotCapture
+        playerId={props.playerId}
+        holeNumber={props.holeNumber}
+        shotNumber={shotNumber}
+        clubs={props.clubs}
+        defaultClubId={props.defaultClubId}
+        onCommit={handleCommit}
+      />
+    </div>
+  )
+}
+```
+
+**24b. Create `fdgolf-app/app/round/[roundId]/hole/[n]/page.tsx`** (Server Component — fetch + claim + render):
+```tsx
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { claimRoundAction } from '@/lib/actions/rounds'
+import { ActiveHole } from '@/components/round/active-hole'
+
+type Tee = { colour: string; yardage: number; lat?: number; lng?: number }
+
+export default async function HolePage({ params }: { params: { roundId: string; n: string } }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const holeNumber = Number(params.n)
+
+  const { data: round } = await supabase
+    .from('rounds')
+    .select('id, player_id, bag_clubs, tournament_id, tournaments(course_id)')
+    .eq('id', params.roundId)
+    .single()
+  if (!round) redirect('/')
+
+  // Soft claim (D3) — best-effort; read-only banner handled client-side if claimed_by_other.
+  await claimRoundAction(params.roundId)
+
+  const courseId = (round.tournaments as unknown as { course_id: string } | null)?.course_id
+  const { data: hole } = await supabase
+    .from('holes')
+    .select('id, number, par, pin_lat, pin_lng, tees')
+    .eq('course_id', courseId ?? '')
+    .eq('number', holeNumber)
+    .single()
+
+  const { data: allClubs } = await supabase.from('clubs').select('id, display_name').order('display_order')
+  const bag = (round.bag_clubs as string[]) ?? []
+  const clubs = bag.length ? (allClubs ?? []).filter((c) => bag.includes(c.id)) : (allClubs ?? [])
+
+  const tees = (hole?.tees ?? []) as Tee[]
+  const tee = tees[0]?.lat != null ? { lat: tees[0].lat!, lng: tees[0].lng! } : { lat: hole?.pin_lat ?? 0, lng: hole?.pin_lng ?? 0 }
+  const defaultClub = clubs.find((c) => c.display_name === 'Driver') ?? clubs[0] ?? null
+
+  return (
+    <ActiveHole
+      roundId={round.id}
+      holeId={hole?.id ?? `${courseId}-${holeNumber}`}
+      holeNumber={holeNumber}
+      pin={{ lat: hole?.pin_lat ?? 0, lng: hole?.pin_lng ?? 0 }}
+      tee={tee}
+      clubs={clubs}
+      defaultClubId={defaultClub?.id ?? null}
+      playerId={round.player_id}
+      completedCount={0}
+      mapboxToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''}
+    />
+  )
+}
+```
+
+**24c. Gate: lint + type-check + build (no unit test for Server Components):**
+```bash
+cd fdgolf-app && npm run lint && npm run type-check && npm run build
+```
+Expected: lint clean, `tsc --noEmit` exit 0, production build succeeds. The `active-hole.tsx` client shell is exercised by Tasks 17–19 unit tests on its children; its own glue is verified by build + the smoke below.
+
+**24d. Smoke** (manual, documented for the executor): with the dev server running and a seeded in-progress round, visit `/round/{roundId}/hole/{startHole}` on a 390×844 viewport — confirm the static map renders, Start shot captures GPS, and an In Play tap advances the shot counter. Capture a screenshot for the PR.
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/active-hole.tsx fdgolf-app/app/round/[roundId]/hole/[n]/page.tsx && git commit -m "[feat] EPIC-0005: active-hole route + client shell (US-0035/0036/0044/0045)"
+```
+
+---
+
+### Task 25 — Hole-summary + round-complete routes (gated by build+lint) [SPINE summary / DEFER complete]
+
+**25a. Create `fdgolf-app/app/round/[roundId]/hole/[n]/summary/page.tsx`** (Server Component):
+```tsx
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { HoleSummary } from '@/components/round/hole-summary'
+import { HoleSummaryClient } from '@/components/round/hole-summary-client'
+
+export default async function HoleSummaryPage({ params }: { params: { roundId: string; n: string } }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const holeNumber = Number(params.n)
+
+  const { data: round } = await supabase
+    .from('rounds')
+    .select('id, team_id, tournament_id, tournaments(course_id)')
+    .eq('id', params.roundId)
+    .single()
+  if (!round) redirect('/')
+
+  const courseId = (round.tournaments as unknown as { course_id: string } | null)?.course_id
+  const { data: hole } = await supabase
+    .from('holes')
+    .select('par')
+    .eq('course_id', courseId ?? '')
+    .eq('number', holeNumber)
+    .single()
+
+  // Per-player gross for this hole's team (server-derived hole_scores).
+  const { data: scores } = await supabase
+    .from('hole_scores')
+    .select('round_id, gross_score, rounds(player_id, players(full_name))')
+    .eq('hole_number', holeNumber)
+
+  // Best Ball contributor for this hole (server-derived).
+  const { data: best } = await supabase
+    .from('team_hole_scores')
+    .select('contributing_player_id')
+    .eq('team_id', round.team_id)
+    .eq('hole_number', holeNumber)
+    .single()
+
+  const players = (scores ?? []).map((s) => {
+    const r = s.rounds as unknown as { player_id: string; players: { full_name: string } | null } | null
+    return { playerId: r?.player_id ?? '', name: r?.players?.full_name ?? 'Player', gross: s.gross_score }
+  })
+
+  return (
+    <HoleSummaryClient roundId={round.id} holeNumber={holeNumber}>
+      <HoleSummary
+        holeNumber={holeNumber}
+        par={hole?.par ?? 4}
+        players={players}
+        bestPlayerId={best?.contributing_player_id ?? null}
+        teamStanding={null}
+        stale={false}
+        onNext={() => {}}
+      />
+    </HoleSummaryClient>
+  )
+}
+```
+
+**25b. Create the small client wrapper `fdgolf-app/components/round/hole-summary-client.tsx`** (handles the Next-CTA navigation; the visual `<HoleSummary>` is already unit-tested):
+```tsx
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { nextPhysicalHole } from '@/lib/round/shotgun'
+
+export function HoleSummaryClient({
+  roundId,
+  holeNumber,
+  children,
+}: {
+  roundId: string
+  holeNumber: number
+  children: React.ReactNode
+}) {
+  const router = useRouter()
+  return (
+    <div className="min-h-screen bg-slate-900 text-white">
+      {children}
+      <div className="p-4">
+        <button
+          className="w-full rounded bg-green-700 py-3 font-bold"
+          onClick={() => router.push(`/round/${roundId}/hole/${nextPhysicalHole(holeNumber)}`)}
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+**25c. Create `fdgolf-app/app/round/[roundId]/complete/page.tsx`** (AC-0177):
+```tsx
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { completeRoundAction } from '@/lib/actions/rounds'
+
+export default async function RoundCompletePage({ params }: { params: { roundId: string } }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  await completeRoundAction(params.roundId) // AC-0176: idempotent; only completes when 18 finals
+
+  const { data: finals } = await supabase
+    .from('hole_scores')
+    .select('gross_score')
+    .eq('round_id', params.roundId)
+    .eq('status', 'final')
+
+  const total = (finals ?? []).reduce((sum, h) => sum + h.gross_score, 0)
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-slate-900 p-6 text-white">
+      <h1 className="text-2xl font-bold">Round complete</h1>
+      <p className="text-lg text-green-400">Total gross: {total}</p>
+    </main>
+  )
+}
+```
+
+**25d. Gate: lint + type-check + build:**
+```bash
+cd fdgolf-app && npm run lint && npm run type-check && npm run build
+```
+Expected: clean lint, tsc exit 0, build succeeds.
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/app/round/[roundId]/hole/[n]/summary/page.tsx fdgolf-app/components/round/hole-summary-client.tsx fdgolf-app/app/round/[roundId]/complete/page.tsx && git commit -m "[feat] EPIC-0005: hole-summary + round-complete routes (US-0043/0046)"
+```
+
+---
+
+### Task 26 — Coverage gate ≥80% [SPINE]
+
+**26a. Run full suite with coverage:**
+```bash
+cd fdgolf-app && npm run test:coverage
+```
+Expected: all tests PASS; lines/functions/branches/statements ≥80% (the pure `lib/round/*` modules and the five components are fully covered; Server Components are excluded). If a branch falls below threshold, add a targeted test to the corresponding `lib/round/*` or component test file — do NOT lower the threshold.
+
+Commit (only if a top-up test was needed):
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add -A fdgolf-app/__tests__ && git commit -m "[test] EPIC-0005: coverage top-up to >=80%"
+```
+
+---
+
+### Task 27 — Sentinel E2E single-hole flow (TC-0042) [SPINE]
+
+One Playwright spec covering begin → shot → sunk → summary → next, per spec §8.
+
+**27a. Create `fdgolf-app/e2e/round-single-hole.spec.ts`:**
+```ts
+import { test, expect } from '@playwright/test'
+
+// Assumes a seeded in-progress round for the signed-in test player (see e2e fixtures).
+// ROUND_ID and START_HOLE are provided by the e2e env (seeded in global setup).
+const ROUND_ID = process.env.E2E_ROUND_ID ?? ''
+const START_HOLE = process.env.E2E_START_HOLE ?? '1'
+
+test('single-hole flow: capture a shot, sink it, see the summary, advance', async ({ page, context }) => {
+  // Grant geolocation so Start shot captures coords.
+  await context.grantPermissions(['geolocation'])
+  await context.setGeolocation({ latitude: 45.0, longitude: -75.0 })
+
+  await page.goto(`/round/${ROUND_ID}/hole/${START_HOLE}`)
+  await expect(page.getByText(/Hole \d+ of 18/)).toBeVisible()
+
+  await page.getByRole('button', { name: /start shot/i }).click()
+  await expect(page.getByRole('button', { name: /in play/i })).toBeVisible()
+  await page.getByRole('button', { name: /in play/i }).click()
+
+  await page.getByRole('button', { name: /start shot/i }).click()
+  await page.getByRole('button', { name: /^sunk/i }).click()
+
+  // Sunk routes to the hole summary.
+  await expect(page).toHaveURL(new RegExp(`/round/${ROUND_ID}/hole/${START_HOLE}/summary`))
+  await expect(page.getByRole('button', { name: /continue/i })).toBeVisible()
+})
+```
+
+**27b. Run the E2E (requires dev server + seeded round; documented for Sentinel):**
+```bash
+cd fdgolf-app && npx playwright test e2e/round-single-hole.spec.ts
+```
+Expected: 1 passed. If geolocation permission flakes in CI, confirm `grantPermissions(['geolocation'])` runs before `goto`.
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/e2e/round-single-hole.spec.ts && git commit -m "[test] EPIC-0005: Sentinel E2E single-hole flow (TC-0042)"
+```
+
+---
+
+### Task 28 — Update ID_REGISTRY [SPINE]
+
+**28a. Edit `docs/ID_REGISTRY.md`** — set the TC row's "Next Available ID" to `TC-0043` and "Last Assigned" to `TC-0042` (TC-0021–TC-0042 consumed by this plan). TASK IDs unchanged (the plan reused the pre-allocated TASK-0127–0169).
+
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add docs/ID_REGISTRY.md && git commit -m "[docs] EPIC-0005: reserve TC-0021..TC-0042 in ID registry"
+```
