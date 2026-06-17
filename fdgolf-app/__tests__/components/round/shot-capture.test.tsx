@@ -87,6 +87,54 @@ describe('ShotCapture', () => {
     await waitFor(() => expect(screen.getByText(/tap the map/i)).toBeInTheDocument())
   })
 
+  it('Sunk commits with outcome sunk and strokeCount 1', async () => {
+    mockGeoSuccess()
+    const onCommit = vi.fn()
+    render(<ShotCapture {...baseProps} onCommit={onCommit} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /^sunk/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^sunk/i }))
+    await waitFor(() =>
+      expect(onCommit).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: 'sunk', strokeCount: 1 })
+      )
+    )
+  })
+
+  it('Mulligan commits with outcome mulligan and strokeCount 0', async () => {
+    mockGeoSuccess()
+    const onCommit = vi.fn()
+    render(<ShotCapture {...baseProps} onCommit={onCommit} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /mulligan/i }))
+    fireEvent.click(screen.getByRole('button', { name: /mulligan/i }))
+    await waitFor(() =>
+      expect(onCommit).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: 'mulligan', strokeCount: 0 })
+      )
+    )
+  })
+
+  it('OOB prior_position rehit is wired correctly', async () => {
+    mockGeoSuccess()
+    const onCommit = vi.fn()
+    render(<ShotCapture {...baseProps} onCommit={onCommit} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /oob/i }))
+    fireEvent.click(screen.getByRole('button', { name: /oob/i }))
+    const oobLocalId = onCommit.mock.calls[0][0].localId as string
+    await waitFor(() => screen.getByRole('button', { name: /rehit from prior position/i }))
+    fireEvent.click(screen.getByRole('button', { name: /rehit from prior position/i }))
+    await waitFor(() => screen.getByRole('button', { name: /start shot/i }))
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /in play/i }))
+    fireEvent.click(screen.getByRole('button', { name: /in play/i }))
+    await waitFor(() => expect(onCommit).toHaveBeenCalledTimes(2))
+    const rehitCall = onCommit.mock.calls[1][0]
+    expect(rehitCall.rehitFromShotLocalId).toBe(oobLocalId)
+    expect(rehitCall.rehitOrigin).toBe('prior_position')
+  })
+
   it('OOB rehit linkage is wired end-to-end: rehit shot carries rehitFromShotLocalId + rehitOrigin (AC-0151/0152)', async () => {
     mockGeoSuccess(45, -75, 5)
     const onCommit = vi.fn()
