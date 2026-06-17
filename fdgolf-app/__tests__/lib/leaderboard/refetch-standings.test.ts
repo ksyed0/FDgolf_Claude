@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { refetchStandings } from '@/lib/leaderboard/refetch-standings'
 
 vi.mock('@/lib/supabase/client', () => ({
-  createBrowserClient: vi.fn(),
+  createClient: vi.fn(),
 }))
 
-import { createBrowserClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 
 const mockOrder = vi.fn()
 const mockEq = vi.fn().mockReturnValue({ order: mockOrder })
@@ -13,7 +13,7 @@ const mockSelect = vi.fn().mockReturnValue({ eq: mockEq })
 const mockFrom = vi.fn().mockReturnValue({ select: mockSelect })
 
 beforeEach(() => {
-  vi.mocked(createBrowserClient).mockReturnValue({ from: mockFrom } as any)
+  vi.mocked(createClient).mockReturnValue({ from: mockFrom } as any)
 })
 
 describe('refetchStandings', () => {

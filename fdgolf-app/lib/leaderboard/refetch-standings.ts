@@ -1,9 +1,9 @@
 'use client'
-import { createBrowserClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import type { TeamStanding } from '@/lib/leaderboard/types'
 
 export async function refetchStandings(slug: string): Promise<TeamStanding[]> {
-  const supabase = createBrowserClient()
+  const supabase = createClient()
   const { data } = await supabase
     .from('team_standings')
     .select('team_id, team_name, total_score, total_vs_par, thru, has_provisional, rank')
