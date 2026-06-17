@@ -18,85 +18,71 @@ function playerChain(playerId: string) {
   }
 }
 
+// Helper: builds the atomic update chain used by claimRoundAction.
+// The chain is: .update().eq().or().select() → resolves to { data, error }.
+function atomicClaimChain(resolvedValue: { data: { id: string }[] | null; error: null | object }) {
+  const chain = {
+    update: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    or: vi.fn().mockReturnThis(),
+    select: vi.fn().mockResolvedValue(resolvedValue),
+  }
+  return chain
+}
+
 describe('claimRoundAction', () => {
   it('rejects when unauthenticated', async () => {
     mockGetUser.mockResolvedValue({ data: { user: null } })
     expect(await claimRoundAction('r1')).toEqual({ ok: false, code: 'denied' })
   })
 
-  it('acquires the claim when no live claim exists', async () => {
+  it('acquires the claim atomically when no live claim exists (single DB call)', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
-    const updateChain = {
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockResolvedValue({ error: null }),
-    }
-    let call = 0
+    const chain = atomicClaimChain({ data: [{ id: 'r1' }], error: null })
     mockFrom.mockImplementation((t: string) => {
       if (t === 'players') return playerChain('p1')
-      if (t === 'rounds') {
-        call++
-        if (call === 1) {
-          // read current claim → none/expired
-          return {
-            select: vi.fn().mockReturnThis(),
-            eq: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({
-              data: { recorded_by: null, recording_expires_at: null },
-              error: null,
-            }),
-          }
-        }
-        return updateChain
-      }
-      return playerChain('p1')
+      return chain
     })
     const res = await claimRoundAction('r1')
     expect(res).toEqual({ ok: true })
-    expect(updateChain.update).toHaveBeenCalledWith(
+    // Verify single-call atomic update was issued
+    expect(chain.update).toHaveBeenCalledWith(
       expect.objectContaining({ recorded_by: 'p1', recording_expires_at: expect.any(String) })
     )
+    expect(chain.or).toHaveBeenCalledWith(expect.stringContaining('recorded_by.is.null'))
+    // Only one 'rounds' from() call — no prior SELECT read
+    expect(mockFrom).toHaveBeenCalledTimes(2) // players + rounds
   })
 
-  it('rejects when a different recorder holds a live (unexpired) claim', async () => {
+  it('rejects when a different recorder holds a live (unexpired) claim (0 rows returned)', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
-    const future = new Date(Date.now() + 30_000).toISOString()
+    const chain = atomicClaimChain({ data: [], error: null })
     mockFrom.mockImplementation((t: string) => {
       if (t === 'players') return playerChain('p1')
-      return {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: { recorded_by: 'p2', recording_expires_at: future },
-          error: null,
-        }),
-      }
+      return chain
     })
     expect(await claimRoundAction('r1')).toEqual({ ok: false, code: 'claimed_by_other' })
   })
 
   it('renews idempotently when the caller already holds the claim', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
-    const future = new Date(Date.now() + 30_000).toISOString()
-    const updateChain = {
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockResolvedValue({ error: null }),
-    }
-    let call = 0
+    const chain = atomicClaimChain({ data: [{ id: 'r1' }], error: null })
     mockFrom.mockImplementation((t: string) => {
       if (t === 'players') return playerChain('p1')
-      call++
-      if (call === 1)
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({
-            data: { recorded_by: 'p1', recording_expires_at: future },
-            error: null,
-          }),
-        }
-      return updateChain
+      return chain
     })
     expect(await claimRoundAction('r1')).toEqual({ ok: true })
+    expect(chain.or).toHaveBeenCalledWith(expect.stringContaining('recorded_by.eq.p1'))
+  })
+
+  it('returns network error when supabase update fails', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const chain = atomicClaimChain({ data: null, error: { message: 'db error' } })
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'players') return playerChain('p1')
+      return chain
+    })
+    expect(await claimRoundAction('r1')).toEqual({ ok: false, code: 'network' })
   })
 })
 
@@ -119,7 +105,9 @@ describe('completeRoundAction', () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
     const updateChain = {
       update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockResolvedValue({ error: null }),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'r1' }, error: null }),
     }
     mockFrom.mockImplementation((t: string) => {
       if (t === 'hole_scores') {
@@ -137,5 +125,28 @@ describe('completeRoundAction', () => {
     expect(updateChain.update).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'completed', completed_at: expect.any(String) })
     )
+  })
+
+  it('does NOT report completed when UPDATE returns 0 rows (RLS blocked / not owner)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const updateChain = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'hole_scores') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi
+            .fn()
+            .mockReturnValue({ eq: vi.fn().mockResolvedValue({ count: 18, error: null }) }),
+        }
+      }
+      return updateChain
+    })
+    const res = await completeRoundAction('r1')
+    expect(res).toEqual({ ok: true, completed: false })
   })
 })
