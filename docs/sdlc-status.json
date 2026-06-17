@@ -182,7 +182,36 @@
       "storiesTotal": 5
     }
   },
-  "stories": {},
+  "stories": {
+    "US-0056": {
+      "status": "Complete",
+      "epic": "EPIC-0007",
+      "assignedAgent": null,
+      "startedAt": null,
+      "completedAt": "2026-06-17T23:22:54.443Z"
+    },
+    "US-0057": {
+      "status": "Complete",
+      "epic": "EPIC-0007",
+      "assignedAgent": null,
+      "startedAt": null,
+      "completedAt": "2026-06-17T23:22:54.540Z"
+    },
+    "US-0063": {
+      "status": "Complete",
+      "epic": "EPIC-0007",
+      "assignedAgent": null,
+      "startedAt": null,
+      "completedAt": "2026-06-17T23:22:54.634Z"
+    },
+    "US-0064": {
+      "status": "Complete",
+      "epic": "EPIC-0007",
+      "assignedAgent": null,
+      "startedAt": null,
+      "completedAt": "2026-06-17T23:22:54.734Z"
+    }
+  },
   "cycles": [
     {
       "id": 1,
@@ -202,8 +231,8 @@
     }
   ],
   "metrics": {
-    "storiesCompleted": 0,
-    "storiesTotal": 0,
+    "storiesCompleted": 4,
+    "storiesTotal": 4,
     "tasksCompleted": 0,
     "tasksTotal": 0,
     "testsPassed": 0,
@@ -768,6 +797,31 @@
       "time": "2026-06-14T18:02:14.088Z",
       "agent": "Conductor",
       "message": "Cycle 1 complete — 5 stories, 80.4% coverage"
+    },
+    {
+      "time": "2026-06-17T23:22:54.443Z",
+      "agent": "Conductor",
+      "message": "completed US-0056 (EPIC-0007)"
+    },
+    {
+      "time": "2026-06-17T23:22:54.541Z",
+      "agent": "Conductor",
+      "message": "completed US-0057 (EPIC-0007)"
+    },
+    {
+      "time": "2026-06-17T23:22:54.635Z",
+      "agent": "Conductor",
+      "message": "completed US-0063 (EPIC-0007)"
+    },
+    {
+      "time": "2026-06-17T23:22:54.734Z",
+      "agent": "Conductor",
+      "message": "completed US-0064 (EPIC-0007)"
+    },
+    {
+      "time": "2026-06-17T23:22:54.826Z",
+      "agent": "Conductor",
+      "message": "Epic EPIC-0007 complete"
     }
   ],
   "tasks": {
