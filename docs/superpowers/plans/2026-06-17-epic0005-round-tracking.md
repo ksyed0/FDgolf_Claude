@@ -1752,3 +1752,465 @@ Commit:
 ```bash
 cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/__tests__/lib/actions/rounds-claim-complete.test.ts && git commit -m "[test] EPIC-0005: completeRoundAction 18-final guard (TC-0035)"
 ```
+
+---
+
+### Task 17 — `<HoleProgressPill>` component (TC-0036) [SPINE]
+
+Smallest component first to establish the RTL pattern for this epic.
+
+**17a. Write failing test** `fdgolf-app/__tests__/components/round/hole-progress-pill.test.tsx`:
+```tsx
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { HoleProgressPill } from '@/components/round/hole-progress-pill'
+
+describe('HoleProgressPill', () => {
+  it('shows "Hole X of 18" from completed count + 1 (AC-0175)', () => {
+    render(<HoleProgressPill completedCount={7} />)
+    expect(screen.getByText('Hole 8 of 18')).toBeInTheDocument()
+  })
+
+  it('shows "Hole 1 of 18" at the start of the round', () => {
+    render(<HoleProgressPill completedCount={0} />)
+    expect(screen.getByText('Hole 1 of 18')).toBeInTheDocument()
+  })
+})
+```
+
+**17b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/hole-progress-pill.test.tsx
+```
+Expected: FAIL — module not found.
+
+**17c. Create `fdgolf-app/components/round/hole-progress-pill.tsx`:**
+```tsx
+import { holesCompletedPill } from '@/lib/round/shotgun'
+
+export function HoleProgressPill({ completedCount }: { completedCount: number }) {
+  return (
+    <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-200">
+      Hole {holesCompletedPill(completedCount)} of 18
+    </span>
+  )
+}
+```
+
+**17d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/hole-progress-pill.test.tsx
+```
+Expected: PASS (2 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/hole-progress-pill.tsx fdgolf-app/__tests__/components/round/hole-progress-pill.test.tsx && git commit -m "[feat] EPIC-0005: HoleProgressPill (TC-0036)"
+```
+
+---
+
+### Task 18 — `<HoleMap>` render-only overlay (TC-0037) [SPINE]
+
+Render-only: cached PNG base + pin/tee/prior-shots/GPS markers projected via `project()`, distance overlay, edge arrow when GPS off-frame, tap mode. Props are pure data so the component is RTL-testable without GPS or Mapbox.
+
+**18a. Write failing test** `fdgolf-app/__tests__/components/round/hole-map.test.tsx`:
+```tsx
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { HoleMap } from '@/components/round/hole-map'
+
+const FRAME = { center: { lat: 45, lng: -75 }, zoom: 16, size: { w: 390, h: 520 } }
+const HOLE = { pin: { lat: 45.0009, lng: -75 }, tee: { lat: 45, lng: -75.0009 } }
+
+const BASE = {
+  baseImageUrl: 'blob:mock',
+  frame: FRAME,
+  hole: HOLE,
+  shots: [
+    { lat: 45.0, lng: -75.0009, shotNumber: 1 },
+    { lat: 45.0004, lng: -75.0004, shotNumber: 2 },
+  ],
+  gps: { lat: 45.0002, lng: -75.0002, accuracyM: 5 },
+  tapMode: false,
+  onMapTap: vi.fn(),
+}
+
+describe('HoleMap', () => {
+  it('renders the cached base image (AC-0137)', () => {
+    render(<HoleMap {...BASE} />)
+    expect(screen.getByRole('img', { name: /hole map/i })).toHaveAttribute('src', 'blob:mock')
+  })
+
+  it('renders pin, tee, and numbered prior-shot markers (AC-0138/0139/0140)', () => {
+    render(<HoleMap {...BASE} />)
+    expect(screen.getByTestId('marker-pin')).toBeInTheDocument()
+    expect(screen.getByTestId('marker-tee')).toBeInTheDocument()
+    expect(screen.getByTestId('marker-shot-1')).toBeInTheDocument()
+    expect(screen.getByTestId('marker-shot-2')).toBeInTheDocument()
+  })
+
+  it('renders the GPS pulse marker (AC-0141)', () => {
+    render(<HoleMap {...BASE} />)
+    expect(screen.getByTestId('marker-gps')).toBeInTheDocument()
+  })
+
+  it('shows the "~N yds to pin" distance overlay (AC-0142/0180)', () => {
+    render(<HoleMap {...BASE} />)
+    expect(screen.getByText(/^~\d+ yds to pin$/)).toBeInTheDocument()
+  })
+
+  it('in tap mode, clicking the surface calls onMapTap with the surface coords (AC-0179)', () => {
+    const onMapTap = vi.fn()
+    render(<HoleMap {...BASE} tapMode onMapTap={onMapTap} />)
+    fireEvent.click(screen.getByTestId('map-surface'), { clientX: 100, clientY: 100 })
+    expect(onMapTap).toHaveBeenCalled()
+  })
+})
+```
+
+**18b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/hole-map.test.tsx
+```
+Expected: FAIL — module not found.
+
+**18c. Create `fdgolf-app/components/round/hole-map.tsx`:**
+```tsx
+'use client'
+
+import { project, unproject, type Frame } from '@/lib/round/projection'
+import { formatYardsToPin, haversineMeters } from '@/lib/round/distance'
+import type { LatLng } from '@/lib/round/types'
+
+type ShotMarker = { lat: number; lng: number; shotNumber: number }
+
+type Props = {
+  baseImageUrl: string
+  frame: Frame
+  hole: { pin: LatLng; tee: LatLng }
+  shots: ShotMarker[]
+  gps: { lat: number; lng: number; accuracyM: number | null } | null
+  tapMode: boolean
+  onMapTap: (coord: LatLng) => void
+}
+
+function inFrame(x: number, y: number, frame: Frame): boolean {
+  return x >= 0 && x <= frame.size.w && y >= 0 && y <= frame.size.h
+}
+
+export function HoleMap({ baseImageUrl, frame, hole, shots, gps, tapMode, onMapTap }: Props) {
+  const pin = project(hole.pin.lat, hole.pin.lng, frame)
+  const tee = project(hole.tee.lat, hole.tee.lng, frame)
+  const shotPts = shots.map((s) => ({ ...s, ...project(s.lat, s.lng, frame) }))
+  const gpsPt = gps ? project(gps.lat, gps.lng, frame) : null
+  const distanceLabel = gps ? formatYardsToPin(haversineMeters(gps, hole.pin)) : null
+
+  function handleClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (!tapMode) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const coord = unproject(e.clientX - rect.left, e.clientY - rect.top, frame)
+    onMapTap(coord)
+  }
+
+  return (
+    <div
+      data-testid="map-surface"
+      onClick={handleClick}
+      className="relative overflow-hidden"
+      style={{ width: frame.size.w, height: frame.size.h }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={baseImageUrl} alt="Hole map" className="absolute inset-0 h-full w-full object-cover" />
+
+      {/* prior shots: dashed polyline + numbered markers (AC-0140) */}
+      <svg className="pointer-events-none absolute inset-0" width={frame.size.w} height={frame.size.h}>
+        <polyline
+          fill="none"
+          stroke="#fbbf24"
+          strokeWidth={2}
+          strokeDasharray="6 4"
+          points={shotPts.map((p) => `${p.x},${p.y}`).join(' ')}
+        />
+      </svg>
+      {shotPts.map((p) => (
+        <span
+          key={p.shotNumber}
+          data-testid={`marker-shot-${p.shotNumber}`}
+          className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-1 text-[10px] font-bold text-slate-900"
+          style={{ left: p.x, top: p.y }}
+        >
+          {p.shotNumber}
+        </span>
+      ))}
+
+      <span data-testid="marker-tee" className="absolute -translate-x-1/2 -translate-y-1/2 text-lg" style={{ left: tee.x, top: tee.y }}>⛳️T</span>
+      <span data-testid="marker-pin" className="absolute -translate-x-1/2 -translate-y-1/2 text-lg" style={{ left: pin.x, top: pin.y }}>📍</span>
+
+      {gpsPt && inFrame(gpsPt.x, gpsPt.y, frame) && (
+        <span data-testid="marker-gps" className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-red-500" style={{ left: gpsPt.x, top: gpsPt.y }} />
+      )}
+      {gpsPt && !inFrame(gpsPt.x, gpsPt.y, frame) && (
+        <span data-testid="marker-gps" className="absolute right-1 top-1 text-red-500">➤</span>
+      )}
+
+      {distanceLabel && (
+        <div className="absolute left-2 top-2 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
+          {distanceLabel}
+        </div>
+      )}
+
+      {tapMode && (
+        <div className="absolute inset-x-0 bottom-2 text-center text-xs text-amber-300">
+          Tap the map to set your shot location
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+**18d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/hole-map.test.tsx
+```
+Expected: PASS (5 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/hole-map.tsx fdgolf-app/__tests__/components/round/hole-map.test.tsx && git commit -m "[feat] EPIC-0005: HoleMap render-only overlay (TC-0037)"
+```
+
+---
+
+### Task 19 — `<ShotCapture>` GPS capture + outcomes + OOB + GPS-denied (TC-0038) [SPINE]
+
+Drives the shot-machine: Start shot (GPS high-accuracy or, on denial, tap fallback), 4 outcome buttons, OOB rehit prompt. Commits via an injected `onCommit` callback (the page wires it to `useRoundStore.commitShot` + `createShotAction`) so the component is unit-testable with a mocked geolocation.
+
+**19a. Write failing test** `fdgolf-app/__tests__/components/round/shot-capture.test.tsx`:
+```tsx
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { ShotCapture } from '@/components/round/shot-capture'
+
+const CLUBS = [{ id: 'c1', display_name: 'Driver' }, { id: 'c2', display_name: '7 Iron' }]
+
+function mockGeoSuccess(lat = 45, lng = -75, accuracy = 5) {
+  // @ts-expect-error test shim
+  globalThis.navigator.geolocation = {
+    getCurrentPosition: (ok: PositionCallback) =>
+      ok({ coords: { latitude: lat, longitude: lng, accuracy } } as GeolocationPosition),
+  }
+}
+function mockGeoDenied() {
+  // @ts-expect-error test shim
+  globalThis.navigator.geolocation = {
+    getCurrentPosition: (_ok: PositionCallback, err: PositionErrorCallback) =>
+      err({ code: 1, message: 'denied' } as GeolocationPositionError),
+  }
+}
+
+const baseProps = {
+  playerId: 'p1', holeNumber: 1, shotNumber: 1, clubs: CLUBS, defaultClubId: 'c1',
+}
+
+beforeEach(() => vi.clearAllMocks())
+
+describe('ShotCapture', () => {
+  it('captures GPS on Start shot and shows four outcome buttons (AC-0143/0146)', async () => {
+    mockGeoSuccess()
+    render(<ShotCapture {...baseProps} onCommit={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => expect(screen.getByRole('button', { name: /in play/i })).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: /^sunk/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /mulligan/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /oob/i })).toBeInTheDocument()
+  })
+
+  it('In Play commits a shot with outcome in_play, stroke_count 1, captured GPS + accuracy (AC-0144/0145/0147/0181)', async () => {
+    mockGeoSuccess(45, -75, 7)
+    const onCommit = vi.fn()
+    render(<ShotCapture {...baseProps} onCommit={onCommit} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /in play/i }))
+    fireEvent.click(screen.getByRole('button', { name: /in play/i }))
+    await waitFor(() =>
+      expect(onCommit).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: 'in_play', strokeCount: 1, originLat: 45, originLng: -75, accuracyM: 7, clubId: 'c1' })
+      )
+    )
+  })
+
+  it('OOB shows the rehit prompt and commits stroke_count 2 (AC-0148/0149/0150)', async () => {
+    mockGeoSuccess()
+    const onCommit = vi.fn()
+    render(<ShotCapture {...baseProps} onCommit={onCommit} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /oob/i }))
+    fireEvent.click(screen.getByRole('button', { name: /oob/i }))
+    expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'out_of_bounds', strokeCount: 2 }))
+    expect(screen.getByRole('button', { name: /rehit from oob location/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /rehit from prior position/i })).toBeInTheDocument()
+  })
+
+  it('on GPS denial shows the tap-the-map fallback message (AC-0178)', async () => {
+    mockGeoDenied()
+    render(<ShotCapture {...baseProps} onCommit={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => expect(screen.getByText(/tap the map/i)).toBeInTheDocument())
+  })
+})
+```
+
+**19b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/shot-capture.test.tsx
+```
+Expected: FAIL — module not found.
+
+**19c. Create `fdgolf-app/components/round/shot-capture.tsx`:**
+```tsx
+'use client'
+
+import { useReducer, useState } from 'react'
+import {
+  shotReducer,
+  initialShotState,
+  type ShotDraft,
+  type CommittedShot,
+} from '@/lib/round/shot-machine'
+import type { LocalShot, RehitOrigin } from '@/lib/round/types'
+
+type Club = { id: string; display_name: string }
+
+type Props = {
+  playerId: string
+  holeNumber: number
+  shotNumber: number
+  clubs: Club[]
+  defaultClubId: string | null
+  onCommit: (shot: Omit<LocalShot, 'localId' | 'roundId' | 'serverId'> & { localId: string }) => void
+}
+
+function toLocalShot(
+  committed: CommittedShot,
+  shotNumber: number,
+  playerId: string,
+  rehitOrigin: RehitOrigin | null,
+  rehitFromLocalId: string | null
+) {
+  const d = committed.draft
+  return {
+    localId: committed.localId,
+    holeNumber: d.holeNumber,
+    shotNumber,
+    playerId,
+    clubId: d.clubId,
+    originLat: d.originLat,
+    originLng: d.originLng,
+    outcome: committed.outcome,
+    strokeCount: committed.strokeCount,
+    accuracyM: d.accuracyM,
+    rehitFromShotLocalId: rehitFromLocalId,
+    rehitOrigin,
+  }
+}
+
+export function ShotCapture({ playerId, holeNumber, shotNumber, clubs, defaultClubId, onCommit }: Props) {
+  const [state, dispatch] = useReducer(shotReducer, initialShotState)
+  const [clubId, setClubId] = useState<string | null>(defaultClubId)
+  const [gpsDenied, setGpsDenied] = useState(false)
+
+  function startShot() {
+    setGpsDenied(false)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const draft: ShotDraft = {
+          playerId,
+          holeNumber,
+          clubId,
+          originLat: pos.coords.latitude,
+          originLng: pos.coords.longitude,
+          accuracyM: pos.coords.accuracy ?? null,
+        }
+        dispatch({ type: 'START_SHOT', draft })
+      },
+      () => setGpsDenied(true),
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
+  function outcome(o: 'in_play' | 'sunk' | 'mulligan' | 'out_of_bounds') {
+    const next = shotReducer(state, { type: 'OUTCOME', outcome: o })
+    if (next.committed && next.committed !== state.committed) {
+      onCommit(toLocalShot(next.committed, shotNumber, playerId, null, null))
+    }
+    dispatch({ type: 'OUTCOME', outcome: o })
+  }
+
+  function rehit(origin: RehitOrigin) {
+    const coord =
+      origin === 'prior_position' && state.committed
+        ? { lat: state.committed.draft.originLat ?? 0, lng: state.committed.draft.originLng ?? 0 }
+        : { lat: state.committed?.draft.originLat ?? 0, lng: state.committed?.draft.originLng ?? 0 }
+    dispatch({ type: 'REHIT', rehitOrigin: origin, origin: coord })
+  }
+
+  if (state.phase === 'OOB_REHIT') {
+    return (
+      <div className="flex flex-col gap-2 p-4">
+        <p className="text-sm text-slate-300">Out of bounds — where do you rehit from?</p>
+        <button className="rounded bg-slate-700 py-3 font-semibold" onClick={() => rehit('oob_location')}>
+          Rehit from OOB location
+        </button>
+        <button className="rounded bg-slate-700 py-3 font-semibold" onClick={() => rehit('prior_position')}>
+          Rehit from prior position
+        </button>
+      </div>
+    )
+  }
+
+  if (state.phase === 'AWAITING_OUTCOME') {
+    return (
+      <div className="grid grid-cols-2 gap-2 p-4">
+        <button className="rounded bg-green-700 py-4 font-bold" onClick={() => outcome('in_play')}>In Play</button>
+        <button className="rounded bg-green-500 py-4 font-bold" onClick={() => outcome('sunk')}>Sunk</button>
+        <button className="rounded bg-amber-500 py-4 font-bold" onClick={() => outcome('mulligan')}>Mulligan</button>
+        <button className="rounded bg-red-600 py-4 font-bold" onClick={() => outcome('out_of_bounds')}>OOB</button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-3 p-4">
+      <select
+        aria-label="club"
+        value={clubId ?? ''}
+        onChange={(e) => setClubId(e.target.value)}
+        className="rounded bg-slate-800 px-3 py-2"
+      >
+        {clubs.map((c) => (
+          <option key={c.id} value={c.id}>{c.display_name}</option>
+        ))}
+      </select>
+      <button className="rounded bg-green-700 py-3 font-bold" onClick={startShot}>
+        Start shot — capture GPS
+      </button>
+      {gpsDenied && <p className="text-sm text-amber-300">GPS denied — tap the map to set your shot location.</p>}
+    </div>
+  )
+}
+```
+
+Note: the `rehit` follow-up origin pre-seeds the next shot's draft via `state.nextOrigin`/`pendingRehitOrigin` (held in the machine). The page reads these to set the next `START_SHOT` draft and to populate `rehitFromShotLocalId`/`rehitOrigin` on the follow-up commit (AC-0151/0152). Mulligan's same-location re-seed (AC-0154) likewise flows through `state.nextOrigin`.
+
+**19d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/components/round/shot-capture.test.tsx
+```
+Expected: PASS (4 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/components/round/shot-capture.tsx fdgolf-app/__tests__/components/round/shot-capture.test.tsx && git commit -m "[feat] EPIC-0005: ShotCapture GPS + outcomes + OOB + tap fallback (TC-0038)"
+```
