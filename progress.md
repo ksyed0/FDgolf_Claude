@@ -10,6 +10,9 @@
 - Executed EPIC-0005 (Round Tracking) plan via Conductor/DM_AGENT: 593 unit tests, coverage ≥80%, merged PR #48; CI regression fixed via PR #49
 - Built EPIC-0007 Leaderboard MVP-spine (TASK-0313–0326, 0334–0335): pgTAP privacy spike, PII-free owner-run views, `useLeaderboardFeed` 30s polling, all leaderboard components, SSR route `/t/[slug]/leaderboard`, CurrentTeamCard hero; 537 tests, 88-97% coverage, build + 37 pgTAP green; PR #50
 - Both epics ran in parallel sessions; ID registry: TASK→0336, TC→0043, BUG→0023
+- EPIC-0005 write-back (PR #51): 6 stories Done (US-0036–0040, 0044 = shot-capture spine), 8 In Progress (US-0035, 0041–0043, 0045–0048 — components built & unit-tested but not wired into the active-hole route). Filed BUG-0020 (editShot shot_edits RLS admin-only), BUG-0021 (grante_ridge_seed), BUG-0022 (route-integration gap)
+- Fixed BUG-0021 (PR #52): grante_ridge_seed inserted a non-existent `venues.country` column → `supabase db reset` now replays all 17 migrations cleanly. Added `.gitignore` guards blocking DB dumps/backups from being committed (PII safety)
+- Provisioned an identical Supabase DB on remote dev machine `192.168.1.100` (OrbStack) over SSH: synced the fixed migrations + `supabase start` + `db reset`; verified remote row counts match local (15 clubs / 1 venue / 1 course / 18 holes; all user tables empty — no real/PII data exists, so reset reproduces the full DB)
 
 ---
 
