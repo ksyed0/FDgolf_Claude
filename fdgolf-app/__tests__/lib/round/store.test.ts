@@ -50,7 +50,8 @@ describe('useRoundStore.flushQueue', () => {
     await useRoundStore.getState().commitShot(shot('s1'))
     await useRoundStore.getState().commitShot(shot('s2'))
     await useRoundStore.getState().flushQueue(send)
-    expect(send.mock.calls.map((c) => c[0].localId)).toEqual(['s1', 's2'])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(send.mock.calls.map((c: any) => c[0].localId)).toEqual(['s1', 's2'])
     expect(await getQueue()).toHaveLength(0)
     expect(useRoundStore.getState().queue).toHaveLength(0)
   })

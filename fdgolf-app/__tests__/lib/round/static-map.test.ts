@@ -3,6 +3,9 @@ import { fetchAndCacheStaticMap, cacheKeyFor } from '@/lib/round/static-map'
 
 const PNG = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const g = globalThis as any
+
 function installCacheMock() {
   const store = new Map<string, Response>()
   const cache = {
@@ -11,15 +14,13 @@ function installCacheMock() {
       store.set(k, r)
     }),
   }
-  // @ts-expect-error test shim
-  globalThis.caches = { open: vi.fn(async () => cache) }
+  g.caches = { open: vi.fn(async () => cache) }
   return cache
 }
 
 beforeEach(() => {
   vi.restoreAllMocks()
-  // @ts-expect-error test shim
-  globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock')
+  g.URL.createObjectURL = vi.fn(() => 'blob:mock')
 })
 
 describe('cacheKeyFor', () => {
@@ -32,8 +33,7 @@ describe('fetchAndCacheStaticMap', () => {
   it('fetches once and caches the PNG when not cached', async () => {
     const cache = installCacheMock()
     const fetchMock = vi.fn(async () => new Response(PNG, { status: 200 }))
-    // @ts-expect-error test shim
-    globalThis.fetch = fetchMock
+    g.fetch = fetchMock
     const url = await fetchAndCacheStaticMap('hole-7', 'https://api.mapbox.com/x')
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(cache.put).toHaveBeenCalledTimes(1)
@@ -44,8 +44,7 @@ describe('fetchAndCacheStaticMap', () => {
     const cache = installCacheMock()
     await cache.put('/fdgolf/static-map/hole-7', new Response(PNG, { status: 200 }))
     const fetchMock = vi.fn()
-    // @ts-expect-error test shim
-    globalThis.fetch = fetchMock
+    g.fetch = fetchMock
     const url = await fetchAndCacheStaticMap('hole-7', 'https://api.mapbox.com/x')
     expect(fetchMock).not.toHaveBeenCalled()
     expect(url).toBe('blob:mock')
