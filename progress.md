@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 12 — 2026-06-17
+
+### What Was Done
+
+- Brainstormed + specced EPIC-0005 (Round Tracking) and EPIC-0007 (Leaderboard) — design specs with locked decisions (EPIC-0005: offline IndexedDB write-through, flexible recorder + soft claim, cached static-PNG map; EPIC-0007: polling-first + PII-free owner-run public views)
+- Authored full TDD implementation plans for both (EPIC-0005: 29 tasks; EPIC-0007: 23 tasks); every AC (AC-0137–0181, AC-0202–0227) mapped, MVP-spine vs deferrable marked, build order = projection-first / anon-view-spike-first
+- Repo housekeeping: reconciled diverged local develop, cleaned 11 stale agent worktrees + merged branches. Specs+plans live on `feature/epic0005-round-tracking` + `feature/epic0007-leaderboard`, awaiting execution
+
+---
+
 ## Session 11 — 2026-06-16
 
 ### What Was Done
