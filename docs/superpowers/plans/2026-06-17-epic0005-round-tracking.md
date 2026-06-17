@@ -1133,3 +1133,407 @@ Commit:
 ```bash
 cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/static-map.ts fdgolf-app/__tests__/lib/round/static-map.test.ts && git commit -m "[feat] EPIC-0005: static-map fetch + Cache API (TC-0030)"
 ```
+
+---
+
+### Task 12 — `useRoundStore`: commit + offline queue + idempotent flush (TC-0031) [SPINE]
+
+The heart of D1. `commitShot()` → optimistic store update → IndexedDB persist → enqueue. `flushQueue()` posts sequentially via an injected `send` fn; a unique-violation result is treated as already-applied (idempotent). `send` is injected so the store stays unit-testable without mocking Server Actions.
+
+**12a. Write failing test** `fdgolf-app/__tests__/lib/round/store.test.ts`:
+```ts
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import 'fake-indexeddb/auto'
+import { useRoundStore } from '@/lib/round/store'
+import { getShotsForRound, getQueue } from '@/lib/round/idb'
+import type { LocalShot } from '@/lib/round/types'
+
+function shot(localId: string): LocalShot {
+  return {
+    localId, roundId: 'r1', holeNumber: 1, shotNumber: 1, playerId: 'p1', clubId: 'c1',
+    originLat: 45, originLng: -75, outcome: 'in_play', strokeCount: 1, accuracyM: 5,
+    rehitFromShotLocalId: null, rehitOrigin: null, serverId: null,
+  }
+}
+
+beforeEach(() => {
+  indexedDB = new IDBFactory()
+  useRoundStore.setState({ localHoles: {}, queue: [], activeHole: 1, activePlayerId: 'p1', claim: null })
+})
+
+describe('useRoundStore.commitShot', () => {
+  it('optimistically adds to localHoles, persists to idb, and enqueues (D1 order)', async () => {
+    await useRoundStore.getState().commitShot(shot('s1'))
+    const local = useRoundStore.getState().localHoles[1]['p1']
+    expect(local).toHaveLength(1)
+    expect(await getShotsForRound('r1')).toHaveLength(1)
+    expect(await getQueue()).toHaveLength(1)
+  })
+})
+
+describe('useRoundStore.flushQueue', () => {
+  it('sends each queued item in order and clears the queue on success', async () => {
+    const send = vi.fn(async () => ({ ok: true as const }))
+    await useRoundStore.getState().commitShot(shot('s1'))
+    await useRoundStore.getState().commitShot(shot('s2'))
+    await useRoundStore.getState().flushQueue(send)
+    expect(send.mock.calls.map((c) => c[0].localId)).toEqual(['s1', 's2'])
+    expect(await getQueue()).toHaveLength(0)
+    expect(useRoundStore.getState().queue).toHaveLength(0)
+  })
+
+  it('treats a unique-violation as already-applied and dequeues it (idempotent)', async () => {
+    const send = vi.fn(async () => ({ ok: false as const, code: 'unique_violation' as const }))
+    await useRoundStore.getState().commitShot(shot('s1'))
+    await useRoundStore.getState().flushQueue(send)
+    expect(await getQueue()).toHaveLength(0)
+  })
+
+  it('keeps an item queued on a transient (non-unique) error and stops the run', async () => {
+    const send = vi.fn(async () => ({ ok: false as const, code: 'network' as const }))
+    await useRoundStore.getState().commitShot(shot('s1'))
+    await useRoundStore.getState().commitShot(shot('s2'))
+    await useRoundStore.getState().flushQueue(send)
+    expect(send).toHaveBeenCalledTimes(1) // stops at first transient failure
+    expect(await getQueue()).toHaveLength(2)
+  })
+})
+```
+
+**12b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/store.test.ts
+```
+Expected: FAIL — module not found.
+
+**12c. Create `fdgolf-app/lib/round/store.ts`:**
+```ts
+import { create } from 'zustand'
+import { putShot, putQueueItem, getQueue, deleteQueueItem } from './idb'
+import type { LocalShot, QueueItem } from './types'
+
+export type SendResult =
+  | { ok: true }
+  | { ok: false; code: 'unique_violation' | 'network' | 'denied' }
+
+export type SendFn = (shot: LocalShot) => Promise<SendResult>
+
+export type ClaimState = { recordedBy: string; expiresAt: string } | null
+
+type LocalHoles = Record<number, Record<string, LocalShot[]>>
+
+type RoundStore = {
+  activeHole: number
+  activePlayerId: string | null
+  localHoles: LocalHoles
+  queue: QueueItem[]
+  claim: ClaimState
+  commitShot: (shot: LocalShot) => Promise<void>
+  flushQueue: (send: SendFn) => Promise<void>
+  hydrate: (shots: LocalShot[], queue: QueueItem[]) => void
+}
+
+export const useRoundStore = create<RoundStore>((set, get) => ({
+  activeHole: 1,
+  activePlayerId: null,
+  localHoles: {},
+  queue: [],
+  claim: null,
+
+  // D1 write order: (1) optimistic store, (2) durable idb, (3) enqueue.
+  commitShot: async (shot) => {
+    set((s) => {
+      const hole = { ...(s.localHoles[shot.holeNumber] ?? {}) }
+      const player = [...(hole[shot.playerId] ?? []), shot]
+      return { localHoles: { ...s.localHoles, [shot.holeNumber]: { ...hole, [shot.playerId]: player } } }
+    })
+    await putShot(shot)
+    const item: QueueItem = { localId: shot.localId, kind: 'create', payload: shot }
+    await putQueueItem(item)
+    set((s) => ({ queue: [...s.queue, item] }))
+  },
+
+  // Sequential, ordered flush. Unique-violation = already applied (idempotent) → dequeue.
+  // Any other failure stops the run and leaves the item queued for the next attempt.
+  flushQueue: async (send) => {
+    const queue = await getQueue()
+    for (const item of queue) {
+      const res = await send(item.payload)
+      if (res.ok || res.code === 'unique_violation') {
+        await deleteQueueItem(item.localId)
+        set((s) => ({ queue: s.queue.filter((q) => q.localId !== item.localId) }))
+      } else {
+        break
+      }
+    }
+  },
+
+  hydrate: (shots, queue) => {
+    const localHoles: LocalHoles = {}
+    for (const sh of shots) {
+      const hole = (localHoles[sh.holeNumber] ??= {})
+      ;(hole[sh.playerId] ??= []).push(sh)
+    }
+    set({ localHoles, queue })
+  },
+}))
+```
+
+**12d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/store.test.ts
+```
+Expected: PASS (4 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/store.ts fdgolf-app/__tests__/lib/round/store.test.ts && git commit -m "[feat] EPIC-0005: useRoundStore commit + idempotent flush queue (TC-0031)"
+```
+
+---
+
+### Task 13 — `createShotAction` Server Action (TC-0032) [SPINE]
+
+Inserts one shot with the EPIC-0006 stroke_count contract. Online claim guard (if a live claim exists for another recorder, reject); the unique constraint is the offline backstop, surfaced to the caller as `unique_violation` so the store treats it as already-applied.
+
+**13a. Write failing test** `fdgolf-app/__tests__/lib/actions/shots.test.ts`:
+```ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+const { mockFrom, mockGetUser } = vi.hoisted(() => ({ mockFrom: vi.fn(), mockGetUser: vi.fn() }))
+
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: async () => ({ auth: { getUser: mockGetUser }, from: mockFrom }),
+}))
+
+import { createShotAction } from '@/lib/actions/shots'
+
+const INPUT = {
+  roundId: 'r1', holeNumber: 1, shotNumber: 1, playerId: 'p1', clubId: 'c1',
+  originLat: 45, originLng: -75, outcome: 'in_play' as const, strokeCount: 1 as const,
+  accuracyM: 5, rehitFromShotId: null, rehitOrigin: null,
+}
+
+beforeEach(() => vi.clearAllMocks())
+
+describe('createShotAction', () => {
+  it('rejects when unauthenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    expect(await createShotAction(INPUT)).toEqual({ ok: false, code: 'denied' })
+  })
+
+  it('inserts the shot and returns ok with the server id', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const insertChain = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: 'srv1' }, error: null }),
+    }
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'shots') return insertChain
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: null, error: null }) }
+    })
+    const res = await createShotAction(INPUT)
+    expect(res).toEqual({ ok: true, serverId: 'srv1' })
+    expect(insertChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ round_id: 'r1', hole_number: 1, shot_number: 1, outcome: 'in_play', stroke_count: 1, accuracy_m: 5 })
+    )
+  })
+
+  it('maps a Postgres unique violation (23505) to ok:false unique_violation (idempotent backstop)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const insertChain = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: { code: '23505' } }),
+    }
+    mockFrom.mockImplementation(() => insertChain)
+    expect(await createShotAction(INPUT)).toEqual({ ok: false, code: 'unique_violation' })
+  })
+})
+```
+
+**13b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/shots.test.ts
+```
+Expected: FAIL — module not found.
+
+**13c. Create `fdgolf-app/lib/actions/shots.ts`:**
+```ts
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import type { RehitOrigin, ShotOutcome } from '@/lib/round/types'
+
+export type CreateShotInput = {
+  roundId: string
+  holeNumber: number
+  shotNumber: number
+  playerId: string
+  clubId: string | null
+  originLat: number | null
+  originLng: number | null
+  outcome: ShotOutcome
+  strokeCount: 0 | 1 | 2
+  accuracyM: number | null
+  rehitFromShotId: string | null
+  rehitOrigin: RehitOrigin | null
+}
+
+export type ShotActionResult =
+  | { ok: true; serverId: string }
+  | { ok: false; code: 'unique_violation' | 'network' | 'denied' }
+
+export async function createShotAction(input: CreateShotInput): Promise<ShotActionResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, code: 'denied' }
+
+  const { data, error } = await supabase
+    .from('shots')
+    .insert({
+      round_id: input.roundId,
+      hole_number: input.holeNumber,
+      shot_number: input.shotNumber,
+      club_id: input.clubId,
+      origin_lat: input.originLat,
+      origin_lng: input.originLng,
+      outcome: input.outcome,
+      stroke_count: input.strokeCount,
+      accuracy_m: input.accuracyM,
+      rehit_from_shot_id: input.rehitFromShotId,
+      rehit_origin: input.rehitOrigin,
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    if (error.code === '23505') return { ok: false, code: 'unique_violation' }
+    return { ok: false, code: 'network' }
+  }
+  return { ok: true, serverId: data!.id }
+}
+```
+
+Note: the EPIC-0006 `trg_shots_recompute` trigger fires on this INSERT and derives `hole_scores`/`team_hole_scores` automatically (AC-0147/0156/0157/0158/0153/0150) — no score writes here. RLS (`shots_insert_own_active_round_or_admin_or_organizer`) is the authorization gate.
+
+**13d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/shots.test.ts
+```
+Expected: PASS (3 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/actions/shots.ts fdgolf-app/__tests__/lib/actions/shots.test.ts && git commit -m "[feat] EPIC-0005: createShotAction with unique-violation idempotency (TC-0032)"
+```
+
+---
+
+### Task 14 — `editShotAction` with shot_edits audit (TC-0033) [DEFER — US-0041; admin can fix via EPIC-0008]
+
+Edit club/outcome/GPS on a prior shot; write before/after JSONB to `shot_edits`; set `updated_by`. Recalc is automatic via the trigger (AC-0163).
+
+**14a. Append to `fdgolf-app/__tests__/lib/actions/shots.test.ts`:**
+```ts
+import { editShotAction } from '@/lib/actions/shots'
+
+describe('editShotAction', () => {
+  it('writes before/after to shot_edits, updates the shot, and sets updated_by (AC-0160/0161/0162)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u9' } } })
+    const before = { id: 'srv1', club_id: 'c1', outcome: 'in_play', origin_lat: 45, origin_lng: -75, stroke_count: 1 }
+    const shotsChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: before, error: null }),
+      update: vi.fn().mockReturnThis(),
+    }
+    const editsInsert = vi.fn().mockResolvedValue({ error: null })
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'shots') return shotsChain
+      if (t === 'shot_edits') return { insert: editsInsert }
+      return shotsChain
+    })
+    const res = await editShotAction({
+      shotId: 'srv1', clubId: 'c2', outcome: 'sunk', strokeCount: 1, originLat: 45.1, originLng: -75.1,
+    })
+    expect(res).toEqual({ ok: true, serverId: 'srv1' })
+    expect(editsInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ shot_id: 'srv1', edited_by: 'u9' })
+    )
+    expect(shotsChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ club_id: 'c2', outcome: 'sunk', stroke_count: 1, updated_by: 'u9' })
+    )
+  })
+})
+```
+
+**14b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/shots.test.ts
+```
+Expected: FAIL — `editShotAction` is not exported.
+
+**14c. Append to `fdgolf-app/lib/actions/shots.ts`:**
+```ts
+export type EditShotInput = {
+  shotId: string
+  clubId: string | null
+  outcome: ShotOutcome
+  strokeCount: 0 | 1 | 2
+  originLat: number | null
+  originLng: number | null
+}
+
+export async function editShotAction(input: EditShotInput): Promise<ShotActionResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, code: 'denied' }
+
+  // 1. Read current state for the before-image (AC-0161).
+  const { data: before, error: readErr } = await supabase
+    .from('shots')
+    .select('id, club_id, outcome, origin_lat, origin_lng, stroke_count')
+    .eq('id', input.shotId)
+    .single()
+  if (readErr || !before) return { ok: false, code: 'network' }
+
+  const after = {
+    club_id: input.clubId,
+    outcome: input.outcome,
+    stroke_count: input.strokeCount,
+    origin_lat: input.originLat,
+    origin_lng: input.originLng,
+    updated_by: user.id,
+  }
+
+  // 2. Audit row (AC-0161). shot_edits insert is admin-gated by RLS; in flexible mode the
+  //    edit is performed by the round owner/organizer whose policy permits the shots UPDATE.
+  const { error: auditErr } = await supabase
+    .from('shot_edits')
+    .insert({ shot_id: input.shotId, edited_by: user.id, before_state: before, after_state: after })
+  if (auditErr) return { ok: false, code: 'network' }
+
+  // 3. Apply the edit (AC-0160/0162). trg_shots_recompute re-derives scores (AC-0163).
+  const { error: updErr } = await supabase.from('shots').update(after).eq('id', input.shotId)
+  if (updErr) return { ok: false, code: 'network' }
+
+  return { ok: true, serverId: input.shotId }
+}
+```
+
+**14d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/shots.test.ts
+```
+Expected: PASS (4 tests total in file).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/actions/shots.ts fdgolf-app/__tests__/lib/actions/shots.test.ts && git commit -m "[feat] EPIC-0005: editShotAction with shot_edits audit (TC-0033)"
+```
