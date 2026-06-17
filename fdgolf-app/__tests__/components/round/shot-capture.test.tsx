@@ -86,4 +86,42 @@ describe('ShotCapture', () => {
     fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
     await waitFor(() => expect(screen.getByText(/tap the map/i)).toBeInTheDocument())
   })
+
+  it('OOB rehit linkage is wired end-to-end: rehit shot carries rehitFromShotLocalId + rehitOrigin (AC-0151/0152)', async () => {
+    mockGeoSuccess(45, -75, 5)
+    const onCommit = vi.fn()
+    render(<ShotCapture {...baseProps} onCommit={onCommit} />)
+
+    // Shot 1: START_SHOT
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /oob/i }))
+
+    // Shot 1: OUTCOME → out_of_bounds
+    fireEvent.click(screen.getByRole('button', { name: /oob/i }))
+    // OOB shot must have been committed first
+    expect(onCommit).toHaveBeenCalledTimes(1)
+    const oobCall = onCommit.mock.calls[0][0]
+    expect(oobCall.outcome).toBe('out_of_bounds')
+    expect(oobCall.strokeCount).toBe(2)
+    const oobLocalId = oobCall.localId as string
+    expect(typeof oobLocalId).toBe('string')
+
+    // REHIT prompt shown — choose oob_location
+    await waitFor(() => screen.getByRole('button', { name: /rehit from oob location/i }))
+    fireEvent.click(screen.getByRole('button', { name: /rehit from oob location/i }))
+
+    // Shot 2: START_SHOT (back to idle then GPS capture)
+    await waitFor(() => screen.getByRole('button', { name: /start shot/i }))
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /in play/i }))
+
+    // Shot 2: OUTCOME → in_play
+    fireEvent.click(screen.getByRole('button', { name: /in play/i }))
+
+    await waitFor(() => expect(onCommit).toHaveBeenCalledTimes(2))
+    const rehitCall = onCommit.mock.calls[1][0]
+    expect(rehitCall.outcome).toBe('in_play')
+    expect(rehitCall.rehitFromShotLocalId).toBe(oobLocalId)
+    expect(rehitCall.rehitOrigin).toBe('oob_location')
+  })
 })

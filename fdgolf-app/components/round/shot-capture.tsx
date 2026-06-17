@@ -1,6 +1,6 @@
 'use client'
 
-import { useReducer, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import {
   shotReducer,
   initialShotState,
@@ -57,6 +57,38 @@ export function ShotCapture({
   const [state, dispatch] = useReducer(shotReducer, initialShotState)
   const [clubId, setClubId] = useState<string | null>(defaultClubId)
   const [gpsDenied, setGpsDenied] = useState(false)
+  // Track the last committed localId we already fired onCommit for, so the
+  // useEffect below can detect a genuinely new committed shot.
+  const lastCommittedIdRef = useRef<string | null>(null)
+  // Stash the pending rehit linkage here so START_SHOT (which resets the reducer
+  // to initialShotState) cannot clear it before the next shot commits.
+  const pendingRehitRef = useRef<{
+    fromLocalId: string
+    origin: RehitOrigin
+  } | null>(null)
+
+  // Fire onCommit exactly once per new committed shot, using the *actual*
+  // reducer state so there is only one call to newLocalId() per shot.
+  // The dependency on `onCommit` is intentionally omitted — callers must
+  // provide a stable (memoised/stable-ref) callback.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!state.committed) return
+    if (state.committed.localId === lastCommittedIdRef.current) return
+    lastCommittedIdRef.current = state.committed.localId
+    // Consume any stashed rehit linkage and clear it so it isn't reused.
+    const pending = pendingRehitRef.current
+    pendingRehitRef.current = null
+    onCommit(
+      toLocalShot(
+        state.committed,
+        shotNumber,
+        playerId,
+        pending?.origin ?? null,
+        pending?.fromLocalId ?? null
+      )
+    )
+  }, [state.committed, shotNumber, playerId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function startShot() {
     setGpsDenied(false)
@@ -78,10 +110,6 @@ export function ShotCapture({
   }
 
   function outcome(o: 'in_play' | 'sunk' | 'mulligan' | 'out_of_bounds') {
-    const next = shotReducer(state, { type: 'OUTCOME', outcome: o })
-    if (next.committed && next.committed !== state.committed) {
-      onCommit(toLocalShot(next.committed, shotNumber, playerId, null, null))
-    }
     dispatch({ type: 'OUTCOME', outcome: o })
   }
 
@@ -90,6 +118,11 @@ export function ShotCapture({
       origin === 'prior_position' && state.committed
         ? { lat: state.committed.draft.originLat ?? 0, lng: state.committed.draft.originLng ?? 0 }
         : { lat: state.committed?.draft.originLat ?? 0, lng: state.committed?.draft.originLng ?? 0 }
+    // Stash rehit linkage BEFORE dispatching REHIT — the subsequent START_SHOT
+    // resets the reducer to initialShotState, wiping pendingRehit* fields.
+    if (state.committed) {
+      pendingRehitRef.current = { fromLocalId: state.committed.localId, origin }
+    }
     dispatch({ type: 'REHIT', rehitOrigin: origin, origin: coord })
   }
 

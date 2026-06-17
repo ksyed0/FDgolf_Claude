@@ -66,7 +66,7 @@ export function ActiveHole(props: Props) {
         outcome: s.outcome,
         strokeCount: s.strokeCount,
         accuracyM: s.accuracyM,
-        rehitFromShotId: null,
+        rehitFromShotId: s.rehitFromShotLocalId ?? null,
         rehitOrigin: s.rehitOrigin,
       })
     )
