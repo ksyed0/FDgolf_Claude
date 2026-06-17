@@ -6,3 +6,15 @@ docs/fdgolf-ux-review.zip
 .claude/worktrees/
 .history/
 .playwright-mcp/
+
+# Database dumps / backups — never commit (PII + repo bloat).
+# Schema lives in supabase/migrations/ and seed data in supabase/seed*.sql (both tracked).
+*.dump
+*.sql.gz
+*.sql.zip
+*-backup.sql
+*.backup.sql
+db-dump*.sql
+data-only.sql
+full-dump.sql
+supabase/backups/

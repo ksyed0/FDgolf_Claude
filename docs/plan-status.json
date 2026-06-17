@@ -6039,8 +6039,8 @@
       "severity": "Medium",
       "relatedStory": "(baseline / EPIC-0005 Task 9)",
       "relatedTask": "—",
-      "status": "Open",
-      "fixBranch": "(none yet)",
+      "status": "Fixed",
+      "fixBranch": "fix/bug-0021-grante-seed",
       "lessonEncoded": "No",
       "estimatedCostUsd": 0,
       "ghIssueNumber": null
@@ -7457,10 +7457,10 @@
       "bugIds": []
     }
   ],
-  "generatedAt": "2026-06-17T23:02:49.283Z",
-  "commitSha": "7480c95",
-  "buildNumber": "92",
-  "branch": "chore/epic0005-writeback",
+  "generatedAt": "2026-06-17T23:10:41.665Z",
+  "commitSha": "e2e1db8",
+  "buildNumber": "93",
+  "branch": "fix/bug-0021-grante-seed",
   "sessionTimeline": [
     {
       "date": "2026-06-09",
@@ -7711,7 +7711,7 @@
       "2026-06-10T03:21:42.310Z",
       "2026-06-13T23:59:49.618Z",
       "2026-06-17T20:34:35.853Z",
-      "2026-06-17T23:02:49.402Z"
+      "2026-06-17T23:10:41.784Z"
     ],
     "doneCounts": [
       0,
@@ -7771,7 +7771,7 @@
       0,
       18,
       19,
-      22
+      21
     ],
     "atRisk": [
       0,
