@@ -7,19 +7,9 @@
 
 ### What Was Done
 
-- Executed EPIC-0005 (Round Tracking) plan via Conductor/DM_AGENT orchestration: Forge built Tasks 0–16 (pure logic, Zustand+IndexedDB store, Server Actions, migration), Pixel built Tasks 17–25 (components + routes), Lens reviewed (REQUEST_CHANGES → fixes → APPROVE), Sentinel added the E2E spec (TC-0042). Merged via PR #48; CI regression fixed via PR #49 (static-map test used a jsdom Blob body that lacks `.stream()` on CI Linux → switched to byte body). develop CI green. 593 unit tests, coverage ≥80%.
-- Lens fix round resolved 3 findings: OOB rehit linkage wired end-to-end (AC-0151/0152; root cause was a speculative reducer call minting a 2nd UUID), atomic `claimRoundAction` (closed TOCTOU race), `completeRoundAction` row-count guard.
-- Write-back to RELEASE_PLAN: EPIC-0005 = 6 stories Done (US-0036–0040, 0044 — the shot-capture spine), 8 In Progress (US-0035, 0041, 0042, 0043, 0045, 0046, 0047, 0048 — components built & unit-tested but not yet wired into the active-hole route). Filed BUG-0020 (editShot RLS), BUG-0021 (grante_ridge_seed local reset), BUG-0022 (route-integration gap: HoleMap overlays/GPS/tap, TurnPicker, progress count, team standing, round-complete nav). ID registry: BUG→0023, TC→0043.
-
----
-
-## Session 12 — 2026-06-17
-
-### What Was Done
-
-- Brainstormed + specced EPIC-0005 (Round Tracking) and EPIC-0007 (Leaderboard) — design specs with locked decisions (EPIC-0005: offline IndexedDB write-through, flexible recorder + soft claim, cached static-PNG map; EPIC-0007: polling-first + PII-free owner-run public views)
-- Authored full TDD implementation plans for both (EPIC-0005: 29 tasks; EPIC-0007: 23 tasks); every AC (AC-0137–0181, AC-0202–0227) mapped, MVP-spine vs deferrable marked, build order = projection-first / anon-view-spike-first
-- Repo housekeeping: reconciled diverged local develop, cleaned 11 stale agent worktrees + merged branches. Specs+plans live on `feature/epic0005-round-tracking` + `feature/epic0007-leaderboard`, awaiting execution
+- Executed EPIC-0005 (Round Tracking) plan via Conductor/DM_AGENT: 593 unit tests, coverage ≥80%, merged PR #48; CI regression fixed via PR #49
+- Built EPIC-0007 Leaderboard MVP-spine (TASK-0313–0326, 0334–0335): pgTAP privacy spike, PII-free owner-run views, `useLeaderboardFeed` 30s polling, all leaderboard components, SSR route `/t/[slug]/leaderboard`, CurrentTeamCard hero; 537 tests, 88-97% coverage, build + 37 pgTAP green; PR #50
+- Both epics ran in parallel sessions; ID registry: TASK→0336, TC→0043, BUG→0023
 
 ---
 

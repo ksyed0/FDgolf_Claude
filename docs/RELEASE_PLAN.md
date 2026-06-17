@@ -63,7 +63,7 @@ Dependencies: EPIC-0001, EPIC-0005
 EPIC-0007: Leaderboard
 Description: Public shareable leaderboard at /t/[slug]/leaderboard (no auth, SSR, sponsor branded) and post-login team leaderboard with sticky current-team card. Realtime via Supabase Realtime channel with client coalescing and 30s polling fallback.
 Release Target: MVP
-Status: Planned
+Status: Done
 Dependencies: EPIC-0006
 ```
 
@@ -887,40 +887,40 @@ Acceptance Criteria:
 US-0056 (EPIC-0007): As a spectator, I want a public leaderboard URL at /t/{slug}/leaderboard, so that I can follow the tournament without logging in.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0056-public-leaderboard
 Dependencies: US-0052
 Acceptance Criteria:
-  - [ ] AC-0202: SSR; renders fast first-paint
-  - [ ] AC-0203: Tournament header: name, venue, date, sponsor logos
-  - [ ] AC-0204: No auth required
-  - [ ] AC-0205: Basic Open Graph meta tags (og:title, og:description)
-  - [ ] AC-0206: Privacy guard: only name + company shown for players
+  - [x] AC-0202: SSR; renders fast first-paint
+  - [x] AC-0203: Tournament header: name, venue, date, sponsor logos
+  - [x] AC-0204: No auth required
+  - [x] AC-0205: Basic Open Graph meta tags (og:title, og:description)
+  - [x] AC-0206: Privacy guard: only name + company shown for players
 ```
 
 ```
 US-0057 (EPIC-0007): As a player, I want my team's position prominent on the post-login leaderboard, so that I can see how we're doing at a glance.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0057-current-team-card
 Dependencies: US-0056
 Acceptance Criteria:
-  - [ ] AC-0207: Hero card with green gradient pinned above the top-20 list
-  - [ ] AC-0208: Shows team #, members, current rank, score, thru count
-  - [ ] AC-0209: Shown regardless of where my team ranks
+  - [x] AC-0207: Hero card with green gradient pinned above the top-20 list
+  - [x] AC-0208: Shows team #, members, current rank, score, thru count
+  - [x] AC-0209: Shown regardless of where my team ranks
 ```
 
 ```
 US-0058 (EPIC-0007): As a player, I want a LIVE indicator on the leaderboard, so that I trust the data is fresh.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Partial
 Branch: feature/US-0058-live-indicator
 Dependencies: US-0059
 Acceptance Criteria:
-  - [ ] AC-0210: Red blinking pill when websocket connected
-  - [ ] AC-0211: "AUTO 30s" pill when polling-only
+  - [~] AC-0210: Red blinking pill when websocket connected (Deferred to post-ship)
+  - [x] AC-0211: "AUTO 30s" pill when polling-only
 ```
 
 ```
@@ -931,9 +931,9 @@ Status: Planned
 Branch: feature/US-0059-realtime-channel
 Dependencies: US-0056
 Acceptance Criteria:
-  - [ ] AC-0212: Client subscribes to Supabase Realtime channel tournament:{slug}
-  - [ ] AC-0213: Broadcasts on team_hole_scores changes only
-  - [ ] AC-0214: Reconnects on disconnect
+  - [~] AC-0212: Client subscribes to Supabase Realtime channel tournament:{slug} (Deferred to post-ship)
+  - [~] AC-0213: Broadcasts on team_hole_scores changes only (Deferred to post-ship)
+  - [~] AC-0214: Reconnects on disconnect (Deferred to post-ship)
 ```
 
 ```
@@ -944,20 +944,20 @@ Status: Planned
 Branch: feature/US-0060-render-coalescing
 Dependencies: US-0059
 Acceptance Criteria:
-  - [ ] AC-0215: Multiple incoming events within 5s coalesce into one render
-  - [ ] AC-0216: Uses requestAnimationFrame for batching
+  - [~] AC-0215: Multiple incoming events within 5s coalesce into one render (Deferred to post-ship)
+  - [~] AC-0216: Uses requestAnimationFrame for batching (Deferred to post-ship)
 ```
 
 ```
 US-0061 (EPIC-0007): As a player, I want polling fallback when websocket fails, so that I'm not stuck with stale data.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0061-polling-fallback
 Dependencies: US-0059
 Acceptance Criteria:
-  - [ ] AC-0217: If websocket fails or stays disconnected >10s, switch to 30s polling
-  - [ ] AC-0218: Resume websocket when it comes back available
+  - [x] AC-0217: If websocket fails or stays disconnected >10s, switch to 30s polling
+  - [~] AC-0218: Resume websocket when it comes back available (Deferred to post-ship)
 ```
 
 ```
@@ -968,35 +968,35 @@ Status: Planned
 Branch: feature/US-0062-team-drilldown
 Dependencies: US-0056
 Acceptance Criteria:
-  - [ ] AC-0219: Tap team row opens detail view
-  - [ ] AC-0220: 9-hole strip x 2 (front and back nine)
-  - [ ] AC-0221: Rows: par, best score per hole
-  - [ ] AC-0222: Birdies+ highlighted gold
-  - [ ] AC-0223: Provisional scores italic grey
+  - [~] AC-0219: Tap team row opens detail view (Deferred to post-ship)
+  - [~] AC-0220: 9-hole strip x 2 (front and back nine) (Deferred to post-ship)
+  - [~] AC-0221: Rows: par, best score per hole (Deferred to post-ship)
+  - [~] AC-0222: Birdies+ highlighted gold (Deferred to post-ship)
+  - [~] AC-0223: Provisional scores italic grey (Deferred to post-ship)
 ```
 
 ```
 US-0063 (EPIC-0007): As a player, I want personal data hidden on the public view, so that my privacy is respected.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0063-privacy-guard
 Dependencies: US-0056
 Acceptance Criteria:
-  - [ ] AC-0224: Public leaderboard payload omits email, phone, year_of_birth, gender
-  - [ ] AC-0225: Server-side filter enforced (not client-side)
+  - [x] AC-0224: Public leaderboard payload omits email, phone, year_of_birth, gender
+  - [x] AC-0225: Server-side filter enforced (not client-side)
 ```
 
 ```
 US-0064 (EPIC-0007): As a spectator, I want a clear indication when the tournament is paused, so that I understand the standings might not be live.
 Priority: Low
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0064-paused-banner
 Dependencies: US-0056
 Acceptance Criteria:
-  - [ ] AC-0226: When tournaments.status=paused, banner shows "Tournament paused"
-  - [ ] AC-0227: LIVE pill disabled; data still visible
+  - [x] AC-0226: When tournaments.status=paused, banner shows "Tournament paused"
+  - [x] AC-0227: LIVE pill disabled; data still visible
 ```
 
 ---

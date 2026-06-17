@@ -6,7 +6,7 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 12 — 2026-06-17
+Session 13 — 2026-06-17
 
 ---
 
@@ -16,10 +16,15 @@ Session 12 — 2026-06-17
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `c1fde22` (Session 11 — map guard + Granite Ridge seed)
-- **Pending PRs:** none merged-pending. EPIC-0005 + EPIC-0007 specs+plans authored on their feature branches (unmerged), ready for execution.
-- **Stories done:** EPIC-0001, EPIC-0002, EPIC-0003, **EPIC-0004**, **EPIC-0006** complete
-- **Stories planned next:** EPIC-0005 + EPIC-0007 — **both fully specced + planned** (Session 12). EPIC-0005 spec/plan on `feature/epic0005-round-tracking`; EPIC-0007 on `feature/epic0007-leaderboard`. Next action = execute (subagent-driven, MVP-spine-first).
+- **Branch:** `develop` (current working branch)
+- **Main branch:** `main`
+- **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
+- **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
+- **Develop tip:** post-merge of PRs #42–#49 (EPIC-0005 + fix PRs)
+- **Pending PRs:** PR #50 (EPIC-0007 Leaderboard MVP — feature/epic0007-leaderboard → develop)
+- **Stories done:** EPIC-0001–0004, EPIC-0006 complete; **EPIC-0007 MVP complete** (US-0056/0057/0063/0064 Done, US-0058/0061 partial); **EPIC-0005 partial** (6 stories Done: US-0036–0040, 0044; 8 In Progress)
+- **Stories deferred:** EPIC-0007 Realtime+drilldown (TASK-0327–0333); EPIC-0005 route integration (US-0035, 0041–0043, 0045–0048)
+- **Stories planned next:** EPIC-0005 route integration (BUG-0022), EPIC-0007 deferred enhancements
 
 ---
 
