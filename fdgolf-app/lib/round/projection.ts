@@ -26,3 +26,21 @@ export function project(lat: number, lng: number, frame: Frame): { x: number; y:
     y: py - cy + frame.size.h / 2,
   }
 }
+
+function worldXToLng(x: number, scale: number): number {
+  return (x / scale) * 360 - 180
+}
+function worldYToLat(y: number, scale: number): number {
+  const n = Math.PI - (2 * Math.PI * y) / scale
+  return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)))
+}
+
+export function unproject(x: number, y: number, frame: Frame): { lat: number; lng: number } {
+  const scale = TILE * Math.pow(2, frame.zoom)
+  const cx = ((frame.center.lng + 180) / 360) * scale
+  const s = Math.sin((frame.center.lat * Math.PI) / 180)
+  const cy = (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * scale
+  const worldX = x - frame.size.w / 2 + cx
+  const worldY = y - frame.size.h / 2 + cy
+  return { lat: worldYToLat(worldY, scale), lng: worldXToLng(worldX, scale) }
+}
