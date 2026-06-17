@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { fetchAndCacheStaticMap, cacheKeyFor } from '@/lib/round/static-map'
 
-const PNG = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })
+// Byte-array body (not a jsdom Blob): undici's Response.clone()/.blob() call
+// blob.stream() during clone, which jsdom's Blob lacks in CI — passing raw bytes
+// keeps the body source byte-backed so clone/blob work in both Node and CI.
+const PNG = () => new Uint8Array([1, 2, 3])
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const g = globalThis as any
@@ -32,7 +35,7 @@ describe('cacheKeyFor', () => {
 describe('fetchAndCacheStaticMap', () => {
   it('fetches once and caches the PNG when not cached', async () => {
     const cache = installCacheMock()
-    const fetchMock = vi.fn(async () => new Response(PNG, { status: 200 }))
+    const fetchMock = vi.fn(async () => new Response(PNG(), { status: 200 }))
     g.fetch = fetchMock
     const url = await fetchAndCacheStaticMap('hole-7', 'https://api.mapbox.com/x')
     expect(fetchMock).toHaveBeenCalledTimes(1)
@@ -42,7 +45,7 @@ describe('fetchAndCacheStaticMap', () => {
 
   it('serves the cached PNG without re-fetching (preserves quota offline)', async () => {
     const cache = installCacheMock()
-    await cache.put('/fdgolf/static-map/hole-7', new Response(PNG, { status: 200 }))
+    await cache.put('/fdgolf/static-map/hole-7', new Response(PNG(), { status: 200 }))
     const fetchMock = vi.fn()
     g.fetch = fetchMock
     const url = await fetchAndCacheStaticMap('hole-7', 'https://api.mapbox.com/x')
