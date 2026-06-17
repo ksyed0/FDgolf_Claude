@@ -57,4 +57,34 @@ describe('LeaderboardClient', () => {
       expect(html.toLowerCase()).not.toContain(k)
     }
   })
+
+  it('pins the current-team card above the list when a viewer team is present (AC-0207/0209)', () => {
+    const currentTeam = {
+      standing: {
+        teamId: 'a',
+        teamName: 'Eagles',
+        totalScore: 70,
+        totalVsPar: -2,
+        thru: 9,
+        hasProvisional: false,
+        rank: 17,
+      },
+      roster: {
+        teamId: 'a',
+        teamName: 'Eagles',
+        startHole: 1,
+        members: [{ name: 'Pat', company: 'Acme' }],
+      },
+    }
+    render(<LeaderboardClient {...baseProps} currentTeam={currentTeam as any} />)
+    const card = screen.getByTestId('current-team-card')
+    const list = screen.getByTestId('leaderboard-list')
+    // Card appears before the list in document order (pinned above).
+    expect(card.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('renders no current-team card for anon viewers', () => {
+    render(<LeaderboardClient {...baseProps} currentTeam={null} />)
+    expect(screen.queryByTestId('current-team-card')).not.toBeInTheDocument()
+  })
 })

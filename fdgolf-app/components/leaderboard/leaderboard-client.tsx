@@ -6,6 +6,7 @@ import { refetchStandings } from '@/lib/leaderboard/refetch-standings'
 import { LeaderboardList } from './leaderboard-list'
 import { StatusPill } from './status-pill'
 import { PausedBanner } from './paused-banner'
+import { CurrentTeamCard } from './current-team-card'
 
 export interface LeaderboardClientProps {
   slug: string
@@ -30,8 +31,9 @@ export function LeaderboardClient(props: LeaderboardClientProps) {
         <StatusPill status={status} />
       </div>
       {isPaused && <PausedBanner />}
+      {props.currentTeam && <CurrentTeamCard team={props.currentTeam} />}
       <LeaderboardList standings={standings} onSelectTeam={setSelectedTeam} />
-      {/* CurrentTeamCard + TeamDrilldown wired in later tasks; selectedTeam reserved */}
+      {/* TeamDrilldown wired in later tasks; selectedTeam reserved */}
       <span hidden>{selectedTeam}</span>
     </div>
   )
