@@ -1537,3 +1537,218 @@ Commit:
 ```bash
 cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/actions/shots.ts fdgolf-app/__tests__/lib/actions/shots.test.ts && git commit -m "[feat] EPIC-0005: editShotAction with shot_edits audit (TC-0033)"
 ```
+
+---
+
+### Task 15 — `claimRoundAction` soft claim + heartbeat (TC-0034) [SPINE — online safety, D3]
+
+Acquire/renew the soft claim: set `recorded_by` to the caller's player and `recording_expires_at = now()+60s`. Reject if a *different* live (non-expired) claim exists. Idempotent renew for the current holder. Called on entering the round and every ~20s (heartbeat).
+
+**15a. Write failing test** `fdgolf-app/__tests__/lib/actions/rounds-claim-complete.test.ts`:
+```ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+const { mockFrom, mockGetUser } = vi.hoisted(() => ({ mockFrom: vi.fn(), mockGetUser: vi.fn() }))
+
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: async () => ({ auth: { getUser: mockGetUser }, from: mockFrom }),
+}))
+
+import { claimRoundAction, completeRoundAction } from '@/lib/actions/rounds'
+
+beforeEach(() => vi.clearAllMocks())
+
+function playerChain(playerId: string) {
+  return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: playerId }, error: null }) }
+}
+
+describe('claimRoundAction', () => {
+  it('rejects when unauthenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    expect(await claimRoundAction('r1')).toEqual({ ok: false, code: 'denied' })
+  })
+
+  it('acquires the claim when no live claim exists', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const updateChain = { update: vi.fn().mockReturnThis(), eq: vi.fn().mockResolvedValue({ error: null }) }
+    let call = 0
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'players') return playerChain('p1')
+      if (t === 'rounds') {
+        call++
+        if (call === 1) {
+          // read current claim → none/expired
+          return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { recorded_by: null, recording_expires_at: null }, error: null }) }
+        }
+        return updateChain
+      }
+      return playerChain('p1')
+    })
+    const res = await claimRoundAction('r1')
+    expect(res).toEqual({ ok: true })
+    expect(updateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ recorded_by: 'p1', recording_expires_at: expect.any(String) })
+    )
+  })
+
+  it('rejects when a different recorder holds a live (unexpired) claim', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const future = new Date(Date.now() + 30_000).toISOString()
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'players') return playerChain('p1')
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { recorded_by: 'p2', recording_expires_at: future }, error: null }) }
+    })
+    expect(await claimRoundAction('r1')).toEqual({ ok: false, code: 'claimed_by_other' })
+  })
+
+  it('renews idempotently when the caller already holds the claim', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const future = new Date(Date.now() + 30_000).toISOString()
+    const updateChain = { update: vi.fn().mockReturnThis(), eq: vi.fn().mockResolvedValue({ error: null }) }
+    let call = 0
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'players') return playerChain('p1')
+      call++
+      if (call === 1) return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { recorded_by: 'p1', recording_expires_at: future }, error: null }) }
+      return updateChain
+    })
+    expect(await claimRoundAction('r1')).toEqual({ ok: true })
+  })
+})
+```
+
+**15b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/rounds-claim-complete.test.ts
+```
+Expected: FAIL — `claimRoundAction`/`completeRoundAction` not exported.
+
+**15c. Append to `fdgolf-app/lib/actions/rounds.ts`** (keep the existing `createRoundAction`; add below it):
+```ts
+const CLAIM_TTL_MS = 60_000 // D3: 60s expiry, 20s heartbeat (caller-driven)
+
+export type ClaimResult = { ok: true } | { ok: false; code: 'denied' | 'claimed_by_other' | 'network' }
+
+export async function claimRoundAction(roundId: string): Promise<ClaimResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, code: 'denied' }
+
+  const { data: player } = await supabase.from('players').select('id').eq('user_id', user.id).single()
+  if (!player) return { ok: false, code: 'denied' }
+
+  const { data: current } = await supabase
+    .from('rounds')
+    .select('recorded_by, recording_expires_at')
+    .eq('id', roundId)
+    .single()
+
+  const now = Date.now()
+  const liveByOther =
+    current?.recorded_by &&
+    current.recorded_by !== player.id &&
+    current.recording_expires_at &&
+    new Date(current.recording_expires_at).getTime() > now
+  if (liveByOther) return { ok: false, code: 'claimed_by_other' }
+
+  const { error } = await supabase
+    .from('rounds')
+    .update({ recorded_by: player.id, recording_expires_at: new Date(now + CLAIM_TTL_MS).toISOString() })
+    .eq('id', roundId)
+  if (error) return { ok: false, code: 'network' }
+  return { ok: true }
+}
+
+export type CompleteResult = { ok: true; completed: boolean } | { ok: false; code: 'denied' | 'network' }
+
+/** AC-0176: when all 18 hole_scores are final, set status=completed + completed_at. */
+export async function completeRoundAction(roundId: string): Promise<CompleteResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, code: 'denied' }
+
+  const { count, error: countErr } = await supabase
+    .from('hole_scores')
+    .select('id', { count: 'exact', head: true })
+    .eq('round_id', roundId)
+    .eq('status', 'final')
+  if (countErr) return { ok: false, code: 'network' }
+  if ((count ?? 0) < 18) return { ok: true, completed: false }
+
+  const { error: updErr } = await supabase
+    .from('rounds')
+    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .eq('id', roundId)
+  if (updErr) return { ok: false, code: 'network' }
+  return { ok: true, completed: true }
+}
+```
+
+**15d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/rounds-claim-complete.test.ts
+```
+Expected: PASS (4 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/actions/rounds.ts fdgolf-app/__tests__/lib/actions/rounds-claim-complete.test.ts && git commit -m "[feat] EPIC-0005: claimRoundAction soft-claim heartbeat (TC-0034)"
+```
+
+---
+
+### Task 16 — `completeRoundAction` 18-final guard (TC-0035) [DEFER — US-0046; can be manual]
+
+The implementation landed with Task 15; this task adds the dedicated coverage for the complete path.
+
+**16a. Append to `fdgolf-app/__tests__/lib/actions/rounds-claim-complete.test.ts`:**
+```ts
+describe('completeRoundAction', () => {
+  it('rejects when unauthenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    expect(await completeRoundAction('r1')).toEqual({ ok: false, code: 'denied' })
+  })
+
+  it('does NOT complete when fewer than 18 final hole_scores', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ count: 10, error: null }) }),
+    }))
+    expect(await completeRoundAction('r1')).toEqual({ ok: true, completed: false })
+  })
+
+  it('completes when all 18 are final: sets status=completed + completed_at (AC-0176)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const updateChain = { update: vi.fn().mockReturnThis(), eq: vi.fn().mockResolvedValue({ error: null }) }
+    let call = 0
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'hole_scores') {
+        return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ count: 18, error: null }) }) }
+      }
+      call++
+      return updateChain
+    })
+    const res = await completeRoundAction('r1')
+    expect(res).toEqual({ ok: true, completed: true })
+    expect(updateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'completed', completed_at: expect.any(String) })
+    )
+  })
+})
+```
+
+**16b. Run — expect pass** (implementation already exists from Task 15):
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/actions/rounds-claim-complete.test.ts
+```
+Expected: PASS (7 tests total). If the count-query chain shape differs from the mock, adjust the mock's `.eq().eq()` nesting to match the action's `.eq(...).eq(...)` call order — the action chains two `.eq()` calls before awaiting.
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/__tests__/lib/actions/rounds-claim-complete.test.ts && git commit -m "[test] EPIC-0005: completeRoundAction 18-final guard (TC-0035)"
+```
