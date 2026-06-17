@@ -33,9 +33,9 @@ describe('refetchStandings', () => {
       ],
       error: null,
     })
-    const result = await refetchStandings('cibc-arc-2026')
+    const result = await refetchStandings('t1-uuid')
     expect(mockFrom).toHaveBeenCalledWith('team_standings')
-    expect(mockEq).toHaveBeenCalledWith('tournament_slug', 'cibc-arc-2026')
+    expect(mockEq).toHaveBeenCalledWith('tournament_id', 't1-uuid')
     expect(mockOrder).toHaveBeenCalledWith('rank', { ascending: true })
     expect(result[0]).toEqual({
       teamId: 'a',
