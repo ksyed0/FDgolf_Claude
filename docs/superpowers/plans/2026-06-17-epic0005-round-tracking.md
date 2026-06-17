@@ -500,3 +500,363 @@ Commit:
 ```bash
 cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/distance.ts fdgolf-app/__tests__/lib/round/distance.test.ts && git commit -m "[feat] EPIC-0005: haversine distance + yards formatting (TC-0024)"
 ```
+
+---
+
+### Task 6 — `shot-machine.ts` reducer + `strokeCountFor` (TC-0025) [SPINE]
+
+Pure state machine: IDLE → AWAITING_OUTCOME → (outcome) → IDLE/OOB_REHIT, with the literal EPIC-0006 stroke_count contract and OOB rehit linkage.
+
+**6a. Write failing test** `fdgolf-app/__tests__/lib/round/shot-machine.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import { shotReducer, strokeCountFor, initialShotState } from '@/lib/round/shot-machine'
+
+const DRAFT = { playerId: 'p1', holeNumber: 3, clubId: 'c1', originLat: 45, originLng: -75, accuracyM: 5 }
+
+describe('strokeCountFor', () => {
+  it('encodes the EPIC-0006 contract: in_play=1, sunk=1, mulligan=0, oob=2', () => {
+    expect(strokeCountFor('in_play')).toBe(1)
+    expect(strokeCountFor('sunk')).toBe(1)
+    expect(strokeCountFor('mulligan')).toBe(0)
+    expect(strokeCountFor('out_of_bounds')).toBe(2)
+  })
+})
+
+describe('shotReducer', () => {
+  it('START_SHOT moves IDLE -> AWAITING_OUTCOME and stores the draft', () => {
+    const s = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    expect(s.phase).toBe('AWAITING_OUTCOME')
+    expect(s.draft).toEqual(DRAFT)
+  })
+
+  it('IN_PLAY commits stroke_count 1 and returns to IDLE with cleared draft', () => {
+    const a = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    const b = shotReducer(a, { type: 'OUTCOME', outcome: 'in_play' })
+    expect(b.phase).toBe('IDLE')
+    expect(b.committed?.outcome).toBe('in_play')
+    expect(b.committed?.strokeCount).toBe(1)
+    expect(b.draft).toBeNull()
+  })
+
+  it('SUNK commits stroke_count 1 and marks holed out', () => {
+    const a = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    const b = shotReducer(a, { type: 'OUTCOME', outcome: 'sunk' })
+    expect(b.committed?.strokeCount).toBe(1)
+    expect(b.holedOut).toBe(true)
+  })
+
+  it('MULLIGAN commits stroke_count 0 and pre-seeds next draft at the SAME location (AC-0154)', () => {
+    const a = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    const b = shotReducer(a, { type: 'OUTCOME', outcome: 'mulligan' })
+    expect(b.committed?.strokeCount).toBe(0)
+    expect(b.nextOrigin).toEqual({ lat: 45, lng: -75 })
+  })
+
+  it('OOB commits stroke_count 2 and enters OOB_REHIT (AC-0150)', () => {
+    const a = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    const b = shotReducer(a, { type: 'OUTCOME', outcome: 'out_of_bounds' })
+    expect(b.committed?.strokeCount).toBe(2)
+    expect(b.phase).toBe('OOB_REHIT')
+  })
+
+  it('REHIT from oob_location seeds rehitOrigin + rehit linkage and returns to IDLE (AC-0151/0152)', () => {
+    const a = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    const b = shotReducer(a, { type: 'OUTCOME', outcome: 'out_of_bounds' })
+    const c = shotReducer(b, { type: 'REHIT', rehitOrigin: 'oob_location', origin: { lat: 45.5, lng: -75.5 } })
+    expect(c.phase).toBe('IDLE')
+    expect(c.nextOrigin).toEqual({ lat: 45.5, lng: -75.5 })
+    expect(c.pendingRehitOrigin).toBe('oob_location')
+    expect(c.pendingRehitFromLocalId).toBe(b.committed?.localId)
+  })
+
+  it('REHIT from prior_position seeds the prior origin (AC-0149)', () => {
+    const a = shotReducer(initialShotState, { type: 'START_SHOT', draft: DRAFT })
+    const b = shotReducer(a, { type: 'OUTCOME', outcome: 'out_of_bounds' })
+    const c = shotReducer(b, { type: 'REHIT', rehitOrigin: 'prior_position', origin: { lat: 45, lng: -75 } })
+    expect(c.pendingRehitOrigin).toBe('prior_position')
+    expect(c.nextOrigin).toEqual({ lat: 45, lng: -75 })
+  })
+})
+```
+
+**6b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/shot-machine.test.ts
+```
+Expected: FAIL — module not found.
+
+**6c. Create `fdgolf-app/lib/round/shot-machine.ts`:**
+```ts
+import type { LatLng, RehitOrigin, ShotOutcome } from './types'
+
+export type ShotDraft = {
+  playerId: string
+  holeNumber: number
+  clubId: string | null
+  originLat: number | null
+  originLng: number | null
+  accuracyM: number | null
+}
+
+export type CommittedShot = {
+  localId: string
+  draft: ShotDraft
+  outcome: ShotOutcome
+  strokeCount: 0 | 1 | 2
+}
+
+export type ShotPhase = 'IDLE' | 'AWAITING_OUTCOME' | 'OOB_REHIT'
+
+export type ShotState = {
+  phase: ShotPhase
+  draft: ShotDraft | null
+  committed: CommittedShot | null
+  holedOut: boolean
+  nextOrigin: LatLng | null
+  pendingRehitOrigin: RehitOrigin | null
+  pendingRehitFromLocalId: string | null
+}
+
+export type ShotEvent =
+  | { type: 'START_SHOT'; draft: ShotDraft }
+  | { type: 'OUTCOME'; outcome: ShotOutcome }
+  | { type: 'REHIT'; rehitOrigin: RehitOrigin; origin: LatLng }
+  | { type: 'RESET' }
+
+export const initialShotState: ShotState = {
+  phase: 'IDLE',
+  draft: null,
+  committed: null,
+  holedOut: false,
+  nextOrigin: null,
+  pendingRehitOrigin: null,
+  pendingRehitFromLocalId: null,
+}
+
+/** EPIC-0006 stroke_count contract. */
+export function strokeCountFor(outcome: ShotOutcome): 0 | 1 | 2 {
+  switch (outcome) {
+    case 'in_play':
+    case 'sunk':
+      return 1
+    case 'mulligan':
+      return 0
+    case 'out_of_bounds':
+      return 2
+  }
+}
+
+function newLocalId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `local-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+export function shotReducer(state: ShotState, event: ShotEvent): ShotState {
+  switch (event.type) {
+    case 'START_SHOT':
+      return { ...initialShotState, phase: 'AWAITING_OUTCOME', draft: event.draft }
+
+    case 'OUTCOME': {
+      if (!state.draft) return state
+      const committed: CommittedShot = {
+        localId: newLocalId(),
+        draft: state.draft,
+        outcome: event.outcome,
+        strokeCount: strokeCountFor(event.outcome),
+      }
+      if (event.outcome === 'out_of_bounds') {
+        return { ...state, phase: 'OOB_REHIT', committed, draft: null }
+      }
+      const holedOut = event.outcome === 'sunk'
+      // Mulligan re-shoots from the same location; in_play continues from new GPS (null → fresh capture).
+      const nextOrigin =
+        event.outcome === 'mulligan' && state.draft.originLat != null && state.draft.originLng != null
+          ? { lat: state.draft.originLat, lng: state.draft.originLng }
+          : null
+      return {
+        ...state,
+        phase: 'IDLE',
+        committed,
+        draft: null,
+        holedOut,
+        nextOrigin,
+        pendingRehitOrigin: null,
+        pendingRehitFromLocalId: null,
+      }
+    }
+
+    case 'REHIT':
+      if (state.phase !== 'OOB_REHIT' || !state.committed) return state
+      return {
+        ...state,
+        phase: 'IDLE',
+        nextOrigin: event.origin,
+        pendingRehitOrigin: event.rehitOrigin,
+        pendingRehitFromLocalId: state.committed.localId,
+      }
+
+    case 'RESET':
+      return initialShotState
+  }
+}
+```
+
+**6d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/shot-machine.test.ts
+```
+Expected: PASS (9 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/shot-machine.ts fdgolf-app/__tests__/lib/round/shot-machine.test.ts && git commit -m "[feat] EPIC-0005: shot-machine reducer + stroke_count contract (TC-0025)"
+```
+
+---
+
+### Task 7 — `turn.ts` next-player selection (TC-0026) [DEFER — US-0042 auto-advance; manual selection works without it]
+
+**7a. Write failing test** `fdgolf-app/__tests__/lib/round/turn.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import { computeNextPlayer, type TurnMember } from '@/lib/round/turn'
+
+const PIN = { lat: 45.01, lng: -75.0 }
+
+function member(id: string, lat: number, lng: number, sunk = false): TurnMember {
+  return { playerId: id, lastOrigin: { lat, lng }, sunk }
+}
+
+describe('computeNextPlayer', () => {
+  it('selects the farthest-from-pin member (AC-0165)', () => {
+    const m = [member('a', 45.009, -75), member('b', 45.0, -75), member('c', 45.005, -75)]
+    expect(computeNextPlayer(m, PIN)).toBe('b')
+  })
+
+  it('excludes sunk members (AC-0167)', () => {
+    const m = [member('a', 45.0, -75, true), member('b', 45.008, -75)]
+    expect(computeNextPlayer(m, PIN)).toBe('b')
+  })
+
+  it('returns null when all members are sunk', () => {
+    const m = [member('a', 45.0, -75, true), member('b', 45.008, -75, true)]
+    expect(computeNextPlayer(m, PIN)).toBeNull()
+  })
+
+  it('ignores members with no recorded origin', () => {
+    const m: TurnMember[] = [
+      { playerId: 'a', lastOrigin: null, sunk: false },
+      member('b', 45.0, -75),
+    ]
+    expect(computeNextPlayer(m, PIN)).toBe('b')
+  })
+
+  it.each([2, 3, 4, 5])('works with team_size %i (AC-0168)', (size) => {
+    const m = Array.from({ length: size }, (_, i) => member(`p${i}`, 45.0 + i * 0.001, -75))
+    // farthest from PIN (lat 45.01) is the smallest lat → p0
+    expect(computeNextPlayer(m, PIN)).toBe('p0')
+  })
+})
+```
+
+**7b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/turn.test.ts
+```
+Expected: FAIL — module not found.
+
+**7c. Create `fdgolf-app/lib/round/turn.ts`:**
+```ts
+import { haversineMeters } from './distance'
+import type { LatLng } from './types'
+
+export type TurnMember = {
+  playerId: string
+  lastOrigin: LatLng | null
+  sunk: boolean
+}
+
+/**
+ * AC-0164/0165/0167/0168: distance-to-pin per active member's last shot origin,
+ * auto-select the greatest, exclude sunk members and members with no origin.
+ * Heuristic: origins are a proxy for ball position (override is manual in the UI).
+ */
+export function computeNextPlayer(members: TurnMember[], pin: LatLng): string | null {
+  let best: { playerId: string; dist: number } | null = null
+  for (const m of members) {
+    if (m.sunk || !m.lastOrigin) continue
+    const dist = haversineMeters(m.lastOrigin, pin)
+    if (!best || dist > best.dist) best = { playerId: m.playerId, dist }
+  }
+  return best?.playerId ?? null
+}
+```
+
+**7d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/turn.test.ts
+```
+Expected: PASS (8 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/turn.ts fdgolf-app/__tests__/lib/round/turn.test.ts && git commit -m "[feat] EPIC-0005: turn-picker next-player selection (TC-0026)"
+```
+
+---
+
+### Task 8 — `shotgun.ts` wrap + progress pill math (TC-0027) [SPINE]
+
+**8a. Write failing test** `fdgolf-app/__tests__/lib/round/shotgun.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import { nextPhysicalHole, holesCompletedPill } from '@/lib/round/shotgun'
+
+describe('nextPhysicalHole', () => {
+  it('increments within 1..17 (AC-0173)', () => {
+    expect(nextPhysicalHole(7)).toBe(8)
+    expect(nextPhysicalHole(1)).toBe(2)
+  })
+  it('wraps 18 back to 1 (shotgun start)', () => {
+    expect(nextPhysicalHole(18)).toBe(1)
+  })
+})
+
+describe('holesCompletedPill', () => {
+  it('is completed+1, representing the current hole of 18 (AC-0175)', () => {
+    expect(holesCompletedPill(0)).toBe(1)
+    expect(holesCompletedPill(7)).toBe(8)
+    expect(holesCompletedPill(17)).toBe(18)
+  })
+})
+```
+
+**8b. Run — expect fail:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/shotgun.test.ts
+```
+Expected: FAIL — module not found.
+
+**8c. Create `fdgolf-app/lib/round/shotgun.ts`:**
+```ts
+/** AC-0173: next physical hole, wrapping 18 → 1 for shotgun starts. */
+export function nextPhysicalHole(n: number): number {
+  return n === 18 ? 1 : n + 1
+}
+
+/** AC-0175: "Hole X of 18" = team holes completed + 1 (progress, not physical hole). */
+export function holesCompletedPill(completedCount: number): number {
+  return completedCount + 1
+}
+```
+
+**8d. Run — expect pass:**
+```bash
+cd fdgolf-app && npx vitest run __tests__/lib/round/shotgun.test.ts
+```
+Expected: PASS (4 tests).
+
+Commit:
+```bash
+cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add fdgolf-app/lib/round/shotgun.ts fdgolf-app/__tests__/lib/round/shotgun.test.ts && git commit -m "[feat] EPIC-0005: shotgun wrap + progress-pill math (TC-0027)"
+```
