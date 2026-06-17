@@ -13,7 +13,13 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({ from: mockFrom }),
 }))
 
-import { getTournamentBySlug, getStandings, getRosters } from '@/lib/leaderboard/queries'
+import {
+  getTournamentBySlug,
+  getStandings,
+  getRosters,
+  getHoleVsPar,
+  getCurrentTeamForUser,
+} from '@/lib/leaderboard/queries'
 
 describe('leaderboard types (privacy contract)', () => {
   it('TeamRosterMember exposes only name + company', () => {
@@ -103,6 +109,89 @@ describe('getStandings', () => {
       rank: 1,
     })
     expect(rows[1].teamName).toBe('Hawks')
+  })
+})
+
+describe('getHoleVsPar', () => {
+  beforeEach(() => vi.resetAllMocks())
+  it('reads team_hole_vs_par for one team, ordered by hole, mapped', async () => {
+    mockOrder.mockResolvedValue({
+      data: [
+        {
+          hole_number: 1,
+          best_ball_score: 3,
+          par: 4,
+          hole_vs_par: -1,
+          cumulative_vs_par: -1,
+          status: 'final',
+        },
+        {
+          hole_number: 2,
+          best_ball_score: 5,
+          par: 4,
+          hole_vs_par: 1,
+          cumulative_vs_par: 0,
+          status: 'provisional',
+        },
+      ],
+      error: null,
+    })
+    mockEq.mockReturnValue({ order: mockOrder })
+    mockFrom.mockReturnValue({ select: () => ({ eq: mockEq }) })
+
+    const holes = await getHoleVsPar('teamA')
+    expect(mockFrom).toHaveBeenCalledWith('team_hole_vs_par')
+    expect(mockEq).toHaveBeenCalledWith('team_id', 'teamA')
+    expect(holes[0]).toEqual({
+      holeNumber: 1,
+      best: 3,
+      par: 4,
+      holeVsPar: -1,
+      cumulativeVsPar: -1,
+      status: 'final',
+    })
+    expect(holes[1].status).toBe('provisional')
+  })
+})
+
+describe('getCurrentTeamForUser', () => {
+  beforeEach(() => vi.resetAllMocks())
+  it('returns null when the user is not on a team in this tournament', async () => {
+    // players row missing → no team
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null })
+    mockEq.mockReturnValue({ eq: mockEq, maybeSingle: mockMaybeSingle })
+    mockFrom.mockReturnValue({ select: () => ({ eq: mockEq }) })
+    const ct = await getCurrentTeamForUser('t1', 'user-x', [], [])
+    expect(ct).toBeNull()
+  })
+
+  it('matches the viewer team by name to a standing + roster', async () => {
+    mockMaybeSingle.mockResolvedValue({ data: { team_id: 'a' }, error: null })
+    mockEq.mockReturnValue({ eq: mockEq, maybeSingle: mockMaybeSingle })
+    mockFrom.mockReturnValue({ select: () => ({ eq: mockEq }) })
+
+    const standings = [
+      {
+        teamId: 'a',
+        teamName: 'Eagles',
+        totalScore: 70,
+        totalVsPar: -2,
+        thru: 9,
+        hasProvisional: true,
+        rank: 1,
+      },
+    ]
+    const rosters = [
+      {
+        teamId: 'a',
+        teamName: 'Eagles',
+        startHole: 1,
+        members: [{ name: 'Pat', company: 'Acme' }],
+      },
+    ]
+    const ct = await getCurrentTeamForUser('t1', 'user-x', standings as any, rosters as any)
+    expect(ct!.standing.teamId).toBe('a')
+    expect(ct!.roster.teamId).toBe('a')
   })
 })
 

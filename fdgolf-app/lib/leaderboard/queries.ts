@@ -1,6 +1,12 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
-import type { TournamentHeader, TeamStanding, TeamRoster } from '@/lib/leaderboard/types'
+import type {
+  TournamentHeader,
+  TeamStanding,
+  TeamRoster,
+  HoleVsPar,
+  CurrentTeam,
+} from '@/lib/leaderboard/types'
 
 export async function getTournamentBySlug(slug: string): Promise<TournamentHeader | null> {
   const supabase = await createClient()
@@ -55,4 +61,41 @@ export async function getRosters(tournamentId: string): Promise<TeamRoster[]> {
     roster.members.push({ name: r.member_name, company: r.member_company })
   }
   return [...byTeam.values()]
+}
+
+export async function getHoleVsPar(teamId: string): Promise<HoleVsPar[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('team_hole_vs_par')
+    .select('hole_number, best_ball_score, par, hole_vs_par, cumulative_vs_par, status')
+    .eq('team_id', teamId)
+    .order('hole_number', { ascending: true })
+  return (data ?? []).map((r) => ({
+    holeNumber: r.hole_number,
+    best: r.best_ball_score,
+    par: r.par,
+    holeVsPar: r.hole_vs_par,
+    cumulativeVsPar: r.cumulative_vs_par,
+    status: r.status,
+  }))
+}
+
+export async function getCurrentTeamForUser(
+  tournamentId: string,
+  userId: string,
+  standings: TeamStanding[],
+  rosters: TeamRoster[]
+): Promise<CurrentTeam | null> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('team_members_for_tournament')
+    .select('team_id')
+    .eq('tournament_id', tournamentId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (!data?.team_id) return null
+  const standing = standings.find((s) => s.teamId === data.team_id)
+  const roster = rosters.find((r) => r.teamId === data.team_id)
+  if (!standing || !roster) return null
+  return { standing, roster }
 }
