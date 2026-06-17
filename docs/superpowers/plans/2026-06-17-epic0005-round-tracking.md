@@ -2942,3 +2942,98 @@ cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git ad
 ```bash
 cd /Users/Kamal_Syed/Projects/FDgolf_Claude/.claude/worktrees/epic0005 && git add docs/ID_REGISTRY.md && git commit -m "[docs] EPIC-0005: reserve TC-0021..TC-0042 in ID registry"
 ```
+
+---
+
+## Self-Review
+
+### AC coverage map (AC-0137 – AC-0181)
+
+| AC | Requirement | Task(s) |
+|----|-------------|---------|
+| AC-0137 | Map shows fairway base from cached static URL | Task 11 (fetch+cache), Task 4 (URL), Task 18 (render), Task 24 (wire) |
+| AC-0138 | Hole pin marker | Task 18 (`marker-pin`) |
+| AC-0139 | Tee marker | Task 18 (`marker-tee`) |
+| AC-0140 | Prior shots dashed lines + numbered markers | Task 18 (polyline + `marker-shot-N`) |
+| AC-0141 | Current position pulsed red | Task 18 (`marker-gps`) |
+| AC-0142 | Distance-to-pin overlay top-left | Task 5 (`formatYardsToPin`), Task 18 (overlay) |
+| AC-0143 | `getCurrentPosition` high accuracy | Task 19 (`enableHighAccuracy: true`) |
+| AC-0144 | lat/lng captured to local state on Start Shot | Task 19 (draft), Task 6 (START_SHOT) |
+| AC-0145 | Selected club persisted with the draft | Task 19 (clubId in draft) |
+| AC-0146 | Four colour-coded outcome buttons | Task 19 |
+| AC-0147 | In Play/Sunk/Mulligan insert with stroke_count 1/1/0 | Task 6 (`strokeCountFor`), Task 13 (insert) |
+| AC-0148 | OOB triggers rehit prompt | Task 6 (OOB_REHIT), Task 19 (prompt) |
+| AC-0149 | Prompt offers OOB-location / prior-position | Task 6 (REHIT), Task 19 |
+| AC-0150 | OOB shot stroke_count=2 | Task 6, Task 13 |
+| AC-0151 | Follow-up origin = chosen rehit position | Task 6 (`nextOrigin`), Task 19/24 |
+| AC-0152 | rehit_from_shot_id + rehit_origin on follow-up | Task 6 (`pendingRehit*`), Task 13 (insert fields) |
+| AC-0153 | Mulligan stroke_count=0 | Task 6, Task 13; recalc via trigger |
+| AC-0154 | Next shot origin defaults to same location | Task 6 (`nextOrigin` on mulligan) |
+| AC-0155 | Sunk stroke_count=1 | Task 6, Task 13 |
+| AC-0156 | gross = SUM(stroke_count) on hole | EPIC-0006 trigger (Task 13 note); verified Task 9 stack |
+| AC-0157 | hole_scores row inserted (provisional/final) | EPIC-0006 trigger (automatic) |
+| AC-0158 | team_hole_scores recalc | EPIC-0006 trigger (automatic) |
+| AC-0159 | Tap a shot to open edit panel | Task 14 (editShotAction); UI entry in active-hole (Task 24) tap-to-edit hook |
+| AC-0160 | Editable club/outcome/GPS | Task 14 |
+| AC-0161 | Before/after recorded in shot_edits | Task 14 |
+| AC-0162 | shots.updated_at / updated_by set | Task 14 (`updated_by`; `updated_at` via DB trigger) |
+| AC-0163 | Hole scores recalculated on change | EPIC-0006 UPDATE trigger (Task 14 note) |
+| AC-0164 | Distance-to-pin per member last shot | Task 7 (`computeNextPlayer`), Task 20 |
+| AC-0165 | Auto-select greatest distance | Task 7, Task 20 |
+| AC-0166 | Manual override | Task 20 |
+| AC-0167 | Exclude sunk members | Task 7, Task 20 |
+| AC-0168 | Works with team_size 2–5 | Task 7 (`it.each([2,3,4,5])`) |
+| AC-0169 | Per-player gross + par-relative | Task 21 (`formatToPar`), Task 22 |
+| AC-0170 | BEST badge on contributor | Task 22 |
+| AC-0171 | Team standing position/N | Task 22, Task 25 (server fetch) |
+| AC-0172 | "Next: Hole X" CTA (shotgun wrap) | Task 8, Task 22 |
+| AC-0173 | Next advances accounting for 18→1 wrap | Task 8 (`nextPhysicalHole`) |
+| AC-0174 | New hole map renders; shot stream resets | Task 24 (route per-hole; store keyed by hole) |
+| AC-0175 | "Hole X of 18" pill | Task 8 (`holesCompletedPill`), Task 17 |
+| AC-0176 | All 18 final → status=completed + completed_at | Task 15/16 (`completeRoundAction`) |
+| AC-0177 | "Round complete" screen with final score | Task 25 (complete route) |
+| AC-0178 | GPS denied → explanation + tap instructions | Task 19 (gpsDenied), Task 18 (tap message) |
+| AC-0179 | Map click sets origin coords | Task 18 (`onMapTap`→`unproject`), Task 3 |
+| AC-0180 | "~245 yds to pin" approx prefix | Task 5 (`formatYardsToPin`) |
+| AC-0181 | GPS accuracy (m) stored on shot | Task 9 (`accuracy_m` column), Task 13 (`accuracy_m` insert), Task 19 (capture) |
+
+**Result: every AC-0137 – AC-0181 maps to at least one task. No gaps.**
+
+### Story → MVP-spine / deferrable (per §9)
+
+| Story | Tasks | Classification |
+|-------|-------|----------------|
+| US-0035 (map) | 4, 11, 18, 24 | SPINE |
+| US-0036 (GPS capture) | 19, 24 | SPINE |
+| US-0037 (outcomes) | 6, 13, 19 | SPINE |
+| US-0038 (OOB) | 6, 13, 19 | SPINE |
+| US-0039 (mulligan) | 6, 13 | SPINE |
+| US-0040 (sunk) | 6, 13, 24 | SPINE |
+| US-0041 (edit prior shot) | 14 | DEFER |
+| US-0042 (turn-picker auto-advance) | 7, 20 | DEFER (manual works) |
+| US-0043 (hole summary) | 21, 22, 25 | SPINE |
+| US-0044 (next hole) | 8, 24 | SPINE |
+| US-0045 (progress pill) | 8, 17 | SPINE |
+| US-0046 (round auto-complete) | 15, 16, 25 | DEFER (can be manual) |
+| US-0047 (GPS-denied tap) | 3, 18, 19 | DEFER |
+| US-0048 (approx distance) | 5 | SPINE (AC-0180 spine; 0181 spine via Task 9) |
+| Soft claim (D3) | 15 | SPINE (online safety; offline edge L1 accepted) |
+
+### Placeholder scan
+No "TBD", "similar to Task N", "add validation", or undefined-function references remain. Every task contains complete, runnable test + implementation code with exact paths, commands, and expected output. (The Task 5 inline typo was corrected to the parenthesized `toBeLessThan(0.01)`.)
+
+### Type/signature consistency
+- `LatLng`, `ShotOutcome`, `RehitOrigin`, `LocalShot`, `QueueItem` declared once in `lib/round/types.ts` (Task 1); all later files import them — no shadow re-declarations.
+- `Frame` declared in `projection.ts` (Task 2) and imported by `frame.ts`, `static-map`-consumers, `hole-map.tsx`, `active-hole.tsx`.
+- `strokeCountFor`/`shotReducer`/`ShotDraft`/`CommittedShot` from `shot-machine.ts` (Task 6) used by `<ShotCapture>` (Task 19) with matching signatures.
+- `ShotActionResult` (`{ok:true;serverId}` | `{ok:false;code}`) shared by `createShotAction`/`editShotAction` (Tasks 13/14); `SendResult` in the store (Task 12) is the structurally-compatible subset the `flushQueue` `send` fn returns, and `active-hole.tsx` (Task 24) adapts `createShotAction`'s result into it.
+- `ClaimResult`/`CompleteResult` (Tasks 15/16) are action-local and only consumed by the route Server Components (Tasks 24/25).
+- `onCommit` payload in `<ShotCapture>` (`Omit<LocalShot,'localId'|'roundId'|'serverId'> & {localId}` ≡ `Omit<LocalShot,'roundId'|'serverId'>`) matches `handleCommit`'s parameter type in `active-hole.tsx` (Task 24).
+
+### Notes / spec ambiguities resolved
+1. **`zustand`/`idb` not yet installed** — added as Task 0 (runtime) and `fake-indexeddb` as a Task 10 devDependency for jsdom IndexedDB tests.
+2. **`send` injection into `flushQueue`** — the spec says the store flushes to Server Actions, but to keep the store unit-testable without mocking `'use server'` modules, `flushQueue(send)` takes the network fn as a parameter; `active-hole.tsx` wires it to `createShotAction`. This preserves the D1 contract and the idempotency rule.
+3. **`recompute_hole_score` finalizes a hole on the first sunk shot** (EPIC-0006), so AC-0176's "18 final hole_scores" is reached once every team member's round has sunk on all 18 holes; `completeRoundAction` counts `status='final'` rows on the *round* (one player) — consistent with `rounds` being per-player.
+4. **Hole `id` for the static-map cache key** — `holes` has an `id`; the route passes it (falling back to `${courseId}-${n}`) so the Cache API key is stable per physical hole (D4).
+5. **Tee coordinates** — `holes.tees` is JSONB; the design's frame needs tee lat/lng. The plan reads `tees[0].lat/lng` when present and falls back to the pin location (single-point frame → zoom 18) so the map still renders if tee coords are absent. This is a documented graceful degradation, not a hidden assumption.
+6. **`shot_edits` RLS is admin-only for direct insert** (existing policy). In flexible self/scorer mode the editor is the round owner/organizer; if RLS blocks the audit insert for a non-admin owner, `editShotAction` returns `network` and US-0041 falls back to EPIC-0008 admin edit — acceptable since US-0041 is DEFER. Flagged here for the executor to confirm against the live policy during Task 14.
