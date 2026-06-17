@@ -676,9 +676,16 @@ BUG-0021: Local `supabase db reset` fails on grante_ridge_seed — venues.countr
 Severity: Medium
 Related Story: (baseline / EPIC-0005 Task 9)
 Related Task: —
-Status: Open
-Fix Branch: (none yet)
+Status: Fixed
+Fix Branch: fix/bug-0021-grante-seed
 Lesson Encoded: No
+
+Verified fix: removed the stray `country` column + value from the venues INSERT in
+`20260616000001_grante_ridge_seed.sql` (the `venues` table never had a `country` column —
+canonical schema in `20260611000001_master_data_v2.sql` is address1/address2/city/
+state_province/zip_postal). Editing this never-successfully-applied seed migration is
+ordering-safe and push-safe (no backdated migration needed). `npx supabase db reset` now
+replays all migrations cleanly through the EPIC-0005 migration.
 
 `npx supabase db reset` fails replaying `supabase/migrations/20260616000001_grante_ridge_seed.sql`
 with `column "country" of relation "venues" does not exist`. The seed (added in PR #45) references a

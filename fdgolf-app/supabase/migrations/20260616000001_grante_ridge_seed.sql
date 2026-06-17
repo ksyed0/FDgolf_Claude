@@ -9,15 +9,17 @@ DECLARE
   v_course_id uuid;
 BEGIN
   -- Venue
-  INSERT INTO venues (id, name, address1, city, state_province, zip_postal, country)
+  -- NOTE: venues has no `country` column (see 20260611000001_master_data_v2.sql) —
+  -- address fields are address1/address2/city/state_province/zip_postal only.
+  -- Dropped the stray `country` value that broke `supabase db reset` (BUG-0021).
+  INSERT INTO venues (id, name, address1, city, state_province, zip_postal)
   VALUES (
     '00000000-0000-0000-0000-000000000001',
     'Grante Ridge Golf Club',
     '1 Grante Ridge Dr',
     'Caledon',
     'ON',
-    'L7K 0Z7',
-    'CA'
+    'L7K 0Z7'
   )
   ON CONFLICT (id) DO NOTHING;
 
