@@ -71,7 +71,6 @@ export function ShotCapture({
   // reducer state so there is only one call to newLocalId() per shot.
   // The dependency on `onCommit` is intentionally omitted — callers must
   // provide a stable (memoised/stable-ref) callback.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!state.committed) return
     if (state.committed.localId === lastCommittedIdRef.current) return
