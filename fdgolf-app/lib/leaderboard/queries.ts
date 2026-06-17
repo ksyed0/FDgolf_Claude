@@ -1,6 +1,6 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
-import type { TournamentHeader, TeamStanding } from '@/lib/leaderboard/types'
+import type { TournamentHeader, TeamStanding, TeamRoster } from '@/lib/leaderboard/types'
 
 export async function getTournamentBySlug(slug: string): Promise<TournamentHeader | null> {
   const supabase = await createClient()
@@ -36,4 +36,23 @@ export async function getStandings(tournamentId: string): Promise<TeamStanding[]
     hasProvisional: r.has_provisional,
     rank: r.rank,
   }))
+}
+
+export async function getRosters(tournamentId: string): Promise<TeamRoster[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('public_team_roster')
+    .select('team_id, team_name, start_hole, member_name, member_company')
+    .eq('tournament_id', tournamentId)
+
+  const byTeam = new Map<string, TeamRoster>()
+  for (const r of data ?? []) {
+    let roster = byTeam.get(r.team_id)
+    if (!roster) {
+      roster = { teamId: r.team_id, teamName: r.team_name, startHole: r.start_hole, members: [] }
+      byTeam.set(r.team_id, roster)
+    }
+    roster.members.push({ name: r.member_name, company: r.member_company })
+  }
+  return [...byTeam.values()]
 }
