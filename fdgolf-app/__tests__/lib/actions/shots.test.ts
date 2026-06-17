@@ -1,0 +1,73 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+const { mockFrom, mockGetUser } = vi.hoisted(() => ({ mockFrom: vi.fn(), mockGetUser: vi.fn() }))
+
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: async () => ({ auth: { getUser: mockGetUser }, from: mockFrom }),
+}))
+
+import { createShotAction } from '@/lib/actions/shots'
+
+const INPUT = {
+  roundId: 'r1',
+  holeNumber: 1,
+  shotNumber: 1,
+  playerId: 'p1',
+  clubId: 'c1',
+  originLat: 45,
+  originLng: -75,
+  outcome: 'in_play' as const,
+  strokeCount: 1 as const,
+  accuracyM: 5,
+  rehitFromShotId: null,
+  rehitOrigin: null,
+}
+
+beforeEach(() => vi.clearAllMocks())
+
+describe('createShotAction', () => {
+  it('rejects when unauthenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    expect(await createShotAction(INPUT)).toEqual({ ok: false, code: 'denied' })
+  })
+
+  it('inserts the shot and returns ok with the server id', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const insertChain = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: 'srv1' }, error: null }),
+    }
+    mockFrom.mockImplementation((t: string) => {
+      if (t === 'shots') return insertChain
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      }
+    })
+    const res = await createShotAction(INPUT)
+    expect(res).toEqual({ ok: true, serverId: 'srv1' })
+    expect(insertChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        round_id: 'r1',
+        hole_number: 1,
+        shot_number: 1,
+        outcome: 'in_play',
+        stroke_count: 1,
+        accuracy_m: 5,
+      })
+    )
+  })
+
+  it('maps a Postgres unique violation (23505) to ok:false unique_violation (idempotent backstop)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const insertChain = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: { code: '23505' } }),
+    }
+    mockFrom.mockImplementation(() => insertChain)
+    expect(await createShotAction(INPUT)).toEqual({ ok: false, code: 'unique_violation' })
+  })
+})
