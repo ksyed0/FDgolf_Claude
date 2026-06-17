@@ -16,12 +16,9 @@ Session 13 — 2026-06-17
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Branch:** `develop` (current working branch)
-- **Main branch:** `main`
-- **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
-- **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** post-merge of PRs #42–#49 (EPIC-0005 + fix PRs)
-- **Pending PRs:** PR #50 (EPIC-0007 Leaderboard MVP — feature/epic0007-leaderboard → develop)
+- **Develop tip:** post-merge of PRs #42–#53 (EPIC-0005 + EPIC-0007 MVP + write-back #51 + BUG-0021 fix #52 + session-13 close #53)
+- **Pending PRs:** none open from this session
+- **Remote dev DB:** identical local Supabase stack provisioned on `192.168.1.100` (OrbStack) over SSH — synced fixed migrations + `db reset`; verified row counts match (15 clubs / 1 venue / 1 course / 18 holes; all user tables empty). `supabase db reset` reproduces it on any machine.
 - **Stories done:** EPIC-0001–0004, EPIC-0006 complete; **EPIC-0007 MVP complete** (US-0056/0057/0063/0064 Done, US-0058/0061 partial); **EPIC-0005 partial** (6 stories Done: US-0036–0040, 0044; 8 In Progress)
 - **Stories deferred:** EPIC-0007 Realtime+drilldown (TASK-0327–0333); EPIC-0005 route integration (US-0035, 0041–0043, 0045–0048)
 - **Stories planned next:** EPIC-0005 route integration (BUG-0022), EPIC-0007 deferred enhancements
