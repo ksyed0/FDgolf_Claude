@@ -6,7 +6,7 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 11 — 2026-06-16
+Session 12 — 2026-06-17
 
 ---
 
@@ -16,10 +16,10 @@ Session 11 — 2026-06-16
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** post-merge of PRs #42–#44 (EPIC-0004 complete)
-- **Pending PRs:** PR #45 (map guard + Grante Ridge seed — auto-merge queued)
-- **Stories done:** EPIC-0001, EPIC-0002, EPIC-0003 complete; **EPIC-0006 complete** (US-0049–US-0055); **EPIC-0004 complete** (US-0030–0034, merged PR #42)
-- **Stories planned next:** EPIC-0005 (Round Tracking — canonical schema in place, shots-only, triggers derive hole_scores), EPIC-0007 (Leaderboard, needs public/anon RLS on team_standings views)
+- **Develop tip:** `c1fde22` (Session 11 — map guard + Granite Ridge seed)
+- **Pending PRs:** none merged-pending. EPIC-0005 + EPIC-0007 specs+plans authored on their feature branches (unmerged), ready for execution.
+- **Stories done:** EPIC-0001, EPIC-0002, EPIC-0003, **EPIC-0004**, **EPIC-0006** complete
+- **Stories planned next:** EPIC-0005 + EPIC-0007 — **both fully specced + planned** (Session 12). EPIC-0005 spec/plan on `feature/epic0005-round-tracking`; EPIC-0007 on `feature/epic0007-leaderboard`. Next action = execute (subagent-driven, MVP-spine-first).
 
 ---
 
@@ -54,8 +54,8 @@ Session 11 — 2026-06-16
 | EPIC     | EPIC-0011      |
 | US       | US-0096        |
 | AC       | AC-0341        |
-| TASK     | TASK-0313      |
-| TC       | TC-0021        |
+| TASK     | TASK-0336      |
+| TC       | TC-0025        |
 | BUG      | BUG-0020       |
 | L        | L-0002         |
 
@@ -78,10 +78,10 @@ EPIC-0001, EPIC-0002, EPIC-0003 all **complete** and merged to main.
 EPIC-0006 (Scoring Engine) complete and merged.
 EPIC-0004 (Pre-Round Setup) complete — PR #42 auto-merge queued on CI.
 
-Next up:
-- **EPIC-0005 — Round Tracking** (US-0035–0048): canonical schema in place (`20260612000003_round_tracking.sql`). Writes SHOTS ONLY; `hole_scores` and `team_hole_scores` are trigger-derived (EPIC-0006 contract). HoleEntryScreen (US-0034) hands off via `/round/[roundId]/shot/new?lat=&lng=&club=`. `bag_clubs` and `first_player_id` now on rounds row for EPIC-0005 to read.
-- **EPIC-0007 — Leaderboard** (US-0056–0064): consumes `team_standings` / `team_hole_vs_par` views from EPIC-0006; must add public/anon RLS visibility for those views (deferred from EPIC-0006).
-- **Latent follow-up:** `searchPlayersAction` was fixed to `full_name`; audit other EPIC-0003 actions for stale `players.name` references.
+Next up — **both epics are specced AND planned (Session 12); next action is execution:**
+- **EPIC-0005 — Round Tracking** (US-0035–0048): spec `docs/superpowers/specs/2026-06-17-epic0005-round-tracking-design.md`, plan `docs/superpowers/plans/2026-06-17-epic0005-round-tracking.md` (29 tasks, 24 spine / 5 deferrable) on `feature/epic0005-round-tracking`. Build order: projection→migration→store→capture. Writes SHOTS ONLY; HoleEntryScreen (US-0034) hands off via `/round/[roundId]/shot/new?lat=&lng=&club=`; `bag_clubs`/`first_player_id` on the rounds row.
+- **EPIC-0007 — Leaderboard** (US-0056–0064): spec `docs/superpowers/specs/2026-06-17-epic0007-leaderboard-design.md`, plan `docs/superpowers/plans/2026-06-17-epic0007-leaderboard.md` (23 tasks, 12 spine / 11 enhancement) on `feature/epic0007-leaderboard`. **Build-step #1 = anon-view access spike** (prove anon reads `team_standings`/`public_team_roster`, denied on base `players`).
+- **Latent follow-up:** audit EPIC-0003 actions for stale `players.name` references (`searchPlayersAction` already fixed to `full_name`).
 
 ## Known Patterns / Gotchas (additions from Session 11)
 
@@ -138,3 +138,12 @@ Next up:
 - **pgTAP scoring tests:** `cd fdgolf-app && supabase test db` (or `npm run test:db`); helpers in `tests` schema (`tests.seed_tournament`, `tests.add_member`, `tests.add_shot`). 32 assertions.
 - **Branch base trap:** the epic0006 work was based on a local-only merge commit (`9c053ef`) not on origin/develop — a `git rebase origin/develop` replayed the whole divergent history. Fix: cherry-pick `<base>..<tip>` onto a fresh branch off `origin/develop` (clean when base code == develop code).
 - **`tournaments.club_id`** was a stale `seed-dev.sql` reference — removed (clubs link via `tournament_clubs`, not a single FK).
+
+## Known Patterns / Gotchas (additions from Session 12 — EPIC-0005 + EPIC-0007 specs & plans)
+
+- **EPIC-0005 (Round Tracking) locked decisions:** offline = local-state + IndexedDB **write-through** (full sync deferred to EPIC-0009); **flexible recorder** (scorer + self-track) with a **one-active-recorder soft claim** (`rounds.recorded_by` + `recording_expires_at` heartbeat; online guard, `UNIQUE(round_id,hole_number,shot_number)` is the offline backstop); active map = **cached static Mapbox PNG + overlay** via Web Mercator lat/lng→pixel (US-0014's `holes.static_map_url` was dropped in the v2 rebuild — re-established client-side, deterministic center/zoom from pin+tee).
+- **EPIC-0005 new deps (plan Task 0):** `zustand`, `idb`, `fake-indexeddb` (devDep). New migration adds `rounds.recorded_by`/`recording_expires_at` + `shots.accuracy_m`.
+- **EPIC-0007 (Leaderboard) locked decisions:** **polling-first** (30s "AUTO 30s" baseline) + websocket as enhancement; **dedicated PII-free owner-run public views** for anon (new `public_team_roster`; base `players`/`teams` stay authenticated-only) — RLS is row-level not column-level, so a view is the only structural way to enforce US-0063; SSR (paint/OG/privacy) + client hydration; initial fetch must be **dynamic/no-store** on Next 16 for fresh first paint.
+- **EPIC-0007 schema reality:** `players` has **NO `year_of_birth`/`gender`** columns (design assumed them) — actual PII set is email/phone/handicap/title/user_id; privacy tests assert the public payload keys are exactly the safe set. `team_hole_scores` has `team_id` (no `tournament_id`) → realtime filters client-side by in-scope team_ids.
+- **MVP-spine discipline (both plans):** each plan marks spine vs deferrable so a working tournament+leaderboard ships even if the deadline squeezes. EPIC-0005 deferrable: edit-shot (US-0041), turn-picker auto-advance (US-0042), round auto-complete (US-0046), GPS-tap fallback (US-0047), approx-distance polish (US-0048). EPIC-0007 deferrable: websocket realtime (US-0059), LIVE pill, coalescing (US-0060), drill-down (US-0062).
+- **Repo is highly active across sessions** — develop moved through Sessions 8/10/11 *during* one working session. ALWAYS `git fetch` + branch off `origin/develop`; never trust a local merge-base (see Session 9 branch-base trap).
