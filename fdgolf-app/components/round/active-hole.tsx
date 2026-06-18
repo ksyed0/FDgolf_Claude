@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { HoleMap } from './hole-map'
 import { ShotCapture } from './shot-capture'
+import { TurnPicker } from './turn-picker'
 import { HoleProgressPill } from './hole-progress-pill'
 import { computeFrame, staticMapUrl } from '@/lib/round/frame'
 import { fetchAndCacheStaticMap } from '@/lib/round/static-map'
@@ -13,6 +14,7 @@ import { nextPhysicalHole } from '@/lib/round/shotgun'
 import type { LatLng, LocalShot } from '@/lib/round/types'
 
 type Club = { id: string; display_name: string }
+type TeamMember = { playerId: string; name: string }
 
 type Props = {
   roundId: string
@@ -24,15 +26,52 @@ type Props = {
   defaultClubId: string | null
   playerId: string
   completedCount: number
+  teamMembers: TeamMember[]
   mapboxToken: string
 }
 
 export function ActiveHole(props: Props) {
   const router = useRouter()
-  const { commitShot, flushQueue } = useRoundStore()
+  const { commitShot, flushQueue } = useRoundStore((s) => ({
+    commitShot: s.commitShot,
+    flushQueue: s.flushQueue,
+  }))
+  const localHoles = useRoundStore((s) => s.localHoles)
+
   const [baseUrl, setBaseUrl] = useState<string | null>(null)
+  const [currentPlayerId, setCurrentPlayerId] = useState(props.playerId)
   const [shotNumber, setShotNumber] = useState(1)
+  const [showTurnPicker, setShowTurnPicker] = useState(false)
+  const [tapMode, setTapMode] = useState(false)
+  const [tapGps, setTapGps] = useState<LatLng | null>(null)
+
   const frame = computeFrame([props.pin, props.tee], { w: 390, h: 520 })
+
+  // Derive shot trail for current player on this hole
+  const holeShots = localHoles[props.holeNumber] ?? {}
+  const playerShots = holeShots[currentPlayerId] ?? []
+  const lastShot = playerShots[playerShots.length - 1] ?? null
+  const lastGps: { lat: number; lng: number; accuracyM: number | null } | null =
+    lastShot?.originLat != null
+      ? { lat: lastShot.originLat, lng: lastShot.originLng!, accuracyM: lastShot.accuracyM }
+      : null
+
+  // Map LocalShot[] → ShotMarker[] for HoleMap (only shots with recorded origin coords)
+  const shotMarkers = playerShots
+    .filter((s) => s.originLat != null && s.originLng != null)
+    .map((s) => ({ lat: s.originLat!, lng: s.originLng!, shotNumber: s.shotNumber }))
+
+  // Derive turn member state from store for TurnPicker
+  const turnMembers = props.teamMembers.map((m) => {
+    const shots = holeShots[m.playerId] ?? []
+    const last = shots[shots.length - 1] ?? null
+    return {
+      playerId: m.playerId,
+      name: m.name,
+      lastOrigin: last?.originLat != null ? { lat: last.originLat, lng: last.originLng! } : null,
+      sunk: shots.some((s) => s.outcome === 'sunk'),
+    }
+  })
 
   useEffect(() => {
     let revoke: string | null = null
@@ -54,6 +93,8 @@ export function ActiveHole(props: Props) {
     const local: LocalShot = { ...shot, roundId: props.roundId, serverId: null }
     await commitShot(local)
     setShotNumber((n) => n + 1)
+    setTapMode(false)
+    setTapGps(null)
     await flushQueue((s) =>
       createShotAction({
         roundId: s.roundId,
@@ -71,8 +112,29 @@ export function ActiveHole(props: Props) {
       })
     )
     if (shot.outcome === 'sunk') {
-      router.push(`/round/${props.roundId}/hole/${props.holeNumber}/summary`)
+      // US-0045: auto-advance when all team members have sunk this hole
+      const state = useRoundStore.getState()
+      const currentHoleData = state.localHoles[props.holeNumber] ?? {}
+      const allSunk = props.teamMembers.every((m) =>
+        (currentHoleData[m.playerId] ?? []).some((s) => s.outcome === 'sunk')
+      )
+      if (allSunk) {
+        router.push(`/round/${props.roundId}/hole/${props.holeNumber}/summary`)
+      } else {
+        setShowTurnPicker(true)
+      }
+    } else {
+      setShowTurnPicker(true)
     }
+  }
+
+  function handleGpsDenied() {
+    setTapMode(true)
+  }
+
+  function handleMapTap(latLng: LatLng) {
+    setTapGps(latLng)
+    setTapMode(false)
   }
 
   return (
@@ -88,20 +150,35 @@ export function ActiveHole(props: Props) {
           baseImageUrl={baseUrl}
           frame={frame}
           hole={{ pin: props.pin, tee: props.tee }}
-          shots={[]}
-          gps={null}
-          tapMode={false}
-          onMapTap={() => {}}
+          shots={shotMarkers}
+          gps={lastGps}
+          tapMode={tapMode}
+          onMapTap={handleMapTap}
         />
       )}
-      <ShotCapture
-        playerId={props.playerId}
-        holeNumber={props.holeNumber}
-        shotNumber={shotNumber}
-        clubs={props.clubs}
-        defaultClubId={props.defaultClubId}
-        onCommit={handleCommit}
-      />
+      {showTurnPicker ? (
+        <TurnPicker
+          members={turnMembers}
+          pin={props.pin}
+          onSelect={(playerId) => {
+            setCurrentPlayerId(playerId)
+            setShowTurnPicker(false)
+            setShotNumber((holeShots[playerId] ?? []).length + 1)
+          }}
+        />
+      ) : (
+        <ShotCapture
+          key={currentPlayerId}
+          playerId={currentPlayerId}
+          holeNumber={props.holeNumber}
+          shotNumber={shotNumber}
+          clubs={props.clubs}
+          defaultClubId={props.defaultClubId}
+          onCommit={handleCommit}
+          onGpsDenied={handleGpsDenied}
+          tapPosition={tapGps}
+        />
+      )}
     </div>
   )
 }

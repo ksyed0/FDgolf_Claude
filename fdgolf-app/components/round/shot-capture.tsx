@@ -20,6 +20,8 @@ type Props = {
   onCommit: (
     shot: Omit<LocalShot, 'localId' | 'roundId' | 'serverId'> & { localId: string }
   ) => void
+  onGpsDenied?: () => void
+  tapPosition?: { lat: number; lng: number } | null
 }
 
 function toLocalShot(
@@ -53,6 +55,8 @@ export function ShotCapture({
   clubs,
   defaultClubId,
   onCommit,
+  onGpsDenied,
+  tapPosition,
 }: Props) {
   const [state, dispatch] = useReducer(shotReducer, initialShotState)
   const [clubId, setClubId] = useState<string | null>(defaultClubId)
@@ -103,7 +107,10 @@ export function ShotCapture({
         }
         dispatch({ type: 'START_SHOT', draft })
       },
-      () => setGpsDenied(true),
+      () => {
+        setGpsDenied(true)
+        onGpsDenied?.()
+      },
       { enableHighAccuracy: true, timeout: 10000 }
     )
   }
@@ -188,6 +195,26 @@ export function ShotCapture({
         <p className="text-sm text-amber-300">
           GPS denied — tap the map to set your shot location.
         </p>
+      )}
+      {gpsDenied && tapPosition && (
+        <button
+          className="rounded bg-amber-700 py-3 font-semibold"
+          onClick={() => {
+            dispatch({
+              type: 'START_SHOT',
+              draft: {
+                playerId,
+                holeNumber,
+                clubId,
+                originLat: tapPosition.lat,
+                originLng: tapPosition.lng,
+                accuracyM: null,
+              },
+            })
+          }}
+        >
+          Use map location
+        </button>
       )}
     </div>
   )

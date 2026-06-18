@@ -16,7 +16,7 @@ export default async function HolePage({ params }: { params: { roundId: string; 
 
   const { data: round } = await supabase
     .from('rounds')
-    .select('id, player_id, bag_clubs, tournament_id, tournaments(course_id)')
+    .select('id, player_id, team_id, bag_clubs, tournament_id, tournaments(course_id)')
     .eq('id', params.roundId)
     .single()
   if (!round) redirect('/')
@@ -39,6 +39,25 @@ export default async function HolePage({ params }: { params: { roundId: string; 
   const bag = (round.bag_clubs as string[]) ?? []
   const clubs = bag.length ? (allClubs ?? []).filter((c) => bag.includes(c.id)) : (allClubs ?? [])
 
+  // completedCount: how many holes this player has finalized
+  const { count: completedCountRaw } = await supabase
+    .from('hole_scores')
+    .select('*', { count: 'exact', head: true })
+    .eq('round_id', params.roundId)
+    .eq('status', 'final')
+  const completedCount = completedCountRaw ?? 0
+
+  // teamMembers: all rounds for same team in this tournament (for TurnPicker)
+  const { data: teamRoundRows } = await supabase
+    .from('rounds')
+    .select('player_id, players(id, full_name)')
+    .eq('team_id', round.team_id)
+    .eq('tournament_id', round.tournament_id)
+  const teamMembers = (teamRoundRows ?? []).map((r) => {
+    const p = r.players as unknown as { id: string; full_name: string } | null
+    return { playerId: r.player_id, name: p?.full_name ?? 'Player' }
+  })
+
   const tees = (hole?.tees ?? []) as Tee[]
   const tee =
     tees[0]?.lat != null
@@ -56,7 +75,8 @@ export default async function HolePage({ params }: { params: { roundId: string; 
       clubs={clubs}
       defaultClubId={defaultClub?.id ?? null}
       playerId={round.player_id}
-      completedCount={0}
+      completedCount={completedCount}
+      teamMembers={teamMembers}
       mapboxToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''}
     />
   )
