@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { LeaderboardTable } from '@/components/leaderboard/LeaderboardTable'
 import type { LeaderboardRow } from '@/lib/leaderboard'
 
@@ -12,10 +12,13 @@ vi.mock('@/components/leaderboard/LeaderboardRow', () => ({
 }))
 
 // Mock the useLeaderboard hook so tests don't need a real Supabase client
+// Allow tests to override connectionStatus via this variable
+let mockConnectionStatus: 'realtime' | 'polling' | 'connecting' = 'connecting'
+
 vi.mock('@/lib/hooks/useLeaderboard', () => ({
   useLeaderboard: (_tournamentId: string, initialRows: LeaderboardRow[], _slug: string) => ({
     rows: initialRows,
-    connectionStatus: 'connecting' as const,
+    connectionStatus: mockConnectionStatus,
   }),
 }))
 
@@ -38,6 +41,10 @@ const ROWS: LeaderboardRow[] = [
 ]
 
 describe('LeaderboardTable', () => {
+  beforeEach(() => {
+    mockConnectionStatus = 'connecting'
+  })
+
   it('renders tournament name in header (AC-0203)', () => {
     render(<LeaderboardTable tournament={TOURNAMENT} initialRows={ROWS} tournamentId="tourney-1" />)
     expect(screen.getByText('CIBC ARC 2026')).toBeInTheDocument()
@@ -58,5 +65,63 @@ describe('LeaderboardTable', () => {
   it('shows venue name', () => {
     render(<LeaderboardTable tournament={TOURNAMENT} initialRows={ROWS} tournamentId="tourney-1" />)
     expect(screen.getByText(/Royal Woodlands GC/)).toBeInTheDocument()
+  })
+
+  it('LIVE pill absent and PAUSED pill shown when isPaused=true + connectionStatus=realtime (AC-0227)', () => {
+    mockConnectionStatus = 'realtime'
+    render(
+      <LeaderboardTable
+        tournament={TOURNAMENT}
+        initialRows={ROWS}
+        tournamentId="tourney-1"
+        isPaused={true}
+      />
+    )
+    expect(screen.queryByTestId('live-pill')).not.toBeInTheDocument()
+    expect(screen.getByTestId('paused-pill')).toBeInTheDocument()
+  })
+
+  it('LIVE pill shown when isPaused=false + connectionStatus=realtime (AC-0227)', () => {
+    mockConnectionStatus = 'realtime'
+    render(
+      <LeaderboardTable
+        tournament={TOURNAMENT}
+        initialRows={ROWS}
+        tournamentId="tourney-1"
+        isPaused={false}
+      />
+    )
+    expect(screen.getByTestId('live-pill')).toBeInTheDocument()
+    expect(screen.queryByTestId('paused-pill')).not.toBeInTheDocument()
+  })
+
+  it('AUTO 30s pill absent and PAUSED pill shown when isPaused=true + connectionStatus=polling (AC-0227)', () => {
+    mockConnectionStatus = 'polling'
+    render(
+      <LeaderboardTable
+        tournament={TOURNAMENT}
+        initialRows={ROWS}
+        tournamentId="tourney-1"
+        isPaused={true}
+      />
+    )
+    expect(screen.queryByTestId('polling-pill')).not.toBeInTheDocument()
+    expect(screen.getByTestId('paused-pill')).toBeInTheDocument()
+  })
+
+  it('PAUSED pill shown when isPaused=true covers suspended status (AC-0227)', () => {
+    // isPaused is derived in page.tsx from status === 'paused' || status === 'suspended'
+    // This test verifies isPaused=true (which covers the 'suspended' case) suppresses LIVE
+    mockConnectionStatus = 'realtime'
+    render(
+      <LeaderboardTable
+        tournament={{ ...TOURNAMENT, status: 'suspended' }}
+        initialRows={ROWS}
+        tournamentId="tourney-1"
+        isPaused={true}
+      />
+    )
+    expect(screen.queryByTestId('live-pill')).not.toBeInTheDocument()
+    expect(screen.getByTestId('paused-pill')).toBeInTheDocument()
   })
 })

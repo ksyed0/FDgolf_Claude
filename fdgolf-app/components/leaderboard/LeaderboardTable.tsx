@@ -54,7 +54,15 @@ export function LeaderboardTable({
       <header className="px-4 py-4 bg-slate-50 border-b border-slate-200">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-slate-900">{tournament.name}</h1>
-          {connectionStatus === 'realtime' && (
+          {isPaused && (
+            <span
+              data-testid="paused-pill"
+              className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-slate-200 text-slate-500 rounded-full"
+            >
+              PAUSED
+            </span>
+          )}
+          {!isPaused && connectionStatus === 'realtime' && (
             <span
               data-testid="live-pill"
               className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-600 rounded-full animate-pulse"
@@ -62,7 +70,7 @@ export function LeaderboardTable({
               ● LIVE
             </span>
           )}
-          {connectionStatus === 'polling' && (
+          {!isPaused && connectionStatus === 'polling' && (
             <span
               data-testid="polling-pill"
               className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-500 rounded-full"

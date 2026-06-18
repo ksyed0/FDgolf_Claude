@@ -74,7 +74,10 @@ async function getMyTeamInfo(
     .eq('team_id', teamId)
 
   const memberNames = (members ?? [])
-    .map((m: { players: { full_name: string } | null }) => m.players?.full_name ?? '')
+    .map((m) => {
+      const p = m.players as unknown as { full_name: string } | null
+      return p?.full_name ?? ''
+    })
     .filter(Boolean)
 
   return { teamId, memberNames }
