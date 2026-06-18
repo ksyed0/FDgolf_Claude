@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import type { LeaderboardRow } from '@/lib/leaderboard'
 import { useLeaderboard } from '@/lib/hooks/useLeaderboard'
 import { LeaderboardRow as LeaderboardRowComponent } from './LeaderboardRow'
 import { MyTeamCard } from './MyTeamCard'
 import { PausedBanner } from './PausedBanner'
+import { TeamDrilldown } from './TeamDrilldown'
 
 export type TournamentMeta = {
   id: string
@@ -47,6 +49,7 @@ export function LeaderboardTable({
   const { rows, connectionStatus } = useLeaderboard(tournamentId, initialRows, tournament.slug)
   const venueName = tournament.venues?.name ?? null
   const myTeamRow = myTeamId ? (rows.find((r) => r.teamId === myTeamId) ?? null) : null
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -105,7 +108,11 @@ export function LeaderboardTable({
           </thead>
           <tbody>
             {rows.map((row) => (
-              <LeaderboardRowComponent key={row.teamId} row={row} />
+              <LeaderboardRowComponent
+                key={row.teamId}
+                row={row}
+                onClick={() => setSelectedTeamId(row.teamId)}
+              />
             ))}
           </tbody>
         </table>
@@ -115,6 +122,15 @@ export function LeaderboardTable({
       <footer className="px-4 py-3 border-t border-slate-200 text-center text-xs text-slate-500">
         Showing {rows.length} teams
       </footer>
+
+      {/* Team drilldown overlay */}
+      {selectedTeamId && (
+        <TeamDrilldown
+          teamId={selectedTeamId}
+          tournamentId={tournamentId}
+          onClose={() => setSelectedTeamId(null)}
+        />
+      )}
     </div>
   )
 }

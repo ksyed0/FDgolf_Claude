@@ -4,6 +4,7 @@ import type { LeaderboardRow as LeaderboardRowType } from '@/lib/leaderboard'
 
 interface Props {
   row: LeaderboardRowType
+  onClick?: () => void
 }
 
 function formatScore(totalVsPar: number): string {
@@ -18,9 +19,9 @@ function scoreColor(totalVsPar: number): string {
   return 'text-slate-500'
 }
 
-export function LeaderboardRow({ row }: Props) {
+export function LeaderboardRow({ row, onClick }: Props) {
   return (
-    <tr className="border-b border-slate-200">
+    <tr className="border-b border-slate-200 cursor-pointer hover:bg-slate-50" onClick={onClick}>
       <td data-testid="rank" className="py-2 px-3 text-sm font-medium text-slate-600 w-8">
         {row.rank}
       </td>
