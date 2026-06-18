@@ -45,6 +45,13 @@ export default async function HoleSummaryPage({
     .eq('hole_number', holeNumber)
     .single()
 
+  const { count: completedCountRaw } = await supabase
+    .from('hole_scores')
+    .select('*', { count: 'exact', head: true })
+    .eq('round_id', params.roundId)
+    .eq('status', 'final')
+  const completedCount = completedCountRaw ?? 0
+
   const players = (scores ?? []).map((s) => {
     const r = s.rounds as unknown as {
       player_id: string
@@ -58,7 +65,7 @@ export default async function HoleSummaryPage({
   })
 
   return (
-    <HoleSummaryClient roundId={round.id} holeNumber={holeNumber}>
+    <HoleSummaryClient roundId={round.id} holeNumber={holeNumber} completedCount={completedCount}>
       <HoleSummary
         holeNumber={holeNumber}
         par={hole?.par ?? 4}
