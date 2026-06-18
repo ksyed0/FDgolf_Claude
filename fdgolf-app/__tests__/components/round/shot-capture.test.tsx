@@ -135,6 +135,43 @@ describe('ShotCapture', () => {
     expect(rehitCall.rehitOrigin).toBe('prior_position')
   })
 
+  it('calls onGpsDenied when GPS is denied (AC-0178)', async () => {
+    mockGeoDenied()
+    const onGpsDenied = vi.fn()
+    render(<ShotCapture {...baseProps} onCommit={vi.fn()} onGpsDenied={onGpsDenied} />)
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => expect(onGpsDenied).toHaveBeenCalledOnce())
+  })
+
+  it('shows "Use map location" button when GPS denied and tapPosition provided (AC-0179)', async () => {
+    mockGeoDenied()
+    render(
+      <ShotCapture {...baseProps} onCommit={vi.fn()} tapPosition={{ lat: 43.7, lng: -79.4 }} />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /use map location/i })).toBeInTheDocument()
+    )
+  })
+
+  it('dispatches START_SHOT with tapped coords on "Use map location" click (AC-0179)', async () => {
+    mockGeoDenied()
+    const onCommit = vi.fn()
+    render(
+      <ShotCapture {...baseProps} onCommit={onCommit} tapPosition={{ lat: 43.7, lng: -79.4 }} />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /use map location/i }))
+    fireEvent.click(screen.getByRole('button', { name: /use map location/i }))
+    await waitFor(() => screen.getByRole('button', { name: /in play/i }))
+    fireEvent.click(screen.getByRole('button', { name: /in play/i }))
+    await waitFor(() =>
+      expect(onCommit).toHaveBeenCalledWith(
+        expect.objectContaining({ originLat: 43.7, originLng: -79.4, accuracyM: null })
+      )
+    )
+  })
+
   it('OOB rehit linkage is wired end-to-end: rehit shot carries rehitFromShotLocalId + rehitOrigin (AC-0151/0152)', async () => {
     mockGeoSuccess(45, -75, 5)
     const onCommit = vi.fn()
