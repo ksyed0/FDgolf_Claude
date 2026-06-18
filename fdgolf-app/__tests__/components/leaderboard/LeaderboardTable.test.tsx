@@ -11,6 +11,14 @@ vi.mock('@/components/leaderboard/LeaderboardRow', () => ({
   ),
 }))
 
+// Mock the useLeaderboard hook so tests don't need a real Supabase client
+vi.mock('@/lib/hooks/useLeaderboard', () => ({
+  useLeaderboard: (_tournamentId: string, initialRows: LeaderboardRow[], _slug: string) => ({
+    rows: initialRows,
+    connectionStatus: 'connecting' as const,
+  }),
+}))
+
 const TOURNAMENT = {
   id: 'tourney-1',
   name: 'CIBC ARC 2026',
