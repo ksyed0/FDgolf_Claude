@@ -71,7 +71,7 @@ Dependencies: EPIC-0006
 EPIC-0008: Admin Operations
 Description: Admin panel for live ops dashboard, player management, score editing with audit trail, team assignment, master club list management. Tournament organizer role scopes admin actions per tournament.
 Release Target: MVP
-Status: Planned
+Status: In Progress
 Dependencies: EPIC-0001, EPIC-0002
 ```
 
@@ -1007,43 +1007,43 @@ Acceptance Criteria:
 US-0065 (EPIC-0008): As an admin, I want a persistent left sidebar layout, so that I can navigate quickly between sections.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0065-admin-layout
 Dependencies: US-0004
 Acceptance Criteria:
-  - [ ] AC-0228: Sidebar with 8 items: Dashboard, Tournaments, Players, Teams, Scores, Courses, Clubs, Stats
-  - [ ] AC-0229: Items grouped (operational vs setup)
-  - [ ] AC-0230: Current section highlighted
-  - [ ] AC-0231: Route-protected to admin role
+  - [x] AC-0228: Sidebar with 8 items: Dashboard, Tournaments, Players, Teams, Scores, Courses, Clubs, Stats
+  - [x] AC-0229: Items grouped (operational vs setup)
+  - [x] AC-0230: Current section highlighted
+  - [x] AC-0231: Route-protected to admin role
 ```
 
 ```
 US-0066 (EPIC-0008): As an admin, I want 4 KPI stat cards on the dashboard, so that I can monitor tournament health at a glance.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0066-admin-kpis
 Dependencies: US-0065
 Acceptance Criteria:
-  - [ ] AC-0232: Players card shows registered count and recent delta
-  - [ ] AC-0233: Teams playing card shows in_progress rounds count
-  - [ ] AC-0234: Avg pace card shows computed minutes-per-hole vs target
-  - [ ] AC-0235: Sync issues card shows count and team numbers
-  - [ ] AC-0236: Auto-refresh every 30s
+  - [x] AC-0232: Players card shows registered count and recent delta
+  - [x] AC-0233: Teams playing card shows in_progress rounds count
+  - [x] AC-0234: Avg pace card shows computed minutes-per-hole vs target
+  - [x] AC-0235: Sync issues card shows count and team numbers
+  - [x] AC-0236: Auto-refresh every 30s
 ```
 
 ```
 US-0067 (EPIC-0008): As an admin, I want a live rounds table with pace warnings, so that I can chase slow groups before they back up the course.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0067-live-rounds
 Dependencies: US-0066
 Acceptance Criteria:
-  - [ ] AC-0237: Table shows all in_progress rounds with team, players, thru, score, pace
-  - [ ] AC-0238: Rows where pace exceeds target by more than 2 min/hole highlighted amber
-  - [ ] AC-0239: Pace target configurable per tournament (default 12 min/hole)
-  - [ ] AC-0240: Click row to view the team's round
+  - [x] AC-0237: Table shows all in_progress rounds with team, players, thru, score, pace
+  - [x] AC-0238: Rows where pace exceeds target by more than 2 min/hole highlighted amber
+  - [x] AC-0239: Pace target configurable per tournament (default 12 min/hole)
+  - [x] AC-0240: Click row to view the team's round
 ```
 
 ```
@@ -1090,26 +1090,26 @@ Acceptance Criteria:
 US-0071 (EPIC-0008): As an admin, I want to drill into a round and edit any shot, so that I can resolve disputes.
 Priority: High
 Estimate: M
-Status: Planned
+Status: Done
 Branch: feature/US-0071-score-editor
 Dependencies: US-0041
 Acceptance Criteria:
-  - [ ] AC-0251: Round detail page shows holes 1-18 with shot lists
-  - [ ] AC-0252: Each shot row is editable: club, outcome, GPS, distance
-  - [ ] AC-0253: Save persists shot_edits audit row with admin actor
-  - [ ] AC-0254: Hole scores and team_hole_scores recompute via trigger
+  - [x] AC-0251: Round detail page shows holes 1-18 with shot lists
+  - [x] AC-0252: Each shot row is editable: club, outcome, GPS, distance
+  - [x] AC-0253: Save persists shot_edits audit row with admin actor
+  - [x] AC-0254: Hole scores and team_hole_scores recompute via trigger
 ```
 
 ```
 US-0072 (EPIC-0008): As an admin, I want the audit trail visible per shot, so that I can defend score changes.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0072-audit-display
 Dependencies: US-0071
 Acceptance Criteria:
-  - [ ] AC-0255: Shot edit panel shows all changes with timestamp and author
-  - [ ] AC-0256: Admin edits shown amber for visual distinction
+  - [x] AC-0255: Shot edit panel shows all changes with timestamp and author
+  - [x] AC-0256: Admin edits shown amber for visual distinction
 ```
 
 ```
