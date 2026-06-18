@@ -1,72 +1,50 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { SponsorBar } from '@/components/sponsor-bar'
-import { LeaderboardClient } from '@/components/leaderboard/leaderboard-client'
-import {
-  getTournamentBySlug,
-  getStandings,
-  getRosters,
-  getCurrentTeamForUser,
-} from '@/lib/leaderboard/queries'
+import { fetchLeaderboard } from '@/lib/leaderboard'
+import { LeaderboardTable } from '@/components/leaderboard/LeaderboardTable'
+import type { TournamentMeta } from '@/components/leaderboard/LeaderboardTable'
 
-// V2: never serve a stale cached board for first paint.
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+
+async function getTournament(slug: string): Promise<TournamentMeta | null> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('tournaments')
+    .select('id, name, slug, starts_at, format, status, sponsor_logos, course_id, venues(name)')
+    .eq('slug', slug)
+    .single()
+  return data as TournamentMeta | null
+}
 
 export async function generateMetadata({
   params,
 }: {
   params: { slug: string }
 }): Promise<Metadata> {
-  const t = await getTournamentBySlug(params.slug)
-  if (!t) return { title: 'Leaderboard' }
-  const title = `${t.name} — Live Leaderboard`
-  const description = `Follow the ${t.name} leaderboard at ${t.venue}.`
+  const tournament = await getTournament(params.slug)
+  if (!tournament) return { title: 'Leaderboard' }
+  const name = tournament.name
   return {
-    title,
-    description,
-    openGraph: { title, description },
+    title: `${name} Leaderboard`,
+    openGraph: {
+      title: `${name} Leaderboard`,
+      description: `Live standings for ${name}`,
+    },
   }
 }
 
-export default async function PublicLeaderboardPage({ params }: { params: { slug: string } }) {
-  const tournament = await getTournamentBySlug(params.slug)
+export default async function LeaderboardPage({ params }: { params: { slug: string } }) {
+  const tournament = await getTournament(params.slug)
   if (!tournament) notFound()
 
-  const [standings, rosters] = await Promise.all([
-    getStandings(tournament.id),
-    getRosters(tournament.id),
-  ])
-
-  // Logged-in viewer → resolve their team for the hero card (optional, no auth required).
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  const currentTeam = user
-    ? await getCurrentTeamForUser(tournament.id, user.id, standings, rosters)
-    : null
-
-  const isPaused = tournament.status === 'paused'
+  const rows = await fetchLeaderboard(supabase, tournament.id)
 
   return (
-    <main className="min-h-screen bg-[#0b1f14]">
-      <header className="bg-[#0e2818] px-4 pt-6 pb-2 text-white">
-        <h1 className="text-2xl font-bold">{tournament.name}</h1>
-        <p className="text-sm text-slate-300">
-          {tournament.venue} · {new Date(tournament.startsAt).toLocaleDateString()}
-        </p>
-      </header>
-      <SponsorBar slug={tournament.slug} />
-      <LeaderboardClient
-        slug={tournament.slug}
-        tournamentId={tournament.id}
-        initialStandings={standings}
-        rosters={rosters}
-        currentTeam={currentTeam}
-        isPaused={isPaused}
-      />
+    <main className="min-h-screen">
+      <LeaderboardTable tournament={tournament} initialRows={rows} tournamentId={tournament.id} />
     </main>
   )
 }
