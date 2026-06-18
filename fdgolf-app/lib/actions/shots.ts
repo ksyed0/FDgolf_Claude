@@ -100,3 +100,13 @@ export async function editShotAction(input: EditShotInput): Promise<ShotActionRe
 
   return { ok: true, serverId: input.shotId }
 }
+
+export async function getShotEditsAction(shotId: string) {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('shot_edits')
+    .select('id, edited_by, before_state, after_state, created_at')
+    .eq('shot_id', shotId)
+    .order('created_at', { ascending: false })
+  return data ?? []
+}
