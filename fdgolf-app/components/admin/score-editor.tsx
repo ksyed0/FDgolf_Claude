@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import { editShotAction, getShotEditsAction } from '@/lib/actions/shots'
+import { ShotAuditTrail } from './shot-audit-trail'
 
 type Shot = {
   id: string
@@ -118,25 +119,7 @@ export function ScoreEditor({ shots, clubs }: Props) {
                       </option>
                     ))}
                   </select>
-                  {editAudits.length > 0 && (
-                    <ul className="mt-1 flex flex-col gap-1">
-                      {editAudits.map((e) => (
-                        <li
-                          key={e.id}
-                          data-testid="audit-row"
-                          className="rounded px-2 py-1 text-xs bg-amber-950 border-l-2 border-amber-500"
-                        >
-                          <span className="text-slate-400">
-                            {new Date(e.created_at).toLocaleTimeString()}
-                          </span>
-                          {' · '}
-                          <span className="font-mono">{e.after_state.outcome as string}</span>
-                          {' ← '}
-                          <span className="text-slate-500">{e.before_state.outcome as string}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <ShotAuditTrail edits={editAudits} isAdmin={true} />
                   <div className="flex gap-2 mt-1">
                     <button
                       type="submit"
