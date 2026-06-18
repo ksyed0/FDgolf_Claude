@@ -6,7 +6,7 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 12 — 2026-06-17
+Session 14 — 2026-06-18
 
 ---
 
@@ -16,10 +16,10 @@ Session 12 — 2026-06-17
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `c1fde22` (Session 11 — map guard + Granite Ridge seed)
-- **Pending PRs:** none merged-pending. EPIC-0005 + EPIC-0007 specs+plans authored on their feature branches (unmerged), ready for execution.
-- **Stories done:** EPIC-0001, EPIC-0002, EPIC-0003, **EPIC-0004**, **EPIC-0006** complete
-- **Stories planned next:** EPIC-0005 + EPIC-0007 — **both fully specced + planned** (Session 12). EPIC-0005 spec/plan on `feature/epic0005-round-tracking`; EPIC-0007 on `feature/epic0007-leaderboard`. Next action = execute (subagent-driven, MVP-spine-first).
+- **Develop tip:** `617c9f0` (Session 14 — EPIC-0008 admin ops MVP, PR #56)
+- **Pending PRs:** none
+- **Stories done:** EPIC-0001, EPIC-0002, EPIC-0003, **EPIC-0004**, **EPIC-0005** (partial — US-0035/0042/0043/0045/0046/0047 Done, BUG-0020/0022 Fixed), **EPIC-0006**, **EPIC-0008** (US-0065/0066/0067/0071/0072 Done, In Progress) complete
+- **Stories planned next:** EPIC-0007 (Leaderboard) — fully specced + planned on `feature/epic0007-leaderboard`. Also EPIC-0005 remaining stories (scoring display, team flow). Next action = execute EPIC-0007 MVP spine.
 
 ---
 
@@ -56,7 +56,7 @@ Session 12 — 2026-06-17
 | AC       | AC-0341        |
 | TASK     | TASK-0336      |
 | TC       | TC-0025        |
-| BUG      | BUG-0020       |
+| BUG      | BUG-0023       |
 | L        | L-0002         |
 
 ---

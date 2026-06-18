@@ -11,7 +11,7 @@ working in parallel don't collide.
 | AC       | AC-0307           | AC-0306       |
 | TASK     | TASK-0313         | TASK-0312     |
 | TC       | TC-0043           | TC-0042       |
-| BUG      | BUG-0020          | BUG-0019      |
+| BUG      | BUG-0023          | BUG-0022      |
 | L        | L-0002            | L-0001        |
 
 ## Conventions

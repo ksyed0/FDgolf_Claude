@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 14 — 2026-06-18
+
+### What Was Done
+
+- EPIC-0005 wiring + BUG-0020/0022 fixed: BUG-0020 RLS policy for `shot_edits` extended to round members; BUG-0022 `ActiveHole` fully wired (shot trail, TurnPicker, GPS tap-fallback, post-commit state read via `getState()`); `ShotCapture` GPS-denied callback + map-tap button; `HoleSummaryClient` last-hole detection → `/complete`; US-0035/0042/0043/0045/0046/0047 → Done — PR #55
+- EPIC-0008 Admin Ops MVP: admin layout + auth guard; sidebar (8 nav items, active highlight); KPI stat cards; live rounds table with pace warnings; score editor with `editShotAction` integration; `ShotAuditTrail` component; US-0065/0066/0067/0071/0072 → Done — PR #56
+- Final review cycle on EPIC-0008: REQUEST_CHANGES resolved (nav href collision fix, typed `Shot` export replaces `as any` cast, `elapsedMin !== null` guard, optional chaining on audit JSONB fields); re-review APPROVE before merge
+
+---
+
 ## Session 12 — 2026-06-17
 
 ### What Was Done
