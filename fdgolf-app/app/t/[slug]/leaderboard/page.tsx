@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { fetchLeaderboard } from '@/lib/leaderboard'
 import { LeaderboardTable } from '@/components/leaderboard/LeaderboardTable'
@@ -8,14 +9,16 @@ import type { TournamentMeta } from '@/components/leaderboard/LeaderboardTable'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-async function getTournament(slug: string): Promise<TournamentMeta | null> {
-  const supabase = await createClient()
+async function getTournament(
+  supabase: SupabaseClient,
+  slug: string
+): Promise<TournamentMeta | null> {
   const { data } = await supabase
     .from('tournaments')
     .select('id, name, slug, starts_at, format, status, sponsor_logos, course_id, venues(name)')
     .eq('slug', slug)
     .single()
-  return data as TournamentMeta | null
+  return data as unknown as TournamentMeta | null
 }
 
 export async function generateMetadata({
@@ -23,7 +26,8 @@ export async function generateMetadata({
 }: {
   params: { slug: string }
 }): Promise<Metadata> {
-  const tournament = await getTournament(params.slug)
+  const supabase = await createClient()
+  const tournament = await getTournament(supabase, params.slug)
   if (!tournament) return { title: 'Leaderboard' }
   const name = tournament.name
   return {
@@ -36,10 +40,10 @@ export async function generateMetadata({
 }
 
 export default async function LeaderboardPage({ params }: { params: { slug: string } }) {
-  const tournament = await getTournament(params.slug)
+  const supabase = await createClient()
+  const tournament = await getTournament(supabase, params.slug)
   if (!tournament) notFound()
 
-  const supabase = await createClient()
   const rows = await fetchLeaderboard(supabase, tournament.id)
 
   return (
