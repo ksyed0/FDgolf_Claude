@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { haversineMeters } from '@/lib/round/distance'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -26,6 +26,7 @@ export type ShotStats = {
  * Returns rows with { team_id, team_name, hole_number, best_ball_score, par }.
  */
 async function fetchHoleScoreRows(
+  supabase: SupabaseClient,
   tournamentId: string
 ): Promise<
   Array<{
@@ -36,8 +37,6 @@ async function fetchHoleScoreRows(
     par: number
   }>
 > {
-  const supabase = createClient()
-
   const { data: tournamentData } = await supabase
     .from('tournaments')
     .select('course_id')
@@ -60,8 +59,11 @@ async function fetchHoleScoreRows(
  * AC-0317: Count birdies (best_ball_score - par <= -1) per team.
  * Returns sorted descending by birdieCount.
  */
-export async function fetchBirdieStats(tournamentId: string): Promise<BirdieStat[]> {
-  const rows = await fetchHoleScoreRows(tournamentId)
+export async function fetchBirdieStats(
+  supabase: SupabaseClient,
+  tournamentId: string
+): Promise<BirdieStat[]> {
+  const rows = await fetchHoleScoreRows(supabase, tournamentId)
 
   const counts = new Map<string, { teamName: string; birdieCount: number }>()
 
@@ -86,8 +88,11 @@ export async function fetchBirdieStats(tournamentId: string): Promise<BirdieStat
  * AC-0318/AC-0319: Last 3 holes played per team, with vsPar.
  * Returns all teams even if last3 is empty.
  */
-export async function fetchMomentumStats(tournamentId: string): Promise<MomentumStat[]> {
-  const rows = await fetchHoleScoreRows(tournamentId)
+export async function fetchMomentumStats(
+  supabase: SupabaseClient,
+  tournamentId: string
+): Promise<MomentumStat[]> {
+  const rows = await fetchHoleScoreRows(supabase, tournamentId)
 
   const byTeam = new Map<
     string,
@@ -116,8 +121,11 @@ export async function fetchMomentumStats(tournamentId: string): Promise<Momentum
  * AC-0320: Avg vsPar per hole, always returning exactly 18 entries (holes 1–18).
  * Holes with no data: { avgVsPar: null, teamsPlayed: 0 }.
  */
-export async function fetchHoleDifficulty(tournamentId: string): Promise<HoleDifficulty[]> {
-  const rows = await fetchHoleScoreRows(tournamentId)
+export async function fetchHoleDifficulty(
+  supabase: SupabaseClient,
+  tournamentId: string
+): Promise<HoleDifficulty[]> {
+  const rows = await fetchHoleScoreRows(supabase, tournamentId)
 
   const byHole = new Map<number, { total: number; count: number }>()
 
@@ -155,8 +163,11 @@ export async function fetchHoleDifficulty(tournamentId: string): Promise<HoleDif
  * AC-0321: Find the single row with lowest vsPar (best_ball_score - par).
  * Returns null if lowest vsPar > -1.
  */
-export async function fetchBestAchievement(tournamentId: string): Promise<BestAchievement> {
-  const rows = await fetchHoleScoreRows(tournamentId)
+export async function fetchBestAchievement(
+  supabase: SupabaseClient,
+  tournamentId: string
+): Promise<BestAchievement> {
+  const rows = await fetchHoleScoreRows(supabase, tournamentId)
 
   let best: BestAchievement = null
 
@@ -179,14 +190,17 @@ type ShotRow = {
   shot_number: number
   origin_lat: number | null
   origin_lng: number | null
+  club: string | null
+  outcome: string | null
 }
 
 /**
  * AC-0322–AC-0325: Longest drive, club of day, cleanest teams.
  */
-export async function fetchShotStats(tournamentId: string): Promise<ShotStats> {
-  const supabase = createClient()
-
+export async function fetchShotStats(
+  supabase: SupabaseClient,
+  tournamentId: string
+): Promise<ShotStats> {
   // Fetch all rounds for this tournament once — reused across all stat sections
   const { data: rounds } = await supabase
     .from('rounds')
@@ -195,7 +209,7 @@ export async function fetchShotStats(tournamentId: string): Promise<ShotStats> {
 
   let longestDriveMeters: number | null = null
   let longestDriveTeam: string | null = null
-  const clubOfDayName: string | null = null
+  let clubOfDayName: string | null = null
   const cleanestTeams: Array<{ teamName: string; oobCount: number }> = []
 
   if (rounds && rounds.length > 0) {
@@ -205,12 +219,13 @@ export async function fetchShotStats(tournamentId: string): Promise<ShotStats> {
     )
     const teamIds = [...new Set(rounds.map((r: { team_id: string }) => r.team_id))]
 
-    // ── Longest drive ────────────────────────────────────────────────────────
-    // Fetch shot_number 1 and 2 for all rounds, filter nulls in JS
+    // ── Longest drive + club of day ──────────────────────────────────────────
+    // Fetch only shot_number 1 and 2 for drive distance calculation (AC-0323)
     const { data: driveShots } = await supabase
       .from('shots')
-      .select('round_id, hole_number, shot_number, origin_lat, origin_lng')
+      .select('round_id, hole_number, shot_number, origin_lat, origin_lng, club, outcome')
       .in('round_id', roundIds)
+      .in('shot_number', [1, 2])
 
     if (driveShots && driveShots.length > 0) {
       const groups = new Map<string, { s1: ShotRow | null; s2: ShotRow | null }>()
@@ -255,6 +270,25 @@ export async function fetchShotStats(tournamentId: string): Promise<ShotStats> {
           longestDriveTeam = teamData?.name ?? null
         }
       }
+
+      // ── Club of day (AC-0322) ────────────────────────────────────────────────
+      // Count non-mulligan shots by club, return the club with the highest count
+      const clubCounts = new Map<string, number>()
+      for (const shot of driveShots as ShotRow[]) {
+        if (shot.outcome === 'mulligan') continue
+        if (!shot.club) continue
+        clubCounts.set(shot.club, (clubCounts.get(shot.club) ?? 0) + 1)
+      }
+
+      let topClub: string | null = null
+      let topCount = 0
+      for (const [club, count] of clubCounts) {
+        if (count > topCount) {
+          topCount = count
+          topClub = club
+        }
+      }
+      clubOfDayName = topClub
     }
 
     // ── Cleanest teams ────────────────────────────────────────────────────────
@@ -285,9 +319,9 @@ export async function fetchShotStats(tournamentId: string): Promise<ShotStats> {
       })
     }
 
-    // Sort by oobCount ASC, take top 3
+    // Sort by oobCount ASC, take top 3 (non-mutating)
     cleanestTeams.sort((a, b) => a.oobCount - b.oobCount)
-    cleanestTeams.splice(3)
+    cleanestTeams.splice(0, cleanestTeams.length, ...cleanestTeams.slice(0, 3))
   }
 
   return {

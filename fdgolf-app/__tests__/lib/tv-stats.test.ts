@@ -1,18 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { Mock } from 'vitest'
-
-// Mock the supabase client
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: vi.fn(),
-}))
 
 // Mock haversineMeters
 vi.mock('@/lib/round/distance', () => ({
   haversineMeters: vi.fn(),
 }))
 
-import { createClient } from '@/lib/supabase/client'
 import { haversineMeters } from '@/lib/round/distance'
+import type { Mock } from 'vitest'
 import {
   fetchBirdieStats,
   fetchHoleDifficulty,
@@ -20,30 +14,7 @@ import {
   fetchShotStats,
 } from '@/lib/tv-stats'
 
-const mockCreateClient = createClient as Mock
 const mockHaversine = haversineMeters as Mock
-
-// Helper to build a chainable Supabase mock that resolves at .eq() or .single()
-function makeQueryBuilder(responses: Record<string, unknown>) {
-  // We need a mock that handles chained calls and returns different data per table
-  // Strategy: track the 'from' table and return appropriate data
-  const supabase = {
-    from: vi.fn((table: string) => {
-      const data = responses[table] ?? []
-      const chain: Record<string, unknown> = {}
-      const resolver = () => Promise.resolve({ data, error: null })
-      chain.select = vi.fn(() => chain)
-      chain.eq = vi.fn(() => chain)
-      chain.in = vi.fn(() => chain)
-      chain.order = vi.fn(resolver)
-      chain.single = vi.fn(resolver)
-      chain.then = (resolve: (v: unknown) => unknown) =>
-        Promise.resolve({ data, error: null }).then(resolve)
-      return chain
-    }),
-  }
-  return supabase
-}
 
 // ─── fetchBirdieStats ────────────────────────────────────────────────────────
 
@@ -82,9 +53,8 @@ describe('fetchBirdieStats', () => {
         }
       }),
     }
-    mockCreateClient.mockReturnValue(mockClient)
 
-    const result = await fetchBirdieStats('tournament-1')
+    const result = await fetchBirdieStats(mockClient as never, 'tournament-1')
     expect(result).toEqual([])
   })
 
@@ -121,9 +91,8 @@ describe('fetchBirdieStats', () => {
         }
       }),
     }
-    mockCreateClient.mockReturnValue(mockClient)
 
-    const result = await fetchBirdieStats('tournament-1')
+    const result = await fetchBirdieStats(mockClient as never, 'tournament-1')
     expect(result).toHaveLength(2)
     // Sorted descending by birdieCount
     expect(result[0]).toEqual({ teamName: 'Eagles', birdieCount: 2 })
@@ -166,9 +135,8 @@ describe('fetchHoleDifficulty', () => {
         }
       }),
     }
-    mockCreateClient.mockReturnValue(mockClient)
 
-    const result = await fetchHoleDifficulty('tournament-1')
+    const result = await fetchHoleDifficulty(mockClient as never, 'tournament-1')
     expect(result).toHaveLength(18)
   })
 
@@ -198,9 +166,8 @@ describe('fetchHoleDifficulty', () => {
         }
       }),
     }
-    mockCreateClient.mockReturnValue(mockClient)
 
-    const result = await fetchHoleDifficulty('tournament-1')
+    const result = await fetchHoleDifficulty(mockClient as never, 'tournament-1')
     // Hole 2 should have null avgVsPar
     const hole2 = result.find((h) => h.holeNumber === 2)
     expect(hole2).toEqual({ holeNumber: 2, avgVsPar: null, teamsPlayed: 0 })
@@ -244,9 +211,8 @@ describe('fetchBestAchievement', () => {
         }
       }),
     }
-    mockCreateClient.mockReturnValue(mockClient)
 
-    const result = await fetchBestAchievement('tournament-1')
+    const result = await fetchBestAchievement(mockClient as never, 'tournament-1')
     expect(result).toBeNull()
   })
 
@@ -282,9 +248,8 @@ describe('fetchBestAchievement', () => {
         }
       }),
     }
-    mockCreateClient.mockReturnValue(mockClient)
 
-    const result = await fetchBestAchievement('tournament-1')
+    const result = await fetchBestAchievement(mockClient as never, 'tournament-1')
     expect(result).toEqual({ holeNumber: 5, teamName: 'Hawks', vsPar: -2 })
   })
 })
@@ -311,9 +276,8 @@ describe('fetchShotStats — longest drive', () => {
         }
       }),
     }
-    mockCreateClient.mockReturnValue(mockClient)
 
-    const result = await fetchShotStats('tournament-1')
+    const result = await fetchShotStats(mockClient as never, 'tournament-1')
     expect(result.longestDriveMeters).toBeNull()
   })
 
@@ -324,6 +288,8 @@ describe('fetchShotStats — longest drive', () => {
       shot_number: 1,
       origin_lat: 43.0,
       origin_lng: -79.0,
+      club: 'Driver',
+      outcome: null,
     }
     const shot2 = {
       round_id: 'r1',
@@ -331,6 +297,8 @@ describe('fetchShotStats — longest drive', () => {
       shot_number: 2,
       origin_lat: 43.002,
       origin_lng: -79.0,
+      club: '7-iron',
+      outcome: null,
     }
 
     mockHaversine.mockReturnValue(222.5)
@@ -347,7 +315,7 @@ describe('fetchShotStats — longest drive', () => {
           }
         }
         if (table === 'shots') {
-          // driveShots query ends with .in() — needs to be both thenable and chainable
+          // driveShots query ends with .in('shot_number', ...) — needs to be thenable
           const shotsData = [shot1, shot2]
           const resolved = { data: shotsData, error: null }
           const shotsChain: Record<string, unknown> = {}
@@ -374,9 +342,8 @@ describe('fetchShotStats — longest drive', () => {
         }
       }),
     }
-    mockCreateClient.mockReturnValue(mockClient)
 
-    const result = await fetchShotStats('tournament-1')
+    const result = await fetchShotStats(mockClient as never, 'tournament-1')
     expect(result.longestDriveMeters).toBe(222.5)
     expect(result.longestDriveTeam).toBe('Eagles')
     expect(mockHaversine).toHaveBeenCalledWith(
@@ -428,7 +395,7 @@ describe('fetchShotStats — cleanest teams', () => {
           // Track which shots.from() call this is using outer closure
           shotsFromCallCount++
           if (shotsFromCallCount === 1) {
-            // driveShots query: ends with .in(), needs to be thenable with empty data
+            // driveShots query: ends with .in('shot_number', ...), needs to be thenable
             const driveChain: Record<string, unknown> = {}
             driveChain.select = vi.fn().mockReturnValue(driveChain)
             driveChain.in = vi.fn().mockReturnValue(driveChain)
@@ -459,13 +426,126 @@ describe('fetchShotStats — cleanest teams', () => {
         }
       }),
     }
-    mockCreateClient.mockReturnValue(mockClient)
 
-    const result = await fetchShotStats('tournament-1')
+    const result = await fetchShotStats(mockClient as never, 'tournament-1')
     // Top 3 by OOB count ascending: Hawks(0), Eagles(1), Condors(2)
     expect(result.cleanestTeams).toHaveLength(3)
     expect(result.cleanestTeams[0]).toEqual({ teamName: 'Hawks', oobCount: 0 })
     expect(result.cleanestTeams[1]).toEqual({ teamName: 'Eagles', oobCount: 1 })
     expect(result.cleanestTeams[2]).toEqual({ teamName: 'Condors', oobCount: 2 })
+  })
+})
+
+// ─── fetchShotStats — club of day ────────────────────────────────────────────
+
+describe('fetchShotStats — club of day', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('AC-0322: returns the club with the highest shot count, excluding mulligans', async () => {
+    const driveShots = [
+      {
+        round_id: 'r1',
+        hole_number: 1,
+        shot_number: 1,
+        origin_lat: 43.0,
+        origin_lng: -79.0,
+        club: 'Driver',
+        outcome: null,
+      },
+      {
+        round_id: 'r1',
+        hole_number: 1,
+        shot_number: 2,
+        origin_lat: 43.002,
+        origin_lng: -79.0,
+        club: 'Driver',
+        outcome: null,
+      },
+      {
+        round_id: 'r1',
+        hole_number: 2,
+        shot_number: 1,
+        origin_lat: 43.005,
+        origin_lng: -79.0,
+        club: '7-iron',
+        outcome: null,
+      },
+      {
+        round_id: 'r1',
+        hole_number: 2,
+        shot_number: 2,
+        origin_lat: 43.006,
+        origin_lng: -79.0,
+        club: 'Driver',
+        outcome: 'mulligan',
+      },
+    ]
+
+    mockHaversine.mockReturnValue(100)
+
+    const mockClient = {
+      from: vi.fn((table: string) => {
+        if (table === 'rounds') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({
+              data: [{ id: 'r1', team_id: 'team-1' }],
+              error: null,
+            }),
+          }
+        }
+        if (table === 'shots') {
+          const resolved = { data: driveShots, error: null }
+          const shotsChain: Record<string, unknown> = {}
+          shotsChain.select = vi.fn().mockReturnValue(shotsChain)
+          shotsChain.in = vi.fn().mockReturnValue(shotsChain)
+          shotsChain.eq = vi.fn().mockResolvedValue(resolved)
+          shotsChain.then = (resolve: (v: unknown) => unknown) =>
+            Promise.resolve(resolved).then(resolve)
+          return shotsChain
+        }
+        if (table === 'teams') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            in: vi
+              .fn()
+              .mockResolvedValue({ data: [{ id: 'team-1', name: 'Eagles' }], error: null }),
+            single: vi.fn().mockResolvedValue({ data: { name: 'Eagles' }, error: null }),
+          }
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }
+      }),
+    }
+
+    // Driver appears 2 times (non-mulligan), 7-iron appears 1 time
+    // The 3rd Driver shot is a mulligan and should be excluded
+    const result = await fetchShotStats(mockClient as never, 'tournament-1')
+    expect(result.clubOfDayName).toBe('Driver')
+  })
+
+  it('AC-0322: returns null when no shots exist', async () => {
+    const mockClient = {
+      from: vi.fn((table: string) => {
+        if (table === 'rounds') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }
+      }),
+    }
+
+    const result = await fetchShotStats(mockClient as never, 'tournament-1')
+    expect(result.clubOfDayName).toBeNull()
   })
 })
