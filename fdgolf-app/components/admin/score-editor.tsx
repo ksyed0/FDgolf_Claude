@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { editShotAction, getShotEditsAction } from '@/lib/actions/shots'
 import { ShotAuditTrail } from './shot-audit-trail'
 
-type Shot = {
+export type Shot = {
   id: string
   hole_number: number
   shot_number: number

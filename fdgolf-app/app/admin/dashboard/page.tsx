@@ -35,7 +35,7 @@ export default async function DashboardPage() {
       (h) => h.status === 'final'
     ).length
     const elapsedMin = r.started_at ? (now - new Date(r.started_at).getTime()) / 60000 : null
-    const pace = holesPlayed > 0 && elapsedMin ? elapsedMin / holesPlayed : null
+    const pace = holesPlayed > 0 && elapsedMin !== null ? elapsedMin / holesPlayed : null
     return {
       roundId: r.id,
       teamName: `Team ${(r.team_id as string)?.slice(0, 6) ?? '—'}`,

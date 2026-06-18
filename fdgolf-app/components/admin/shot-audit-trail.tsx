@@ -22,9 +22,11 @@ export function ShotAuditTrail({ edits, isAdmin }: { edits: Edit[]; isAdmin: boo
         >
           <span className="text-slate-400">{new Date(e.created_at).toLocaleTimeString()}</span>
           {' · '}
-          <span className="font-mono">{e.after_state.outcome as string}</span>
+          <span className="font-mono">{(e.after_state.outcome as string | undefined) ?? '—'}</span>
           {' ← '}
-          <span className="text-slate-500">{e.before_state.outcome as string}</span>
+          <span className="text-slate-500">
+            {(e.before_state.outcome as string | undefined) ?? '—'}
+          </span>
         </li>
       ))}
     </ul>

@@ -6,12 +6,12 @@ import { usePathname } from 'next/navigation'
 const ITEMS = [
   { label: 'Dashboard', href: '/admin/dashboard', group: 'operational' },
   { label: 'Tournaments', href: '/admin/tournaments', group: 'operational' },
-  { label: 'Players', href: '/admin/tournaments', group: 'operational' },
-  { label: 'Teams', href: '/admin/tournaments', group: 'operational' },
+  { label: 'Players', href: '/admin/players', group: 'operational' },
+  { label: 'Teams', href: '/admin/teams', group: 'operational' },
   { label: 'Scores', href: '/admin/scores', group: 'operational' },
   { label: 'Courses', href: '/admin/venues', group: 'setup' },
   { label: 'Clubs', href: '/admin/clubs', group: 'setup' },
-  { label: 'Stats', href: '/admin/dashboard', group: 'setup' },
+  { label: 'Stats', href: '/admin/stats', group: 'setup' },
 ] as const
 
 export function AdminSidebar() {
