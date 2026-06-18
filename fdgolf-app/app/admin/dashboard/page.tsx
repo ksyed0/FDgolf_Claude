@@ -7,6 +7,8 @@ export const revalidate = 30 // AC-0236
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+  // eslint-disable-next-line react-hooks/purity -- Server Component, Date.now() is safe here
+  const now = Date.now()
 
   const [
     { count: playersCount },
@@ -20,7 +22,7 @@ export default async function DashboardPage() {
       .from('rounds')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'in_progress')
-      .lt('updated_at', new Date(Date.now() - 10 * 60 * 1000).toISOString()),
+      .lt('updated_at', new Date(now - 10 * 60 * 1000).toISOString()),
     supabase
       .from('rounds')
       .select('id, team_id, started_at, player_id, players(full_name), hole_scores(status)')
@@ -32,7 +34,7 @@ export default async function DashboardPage() {
     const holesPlayed = ((r.hole_scores as unknown as { status: string }[]) ?? []).filter(
       (h) => h.status === 'final'
     ).length
-    const elapsedMin = r.started_at ? (Date.now() - new Date(r.started_at).getTime()) / 60000 : null
+    const elapsedMin = r.started_at ? (now - new Date(r.started_at).getTime()) / 60000 : null
     const pace = holesPlayed > 0 && elapsedMin ? elapsedMin / holesPlayed : null
     return {
       roundId: r.id,
