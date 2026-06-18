@@ -650,8 +650,8 @@ BUG-0020: editShotAction fails for non-admin users — shot_edits INSERT is admi
 Severity: Medium
 Related Story: US-0041
 Related Task: TASK-0154
-Status: Open
-Fix Branch: (none yet)
+Status: Fixed
+Fix Branch: feature/epic-0005-wiring-bug0022
 Lesson Encoded: No
 
 `lib/actions/shots.ts` (editShotAction) inserts a before/after audit row into `shot_edits`, but the
@@ -703,8 +703,8 @@ BUG-0022: EPIC-0005 round-tracking components built & tested but not wired into 
 Severity: High
 Related Story: US-0035, US-0042, US-0043, US-0045, US-0046, US-0047, US-0048
 Related Task: TASK-0143 (route wiring)
-Status: Open
-Fix Branch: (none yet)
+Status: Fixed
+Fix Branch: feature/epic-0005-wiring-bug0022
 Lesson Encoded: No
 
 The active-hole route (`app/round/[roundId]/hole/[n]/page.tsx` + `components/round/active-hole.tsx`)

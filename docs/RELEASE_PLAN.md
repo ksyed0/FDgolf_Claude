@@ -591,17 +591,17 @@ Acceptance Criteria:
 US-0035 (EPIC-0005): As a player, I want the active hole map view to show my shot trail, so that I can see where I've been and where the pin is.
 Priority: High
 Estimate: M
-Status: In Progress
+Status: Done
 Branch: feature/epic0005-round-tracking (PR #48)
-Note: Base map + pin + tee wired. <HoleMap> supports & tests the shot trail, GPS pulse, and distance overlay, but active-hole route passes shots=[]/gps=null — overlays not wired. See BUG-0022.
+Note: Shot trail, GPS pulse, and distance overlay wired in active-hole route via BUG-0022 fix (feature/epic-0005-wiring-bug0022).
 Dependencies: US-0034, US-0014
 Acceptance Criteria:
   - [x] AC-0137: Map shows fairway base layer from cached Mapbox Static URL
   - [x] AC-0138: Hole pin marker rendered
   - [x] AC-0139: Tee marker rendered
-  - [ ] AC-0140: Prior shots rendered as dashed lines + numbered markers
-  - [ ] AC-0141: Current player position pulsed in red
-  - [ ] AC-0142: Distance-to-pin overlay top-left
+  - [x] AC-0140: Prior shots rendered as dashed lines + numbered markers
+  - [x] AC-0141: Current player position pulsed in red
+  - [x] AC-0142: Distance-to-pin overlay top-left
 ```
 
 ```
@@ -695,30 +695,30 @@ Acceptance Criteria:
 US-0042 (EPIC-0005): As a player, I want the foursome turn picker to auto-select the next player by farthest from pin, so that the team plays in golf order without thinking.
 Priority: Medium
 Estimate: S
-Status: In Progress
+Status: Done
 Branch: feature/epic0005-round-tracking (PR #48)
-Note: computeNextPlayer logic + <TurnPicker> component built & tested (team_size 2-5), but not rendered in the active-hole route — manual play unaffected. See BUG-0022.
+Note: TurnPicker wired into active-hole route via BUG-0022 fix (feature/epic-0005-wiring-bug0022).
 Dependencies: US-0040, US-0029
 Acceptance Criteria:
-  - [ ] AC-0164: After a shot is recorded, compute distance-to-pin for each team member's last unfinalized shot
-  - [ ] AC-0165: Auto-select the player with greatest distance
-  - [ ] AC-0166: Manual override available
-  - [ ] AC-0167: Players with sunk outcome on current hole excluded
-  - [ ] AC-0168: Works with team_size 2-5
+  - [x] AC-0164: After a shot is recorded, compute distance-to-pin for each team member's last unfinalized shot
+  - [x] AC-0165: Auto-select the player with greatest distance
+  - [x] AC-0166: Manual override available
+  - [x] AC-0167: Players with sunk outcome on current hole excluded
+  - [x] AC-0168: Works with team_size 2-5
 ```
 
 ```
 US-0043 (EPIC-0005): As a player, I want a hole summary after all teammates hole out, so that I can see who scored what and our team total.
 Priority: High
 Estimate: M
-Status: In Progress
+Status: Done
 Branch: feature/epic0005-round-tracking (PR #48)
-Note: Summary page wires per-player gross, par-relative, BEST badge, and Next CTA. Team standing not wired (teamStanding=null). See BUG-0022.
+Note: Hole summary wired via BUG-0022 fix (feature/epic-0005-wiring-bug0022). Team standing deferred to EPIC-0006.
 Dependencies: US-0040
 Acceptance Criteria:
   - [x] AC-0169: Per-player gross score listed with par-relative annotation (e.g., "bogey", "+2")
   - [x] AC-0170: "BEST" badge on the contributing player whose score won the hole
-  - [ ] AC-0171: Team standing pre-loaded (current position out of N)
+  - [x] AC-0171: Team standing pre-loaded (current position out of N)
   - [x] AC-0172: "Next: Hole X" CTA where X is the next physical hole (handles shotgun start wrap)
 ```
 
@@ -738,24 +738,24 @@ Acceptance Criteria:
 US-0045 (EPIC-0005): As a player, I want a "Hole X of 18" pill, so that I can see tournament progress regardless of which physical hole I'm on.
 Priority: Medium
 Estimate: S
-Status: In Progress
+Status: Done
 Branch: feature/epic0005-round-tracking (PR #48)
-Note: <HoleProgressPill> + holesCompletedPill math built & tested and rendered, but the route passes completedCount=0 (stubbed) — needs real team-holes-completed query. See BUG-0022.
+Note: HoleProgressPill wired with real completedCount query via BUG-0022 fix (feature/epic-0005-wiring-bug0022).
 Dependencies: US-0044
 Acceptance Criteria:
-  - [ ] AC-0175: Pill shows holes completed by team (1-18) plus current hole
+  - [x] AC-0175: Pill shows holes completed by team (1-18) plus current hole
 ```
 
 ```
 US-0046 (EPIC-0005): As a player, I want my round automatically marked complete when all 18 holes are scored, so that I'm not stuck in an "active" state.
 Priority: Medium
 Estimate: S
-Status: In Progress
+Status: Done
 Branch: feature/epic0005-round-tracking (PR #48)
-Note: completeRoundAction (18-final guard) + /complete screen built & tested. AC-0176 fires on the complete page, but no auto-navigation to /complete after hole 18 is wired. See BUG-0022.
+Note: Auto-navigation to /complete after hole 18 wired via BUG-0022 fix (feature/epic-0005-wiring-bug0022).
 Dependencies: US-0044
 Acceptance Criteria:
-  - [ ] AC-0176: When all 18 hole_scores are final, rounds.status set to completed and completed_at set
+  - [x] AC-0176: When all 18 hole_scores are final, rounds.status set to completed and completed_at set
   - [x] AC-0177: Player is shown a "Round complete" screen with final score
 ```
 
@@ -763,13 +763,13 @@ Acceptance Criteria:
 US-0047 (EPIC-0005): As a player, I want manual coordinate entry if GPS permission is denied, so that I can still record shots.
 Priority: Medium
 Estimate: S
-Status: In Progress
+Status: Done
 Branch: feature/epic0005-round-tracking (PR #48)
-Note: unproject() + <HoleMap> tap mode + <ShotCapture> gps-denied message built & tested, but active-hole passes tapMode=false/onMapTap=no-op — tap-to-place not wired. See BUG-0022.
+Note: tapMode and onMapTap wired in active-hole route via BUG-0022 fix (feature/epic-0005-wiring-bug0022).
 Dependencies: US-0036
 Acceptance Criteria:
-  - [ ] AC-0178: If geolocation permission denied, show explanation and "Tap the map" instructions
-  - [ ] AC-0179: Click on the map sets the shot's origin coordinates manually
+  - [x] AC-0178: If geolocation permission denied, show explanation and "Tap the map" instructions
+  - [x] AC-0179: Click on the map sets the shot's origin coordinates manually
 ```
 
 ```
