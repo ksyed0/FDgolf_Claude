@@ -39,16 +39,69 @@ export async function generateMetadata({
   }
 }
 
+async function getMyTeamInfo(
+  supabase: SupabaseClient,
+  tournamentId: string
+): Promise<{ teamId: string; memberNames: string[] } | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return null
+
+  // Find the player record for the current user
+  const { data: player } = await supabase
+    .from('players')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+  if (!player) return null
+
+  // Find the team this player belongs to in this tournament
+  const { data: membership } = await supabase
+    .from('team_members')
+    .select('team_id, teams!inner(id, name, tournament_id)')
+    .eq('player_id', player.id)
+    .eq('teams.tournament_id', tournamentId)
+    .single()
+  if (!membership) return null
+
+  const teamId = membership.team_id
+
+  // Fetch all member names for this team
+  const { data: members } = await supabase
+    .from('team_members')
+    .select('players(full_name)')
+    .eq('team_id', teamId)
+
+  const memberNames = (members ?? [])
+    .map((m: { players: { full_name: string } | null }) => m.players?.full_name ?? '')
+    .filter(Boolean)
+
+  return { teamId, memberNames }
+}
+
 export default async function LeaderboardPage({ params }: { params: { slug: string } }) {
   const supabase = await createClient()
   const tournament = await getTournament(supabase, params.slug)
   if (!tournament) notFound()
 
-  const rows = await fetchLeaderboard(supabase, tournament.id)
+  const [rows, myTeamInfo] = await Promise.all([
+    fetchLeaderboard(supabase, tournament.id),
+    getMyTeamInfo(supabase, tournament.id),
+  ])
+
+  const isPaused = tournament.status === 'paused' || tournament.status === 'suspended'
 
   return (
     <main className="min-h-screen">
-      <LeaderboardTable tournament={tournament} initialRows={rows} tournamentId={tournament.id} />
+      <LeaderboardTable
+        tournament={tournament}
+        initialRows={rows}
+        tournamentId={tournament.id}
+        myTeamId={myTeamInfo?.teamId}
+        myMemberNames={myTeamInfo?.memberNames}
+        isPaused={isPaused}
+      />
     </main>
   )
 }

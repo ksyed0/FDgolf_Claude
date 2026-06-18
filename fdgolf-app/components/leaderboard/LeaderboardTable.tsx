@@ -3,6 +3,8 @@
 import type { LeaderboardRow } from '@/lib/leaderboard'
 import { useLeaderboard } from '@/lib/hooks/useLeaderboard'
 import { LeaderboardRow as LeaderboardRowComponent } from './LeaderboardRow'
+import { MyTeamCard } from './MyTeamCard'
+import { PausedBanner } from './PausedBanner'
 
 export type TournamentMeta = {
   id: string
@@ -20,6 +22,9 @@ interface Props {
   tournament: TournamentMeta
   initialRows: LeaderboardRow[]
   tournamentId: string
+  myTeamId?: string
+  myMemberNames?: string[]
+  isPaused?: boolean
 }
 
 function formatDate(isoString: string): string {
@@ -31,9 +36,17 @@ function formatDate(isoString: string): string {
   })
 }
 
-export function LeaderboardTable({ tournament, initialRows, tournamentId }: Props) {
+export function LeaderboardTable({
+  tournament,
+  initialRows,
+  tournamentId,
+  myTeamId,
+  myMemberNames = [],
+  isPaused = false,
+}: Props) {
   const { rows, connectionStatus } = useLeaderboard(tournamentId, initialRows, tournament.slug)
   const venueName = tournament.venues?.name ?? null
+  const myTeamRow = myTeamId ? (rows.find((r) => r.teamId === myTeamId) ?? null) : null
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -64,6 +77,12 @@ export function LeaderboardTable({ tournament, initialRows, tournamentId }: Prop
           {tournament.format}
         </span>
       </header>
+
+      {/* Paused banner */}
+      <PausedBanner isPaused={isPaused} />
+
+      {/* My team hero card */}
+      <MyTeamCard row={myTeamRow} memberNames={myMemberNames} />
 
       {/* Leaderboard table */}
       <div className="flex-1 overflow-auto">

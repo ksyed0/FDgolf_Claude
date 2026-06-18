@@ -63,7 +63,7 @@ const ROWS = [
   },
 ]
 
-let mockSupabase: { from: ReturnType<typeof vi.fn> }
+let mockSupabase: { from: ReturnType<typeof vi.fn>; auth: { getUser: ReturnType<typeof vi.fn> } }
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -75,6 +75,9 @@ beforeEach(() => {
         }),
       }),
     }),
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+    },
   }
   mockCreateClient.mockResolvedValue(mockSupabase)
   mockFetchLeaderboard.mockResolvedValue(ROWS)
@@ -96,13 +99,14 @@ describe('LeaderboardPage /t/[slug]/leaderboard', () => {
     expect(mockNotFound).toHaveBeenCalled()
   })
 
-  it('does NOT check auth / session (AC-0204)', async () => {
+  it('leaderboard renders for unauthenticated users (AC-0204)', async () => {
+    // auth.getUser returns null user — page still renders leaderboard
+    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } })
     render(await LeaderboardPage({ params: { slug: 'cibc-arc-2026' } }))
-    // Verify the supabase client only fetches the tournament (no auth calls)
-    const supabaseInstance = await mockCreateClient.mock.results[0].value
-    expect(supabaseInstance.from).toHaveBeenCalledWith('tournaments')
-    // No .auth property means no session/user check
-    expect(supabaseInstance).not.toHaveProperty('auth')
+    // Tournament data is fetched
+    expect(mockSupabase.from).toHaveBeenCalledWith('tournaments')
+    // Leaderboard table is rendered
+    expect(screen.getByTestId('leaderboard-table')).toBeInTheDocument()
   })
 
   it('passes initial rows to LeaderboardTable', async () => {
