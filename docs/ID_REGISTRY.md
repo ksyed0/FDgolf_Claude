@@ -7,8 +7,8 @@ working in parallel don't collide.
 | Sequence | Next Available ID | Last Assigned |
 | -------- | ----------------- | ------------- |
 | EPIC     | EPIC-0011         | EPIC-0010     |
-| US       | US-0090           | US-0089       |
-| AC       | AC-0307           | AC-0306       |
+| US       | US-0096           | US-0095       |
+| AC       | AC-0330           | AC-0329       |
 | TASK     | TASK-0313         | TASK-0312     |
 | TC       | TC-0043           | TC-0042       |
 | BUG      | BUG-0023          | BUG-0022      |
@@ -24,7 +24,7 @@ working in parallel don't collide.
 ## Active artefact ranges
 
 - **Epics:** EPIC-0001 through EPIC-0010 (10 total — see `docs/RELEASE_PLAN.md`)
-- **User Stories:** US-0001 through US-0089 (89 total)
-- **Acceptance Criteria:** AC-0001 through AC-0306 (306 total across all stories)
+- **User Stories:** US-0001 through US-0095 (95 total)
+- **Acceptance Criteria:** AC-0001 through AC-0329 (329 total across all stories)
 - **Tasks:** TASK-0001 through TASK-0312 (312 total across all 10 epics)
 - **Lessons:** L-0001 (seeded during install)

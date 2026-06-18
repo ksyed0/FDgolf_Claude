@@ -991,6 +991,89 @@ Acceptance Criteria:
   - [ ] AC-0227: LIVE pill disabled; data still visible
 ```
 
+```
+US-0090 (EPIC-0007): As a tournament organiser, I want a full-screen TV leaderboard display at /t/{slug}/tv, so that I can show live standings on a projector without browser chrome.
+Priority: High
+Estimate: M
+Status: Planned
+Branch: feature/epic-0007-tv-leaderboard
+Dependencies: US-0056
+Acceptance Criteria:
+  - [ ] AC-0307: Route /t/[slug]/tv is public — no auth check, accessible without login
+  - [ ] AC-0308: viewport export sets width=1920, initialScale=1
+  - [ ] AC-0309: Header shows tournament name, venue name, format, and a green LIVE dot
+  - [ ] AC-0310: Full-screen overlay (fixed inset-0 z-[100]) — no AppChrome nav visible
+  - [ ] AC-0311: Server component fetches tournament + initial leaderboard; passes as props to TvDisplay
+  - [ ] AC-0312: TvDisplay polls team_standings + all stat functions every 30s via setInterval
+```
+
+```
+US-0091 (EPIC-0007): As a spectator watching the projector, I want a persistent leaderboard on the left of the TV display, so that I can always see the current standings.
+Priority: High
+Estimate: S
+Status: Planned
+Branch: feature/epic-0007-tv-leaderboard
+Dependencies: US-0090
+Acceptance Criteria:
+  - [ ] AC-0313: Renders team rows from team_standings: rank, teamName, total_vs_par (formatted), thru
+  - [ ] AC-0314: Under par = text-red-400, even par = text-white, over par = text-slate-400
+  - [ ] AC-0315: Footer shows "Showing N of M teams"
+  - [ ] AC-0316: 3 panel indicator dots at bottom; active dot = bg-white, inactive = bg-slate-600
+```
+
+```
+US-0092 (EPIC-0007): As a spectator, I want to see birdie leaders and recent momentum on the rotating stats panel, so that I can follow which teams are on a hot streak.
+Priority: Medium
+Estimate: S
+Status: Planned
+Branch: feature/epic-0007-tv-leaderboard
+Dependencies: US-0090
+Acceptance Criteria:
+  - [ ] AC-0317: Birdie leaders table: teamName + count, sorted descending
+  - [ ] AC-0318: Empty state: "No birdies yet — keep swinging!" centred when no birdies
+  - [ ] AC-0319: Momentum: per-team last-3-holes mini bars (green/grey/red by vsPar)
+```
+
+```
+US-0093 (EPIC-0007): As a spectator, I want a hole difficulty map with best achievement callout, so that I can see which holes are playing hard and if anyone made an eagle.
+Priority: Medium
+Estimate: S
+Status: Planned
+Branch: feature/epic-0007-tv-leaderboard
+Dependencies: US-0090
+Acceptance Criteria:
+  - [ ] AC-0320: 18 hole circles (2 rows x 9): bg-green-500 (<-0.5 avg vs par), bg-yellow-400 (±0.5), bg-red-500 (>0.5), bg-slate-700 (no data)
+  - [ ] AC-0321: Best achievement callout: hole number + team name + label (Eagle/Birdie); omit if no vsPar <= -1
+  - [ ] AC-0322: Circles are 48x48px (w-12 h-12) with hole number label below
+```
+
+```
+US-0094 (EPIC-0007): As a spectator, I want a shot stats panel showing longest drive, club of the day, and cleanest teams, so that individual shot achievements are recognised.
+Priority: Medium
+Estimate: S
+Status: Planned
+Branch: feature/epic-0007-tv-leaderboard
+Dependencies: US-0090
+Acceptance Criteria:
+  - [ ] AC-0323: Longest drive: haversineMeters(shot1.origin, shot2.origin) max across tournament; "GPS data pending" if null
+  - [ ] AC-0324: Club of the day: most-used club among contributing-player shots; "-" if none
+  - [ ] AC-0325: Cleanest teams: top 3 by out_of_bounds shot count; "All teams playing clean!" if all zero
+```
+
+```
+US-0095 (EPIC-0007): As a spectator, I want the stats panel to rotate automatically, so that I see all stats without any interaction.
+Priority: Medium
+Estimate: S
+Status: Planned
+Branch: feature/epic-0007-tv-leaderboard
+Dependencies: US-0091, US-0092, US-0093, US-0094
+Acceptance Criteria:
+  - [ ] AC-0326: Panels cycle A→B→C→A every 15 seconds
+  - [ ] AC-0327: 400ms opacity fade transition (transition-opacity duration-[400ms])
+  - [ ] AC-0328: Panel indicator dots update with active panel
+  - [ ] AC-0329: Panel timer resets from A on page load
+```
+
 ---
 
 ## Epic 8 — Admin Operations

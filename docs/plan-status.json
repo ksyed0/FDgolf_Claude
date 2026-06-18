@@ -2162,6 +2162,208 @@
       ]
     },
     {
+      "id": "US-0090",
+      "epicId": "EPIC-0007",
+      "title": "As a tournament organiser, I want a full-screen TV leaderboard display at /t/{slug}/tv, so that I can show live standings on a projector without browser chrome.",
+      "priority": "High",
+      "estimate": "M",
+      "status": "Planned",
+      "branch": "feature/epic-0007-tv-leaderboard",
+      "acs": [
+        {
+          "id": "AC-0307",
+          "text": "Route /t/[slug]/tv is public — no auth check, accessible without login",
+          "done": false
+        },
+        {
+          "id": "AC-0308",
+          "text": "viewport export sets width=1920, initialScale=1",
+          "done": false
+        },
+        {
+          "id": "AC-0309",
+          "text": "Header shows tournament name, venue name, format, and a green LIVE dot",
+          "done": false
+        },
+        {
+          "id": "AC-0310",
+          "text": "Full-screen overlay (fixed inset-0 z-[100]) — no AppChrome nav visible",
+          "done": false
+        },
+        {
+          "id": "AC-0311",
+          "text": "Server component fetches tournament + initial leaderboard; passes as props to TvDisplay",
+          "done": false
+        },
+        {
+          "id": "AC-0312",
+          "text": "TvDisplay polls team_standings + all stat functions every 30s via setInterval",
+          "done": false
+        }
+      ],
+      "dependencies": [
+        "US-0056"
+      ]
+    },
+    {
+      "id": "US-0091",
+      "epicId": "EPIC-0007",
+      "title": "As a spectator watching the projector, I want a persistent leaderboard on the left of the TV display, so that I can always see the current standings.",
+      "priority": "High",
+      "estimate": "S",
+      "status": "Planned",
+      "branch": "feature/epic-0007-tv-leaderboard",
+      "acs": [
+        {
+          "id": "AC-0313",
+          "text": "Renders team rows from team_standings: rank, teamName, total_vs_par (formatted), thru",
+          "done": false
+        },
+        {
+          "id": "AC-0314",
+          "text": "Under par = text-red-400, even par = text-white, over par = text-slate-400",
+          "done": false
+        },
+        {
+          "id": "AC-0315",
+          "text": "Footer shows \"Showing N of M teams\"",
+          "done": false
+        },
+        {
+          "id": "AC-0316",
+          "text": "3 panel indicator dots at bottom; active dot = bg-white, inactive = bg-slate-600",
+          "done": false
+        }
+      ],
+      "dependencies": [
+        "US-0090"
+      ]
+    },
+    {
+      "id": "US-0092",
+      "epicId": "EPIC-0007",
+      "title": "As a spectator, I want to see birdie leaders and recent momentum on the rotating stats panel, so that I can follow which teams are on a hot streak.",
+      "priority": "Medium",
+      "estimate": "S",
+      "status": "Planned",
+      "branch": "feature/epic-0007-tv-leaderboard",
+      "acs": [
+        {
+          "id": "AC-0317",
+          "text": "Birdie leaders table: teamName + count, sorted descending",
+          "done": false
+        },
+        {
+          "id": "AC-0318",
+          "text": "Empty state: \"No birdies yet — keep swinging!\" centred when no birdies",
+          "done": false
+        },
+        {
+          "id": "AC-0319",
+          "text": "Momentum: per-team last-3-holes mini bars (green/grey/red by vsPar)",
+          "done": false
+        }
+      ],
+      "dependencies": [
+        "US-0090"
+      ]
+    },
+    {
+      "id": "US-0093",
+      "epicId": "EPIC-0007",
+      "title": "As a spectator, I want a hole difficulty map with best achievement callout, so that I can see which holes are playing hard and if anyone made an eagle.",
+      "priority": "Medium",
+      "estimate": "S",
+      "status": "Planned",
+      "branch": "feature/epic-0007-tv-leaderboard",
+      "acs": [
+        {
+          "id": "AC-0320",
+          "text": "18 hole circles (2 rows x 9): bg-green-500 (<-0.5 avg vs par), bg-yellow-400 (±0.5), bg-red-500 (>0.5), bg-slate-700 (no data)",
+          "done": false
+        },
+        {
+          "id": "AC-0321",
+          "text": "Best achievement callout: hole number + team name + label (Eagle/Birdie); omit if no vsPar <= -1",
+          "done": false
+        },
+        {
+          "id": "AC-0322",
+          "text": "Circles are 48x48px (w-12 h-12) with hole number label below",
+          "done": false
+        }
+      ],
+      "dependencies": [
+        "US-0090"
+      ]
+    },
+    {
+      "id": "US-0094",
+      "epicId": "EPIC-0007",
+      "title": "As a spectator, I want a shot stats panel showing longest drive, club of the day, and cleanest teams, so that individual shot achievements are recognised.",
+      "priority": "Medium",
+      "estimate": "S",
+      "status": "Planned",
+      "branch": "feature/epic-0007-tv-leaderboard",
+      "acs": [
+        {
+          "id": "AC-0323",
+          "text": "Longest drive: haversineMeters(shot1.origin, shot2.origin) max across tournament; \"GPS data pending\" if null",
+          "done": false
+        },
+        {
+          "id": "AC-0324",
+          "text": "Club of the day: most-used club among contributing-player shots; \"-\" if none",
+          "done": false
+        },
+        {
+          "id": "AC-0325",
+          "text": "Cleanest teams: top 3 by out_of_bounds shot count; \"All teams playing clean!\" if all zero",
+          "done": false
+        }
+      ],
+      "dependencies": [
+        "US-0090"
+      ]
+    },
+    {
+      "id": "US-0095",
+      "epicId": "EPIC-0007",
+      "title": "As a spectator, I want the stats panel to rotate automatically, so that I see all stats without any interaction.",
+      "priority": "Medium",
+      "estimate": "S",
+      "status": "Planned",
+      "branch": "feature/epic-0007-tv-leaderboard",
+      "acs": [
+        {
+          "id": "AC-0326",
+          "text": "Panels cycle A→B→C→A every 15 seconds",
+          "done": false
+        },
+        {
+          "id": "AC-0327",
+          "text": "400ms opacity fade transition (transition-opacity duration-[400ms])",
+          "done": false
+        },
+        {
+          "id": "AC-0328",
+          "text": "Panel indicator dots update with active panel",
+          "done": false
+        },
+        {
+          "id": "AC-0329",
+          "text": "Panel timer resets from A on page load",
+          "done": false
+        }
+      ],
+      "dependencies": [
+        "US-0091",
+        "US-0092",
+        "US-0093",
+        "US-0094"
+      ]
+    },
+    {
       "id": "US-0065",
       "epicId": "EPIC-0008",
       "title": "As an admin, I want a persistent left sidebar layout, so that I can navigate quickly between sections.",
@@ -6025,535 +6227,571 @@
   "costs": {
     "US-0001": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0002": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0003": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0004": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0005": {
       "projectedUsd": 800,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0006": {
       "projectedUsd": 800,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0007": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0008": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0009": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0010": {
       "projectedUsd": 400,
-      "costUsd": 44.139252,
+      "costUsd": 44.016469,
       "inputTokens": 2743332,
       "outputTokens": 547938
     },
     "US-0011": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0012": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0013": {
       "projectedUsd": 800,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0014": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0015": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0016": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0017": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0018": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0019": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0020": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0021": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0022": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0023": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0024": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0025": {
       "projectedUsd": 0.9,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0026": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0027": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0028": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0029": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0030": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0031": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0032": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0033": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0034": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0035": {
       "projectedUsd": 0.9,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0036": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0037": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0038": {
       "projectedUsd": 0.9,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0039": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0040": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0041": {
       "projectedUsd": 0.9,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0042": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0043": {
       "projectedUsd": 0.9,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0044": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0045": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0046": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0047": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0048": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0049": {
       "projectedUsd": 800,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0050": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0051": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0052": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0053": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0054": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0055": {
       "projectedUsd": 400,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0056": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0057": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0058": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0059": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0060": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0061": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0062": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0063": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0064": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
+      "inputTokens": 0,
+      "outputTokens": 0
+    },
+    "US-0090": {
+      "projectedUsd": 0.9,
+      "costUsd": 1.821269,
+      "inputTokens": 0,
+      "outputTokens": 0
+    },
+    "US-0091": {
+      "projectedUsd": 2.1158099999999997,
+      "costUsd": 1.821269,
+      "inputTokens": 0,
+      "outputTokens": 0
+    },
+    "US-0092": {
+      "projectedUsd": 2.1158099999999997,
+      "costUsd": 1.821269,
+      "inputTokens": 0,
+      "outputTokens": 0
+    },
+    "US-0093": {
+      "projectedUsd": 2.1158099999999997,
+      "costUsd": 1.821269,
+      "inputTokens": 0,
+      "outputTokens": 0
+    },
+    "US-0094": {
+      "projectedUsd": 2.1158099999999997,
+      "costUsd": 1.821269,
+      "inputTokens": 0,
+      "outputTokens": 0
+    },
+    "US-0095": {
+      "projectedUsd": 2.1158099999999997,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0065": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0066": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0067": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0068": {
       "projectedUsd": 0.9,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0069": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0070": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0071": {
       "projectedUsd": 0.9,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0072": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0073": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0074": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0075": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0076": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0077": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0078": {
       "projectedUsd": 0.9,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0079": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0080": {
       "projectedUsd": 0.9,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0081": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0082": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0083": {
       "projectedUsd": 0.9,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0084": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0085": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0086": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0087": {
       "projectedUsd": 0.9,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0088": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
     "US-0089": {
       "projectedUsd": 2.1158099999999997,
-      "costUsd": 1.944052,
+      "costUsd": 1.821269,
       "inputTokens": 0,
       "outputTokens": 0
     },
@@ -7171,6 +7409,48 @@
       "openCriticalBug": false,
       "isAtRisk": true
     },
+    "US-0090": {
+      "missingTCs": true,
+      "noBranch": false,
+      "failedTCNoBug": false,
+      "openCriticalBug": false,
+      "isAtRisk": true
+    },
+    "US-0091": {
+      "missingTCs": true,
+      "noBranch": false,
+      "failedTCNoBug": false,
+      "openCriticalBug": false,
+      "isAtRisk": true
+    },
+    "US-0092": {
+      "missingTCs": true,
+      "noBranch": false,
+      "failedTCNoBug": false,
+      "openCriticalBug": false,
+      "isAtRisk": true
+    },
+    "US-0093": {
+      "missingTCs": true,
+      "noBranch": false,
+      "failedTCNoBug": false,
+      "openCriticalBug": false,
+      "isAtRisk": true
+    },
+    "US-0094": {
+      "missingTCs": true,
+      "noBranch": false,
+      "failedTCNoBug": false,
+      "openCriticalBug": false,
+      "isAtRisk": true
+    },
+    "US-0095": {
+      "missingTCs": true,
+      "noBranch": false,
+      "failedTCNoBug": false,
+      "openCriticalBug": false,
+      "isAtRisk": true
+    },
     "US-0065": {
       "missingTCs": true,
       "noBranch": false,
@@ -7397,10 +7677,10 @@
       "bugIds": []
     }
   ],
-  "generatedAt": "2026-06-18T16:27:25.555Z",
-  "commitSha": "6ec1b2b",
-  "buildNumber": "91",
-  "branch": "chore/session-11-close",
+  "generatedAt": "2026-06-18T18:20:44.845Z",
+  "commitSha": "6f9916f",
+  "buildNumber": "92",
+  "branch": "chore/session-14-close",
   "sessionTimeline": [
     {
       "date": "2026-06-09",
@@ -7523,10 +7803,10 @@
     }
   },
   "budget": {
-    "totalBudget": 322.4430599999999,
+    "totalBudget": 333.92210999999986,
     "totalSpent": 215.21579999999997,
-    "totalProjected": 14507.227259999965,
-    "percentUsed": 67,
+    "totalProjected": 14518.706309999961,
+    "percentUsed": 64,
     "burnRate": 20.092039999999997,
     "daysRemaining": 5,
     "projectedExhaustion": 5,
@@ -7543,93 +7823,93 @@
       {
         "id": "EPIC-0001",
         "title": "Foundation & Infrastructure",
-        "budget": 15.552415999999997,
-        "spent": 15.552415999999997,
+        "budget": 14.570152000000004,
+        "spent": 14.570152000000004,
         "remaining": 0,
         "percentUsed": 100
       },
       {
         "id": "EPIC-0002",
         "title": "Tournament Setup (Admin)",
-        "budget": 65.52382399999999,
-        "spent": 65.52382399999999,
+        "budget": 64.05042800000001,
+        "spent": 64.05042800000001,
         "remaining": 0,
         "percentUsed": 100
       },
       {
         "id": "EPIC-0004",
         "title": "Pre-Round Setup",
-        "budget": 9.72026,
-        "spent": 9.72026,
+        "budget": 9.106345000000001,
+        "spent": 9.106345000000001,
         "remaining": 0,
         "percentUsed": 100
       },
       {
         "id": "EPIC-0006",
         "title": "Scoring Engine",
-        "budget": 13.608363999999998,
-        "spent": 13.608363999999998,
+        "budget": 12.748883000000003,
+        "spent": 12.748883000000003,
         "remaining": 0,
         "percentUsed": 100
       },
       {
         "id": "EPIC-0009",
         "title": "Offline & Sync",
-        "budget": 21.927552,
-        "spent": 11.664311999999999,
+        "budget": 21.190854,
+        "spent": 10.927614000000002,
         "remaining": 10.26324,
-        "percentUsed": 53
+        "percentUsed": 52
       },
       {
         "id": "EPIC-0005",
         "title": "Round Tracking",
-        "budget": 51.97482799999999,
-        "spent": 27.216727999999993,
-        "remaining": 24.758099999999995,
-        "percentUsed": 52
+        "budget": 50.25586600000001,
+        "spent": 25.49776600000001,
+        "remaining": 24.758100000000002,
+        "percentUsed": 51
       },
       {
         "id": "EPIC-0010",
         "title": "Security & 2FA",
-        "budget": 25.987413999999998,
-        "spent": 13.608363999999998,
+        "budget": 25.127933000000002,
+        "spent": 12.748883000000003,
         "remaining": 12.37905,
-        "percentUsed": 52
-      },
-      {
-        "id": "EPIC-0003",
-        "title": "Registration & Profile",
-        "budget": 35.322948,
-        "spent": 17.496467999999997,
-        "remaining": 17.82648,
-        "percentUsed": 50
+        "percentUsed": 51
       },
       {
         "id": "EPIC-0008",
         "title": "Admin Operations",
-        "budget": 46.28672399999999,
-        "spent": 23.328623999999994,
+        "budget": 44.813328000000006,
+        "spent": 21.855228000000007,
         "remaining": 22.958099999999998,
-        "percentUsed": 50
+        "percentUsed": 49
+      },
+      {
+        "id": "EPIC-0003",
+        "title": "Registration & Profile",
+        "budget": 34.217901,
+        "spent": 16.391421000000005,
+        "remaining": 17.826479999999993,
+        "percentUsed": 48
       },
       {
         "id": "EPIC-0007",
         "title": "Leaderboard",
-        "budget": 36.538757999999994,
-        "spent": 17.496467999999997,
-        "remaining": 19.042289999999998,
-        "percentUsed": 48
+        "budget": 57.84037500000001,
+        "spent": 27.31903500000001,
+        "remaining": 30.52134,
+        "percentUsed": 47
       }
     ],
     "hasBudget": true
   },
   "completion": {
-    "likelyDate": "Jul 7",
-    "rangeStart": "Jul 3",
-    "rangeEnd": "Jul 11",
+    "likelyDate": "Jul 10",
+    "rangeStart": "Jul 5",
+    "rangeEnd": "Jul 14",
     "velocityWeeks": 1,
-    "storiesPerWeek": 22.9,
-    "pointsPerWeek": 28.6
+    "storiesPerWeek": 22.7,
+    "pointsPerWeek": 28.4
   },
   "trends": {
     "dates": [
@@ -7641,7 +7921,8 @@
       "2026-06-13T23:59:49.618Z",
       "2026-06-17T20:34:35.853Z",
       "2026-06-17T23:27:43.741Z",
-      "2026-06-18T16:27:25.647Z"
+      "2026-06-18T16:27:25.647Z",
+      "2026-06-18T18:20:44.969Z"
     ],
     "doneCounts": [
       0,
@@ -7652,6 +7933,7 @@
       27,
       32,
       43,
+      32,
       32
     ],
     "totalStories": [
@@ -7663,7 +7945,8 @@
       89,
       89,
       89,
-      89
+      89,
+      95
     ],
     "aiCosts": [
       18.7247,
@@ -7674,6 +7957,7 @@
       207.93789999999998,
       229.71049999999997,
       236.29129999999998,
+      236.29129999999998,
       236.29129999999998
     ],
     "coverage": [
@@ -7682,6 +7966,7 @@
       null,
       null,
       null,
+      90.46,
       90.46,
       90.46,
       90.46,
@@ -7696,6 +7981,7 @@
       35,
       40,
       53,
+      40,
       40
     ],
     "openBugs": [
@@ -7707,9 +7993,11 @@
       18,
       19,
       21,
+      19,
       19
     ],
     "atRisk": [
+      0,
       0,
       0,
       0,
@@ -7729,6 +8017,7 @@
       12408958,
       13226268,
       13422669,
+      12704308,
       12704308
     ],
     "outputTokens": [
@@ -7740,6 +8029,7 @@
       3446819,
       3735325,
       3779856,
+      3575986,
       3575986
     ],
     "avgRisk": [
@@ -7751,7 +8041,8 @@
       1.1000000000000005,
       1.100000000000001,
       1.184782608695653,
-      1.100000000000001
+      1.100000000000001,
+      1.1000000000000003
     ],
     "velocityByWeek": {
       "labels": [
