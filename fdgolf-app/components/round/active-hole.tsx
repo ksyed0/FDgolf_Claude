@@ -51,8 +51,15 @@ export function ActiveHole(props: Props) {
   const holeShots = localHoles[props.holeNumber] ?? {}
   const playerShots = holeShots[currentPlayerId] ?? []
   const lastShot = playerShots[playerShots.length - 1] ?? null
-  const lastGps: LatLng | null =
-    lastShot?.originLat != null ? { lat: lastShot.originLat, lng: lastShot.originLng! } : null
+  const lastGps: { lat: number; lng: number; accuracyM: number | null } | null =
+    lastShot?.originLat != null
+      ? { lat: lastShot.originLat, lng: lastShot.originLng!, accuracyM: lastShot.accuracyM }
+      : null
+
+  // Map LocalShot[] → ShotMarker[] for HoleMap (only shots with recorded origin coords)
+  const shotMarkers = playerShots
+    .filter((s) => s.originLat != null && s.originLng != null)
+    .map((s) => ({ lat: s.originLat!, lng: s.originLng!, shotNumber: s.shotNumber }))
 
   // Derive turn member state from store for TurnPicker
   const turnMembers = props.teamMembers.map((m) => {
@@ -143,7 +150,7 @@ export function ActiveHole(props: Props) {
           baseImageUrl={baseUrl}
           frame={frame}
           hole={{ pin: props.pin, tee: props.tee }}
-          shots={playerShots}
+          shots={shotMarkers}
           gps={lastGps}
           tapMode={tapMode}
           onMapTap={handleMapTap}
