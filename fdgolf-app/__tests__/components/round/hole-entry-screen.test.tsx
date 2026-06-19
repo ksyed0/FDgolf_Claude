@@ -103,4 +103,10 @@ describe('HoleEntryScreen', () => {
     render(<HoleEntryScreen roundId="r1" hole={holeNoPins} clubs={CLUBS} shotNumber={1} />)
     expect(screen.queryByTestId('map')).not.toBeInTheDocument()
   })
+
+  it('renders hole yardage with "(hole length)" label, not "yds to pin"', () => {
+    render(<HoleEntryScreen roundId="r1" hole={HOLE} clubs={CLUBS} shotNumber={1} />)
+    expect(screen.getByText(/yds \(hole length\)/i)).toBeInTheDocument()
+    expect(screen.queryByText(/yds to pin/i)).not.toBeInTheDocument()
+  })
 })
