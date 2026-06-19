@@ -25,6 +25,16 @@ afterEach(() => {
 })
 
 describe('OfflineBanner', () => {
+  it('renders nothing on initial render (SSR-safe default)', () => {
+    // With online=true default (useState(true)) and empty queue, nothing renders.
+    // This verifies navigator is never accessed during the useState initializer,
+    // which would throw ReferenceError in a Node/SSR environment.
+    setOnline(true)
+    mockQueueLength = 0
+    const { container } = render(<OfflineBanner />)
+    expect(container.firstChild).toBeNull()
+  })
+
   it('renders nothing when navigator.onLine is true and queue is empty', () => {
     setOnline(true)
     mockQueueLength = 0

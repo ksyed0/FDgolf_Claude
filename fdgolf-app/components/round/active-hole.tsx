@@ -101,11 +101,9 @@ export function ActiveHole(props: Props) {
 
   // Gap 1 + Gap 2: Hydrate from IDB on mount; wire reconnect flush
   useEffect(() => {
-    getShotsForRound(props.roundId).then((shots) => {
-      getQueue().then((queue) => {
-        useRoundStore.getState().hydrate(shots, queue)
-      })
-    })
+    Promise.all([getShotsForRound(props.roundId), getQueue()])
+      .then(([shots, queue]) => useRoundStore.getState().hydrate(shots, queue))
+      .catch(() => {}) // IDB unavailable — continue with empty store (graceful degradation)
 
     function handleOnline() {
       useRoundStore.getState().flushQueue((s) =>
