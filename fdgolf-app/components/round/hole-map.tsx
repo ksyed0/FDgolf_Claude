@@ -14,13 +14,23 @@ type Props = {
   gps: { lat: number; lng: number; accuracyM: number | null } | null
   tapMode: boolean
   onMapTap: (coord: LatLng) => void
+  onShotTap?: (shotNumber: number) => void
 }
 
 function inFrame(x: number, y: number, frame: Frame): boolean {
   return x >= 0 && x <= frame.size.w && y >= 0 && y <= frame.size.h
 }
 
-export function HoleMap({ baseImageUrl, frame, hole, shots, gps, tapMode, onMapTap }: Props) {
+export function HoleMap({
+  baseImageUrl,
+  frame,
+  hole,
+  shots,
+  gps,
+  tapMode,
+  onMapTap,
+  onShotTap,
+}: Props) {
   const pin = project(hole.pin.lat, hole.pin.lng, frame)
   const tee = project(hole.tee.lat, hole.tee.lng, frame)
   const shotPts = shots.map((s) => ({ ...s, ...project(s.lat, s.lng, frame) }))
@@ -66,8 +76,16 @@ export function HoleMap({ baseImageUrl, frame, hole, shots, gps, tapMode, onMapT
         <span
           key={p.shotNumber}
           data-testid={`marker-shot-${p.shotNumber}`}
-          className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-1 text-[10px] font-bold text-slate-900"
+          className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-1 text-[10px] font-bold text-slate-900${onShotTap ? ' cursor-pointer' : ''}`}
           style={{ left: p.x, top: p.y }}
+          onClick={
+            onShotTap
+              ? (e) => {
+                  e.stopPropagation()
+                  onShotTap(p.shotNumber)
+                }
+              : undefined
+          }
         >
           {p.shotNumber}
         </span>

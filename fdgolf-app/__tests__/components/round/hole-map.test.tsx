@@ -48,4 +48,17 @@ describe('HoleMap', () => {
     fireEvent.click(screen.getByTestId('map-surface'), { clientX: 100, clientY: 100 })
     expect(onMapTap).toHaveBeenCalled()
   })
+
+  it('calls onShotTap when a shot marker is clicked', () => {
+    const onShotTap = vi.fn()
+    render(
+      <HoleMap
+        {...BASE}
+        shots={[{ lat: 45.0, lng: -75.0009, shotNumber: 1 }]}
+        onShotTap={onShotTap}
+      />
+    )
+    fireEvent.click(screen.getByTestId('marker-shot-1'))
+    expect(onShotTap).toHaveBeenCalledWith(1)
+  })
 })

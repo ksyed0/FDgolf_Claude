@@ -6,6 +6,7 @@ import { HoleMap } from './hole-map'
 import { ShotCapture } from './shot-capture'
 import { TurnPicker } from './turn-picker'
 import { HoleProgressPill } from './hole-progress-pill'
+import { EditShotPanel } from './edit-shot-panel'
 import { computeFrame, staticMapUrl } from '@/lib/round/frame'
 import { fetchAndCacheStaticMap } from '@/lib/round/static-map'
 import { useRoundStore } from '@/lib/round/store'
@@ -49,6 +50,9 @@ export function ActiveHole(props: Props) {
     lng: number
     accuracyM: number | null
   } | null>(null)
+  const [editingShot, setEditingShot] = useState<{ shotNumber: number; serverId: string } | null>(
+    null
+  )
 
   const frame = computeFrame([props.pin, props.tee], { w: 390, h: 520 })
 
@@ -172,8 +176,26 @@ export function ActiveHole(props: Props) {
           gps={gpsPos}
           tapMode={tapMode}
           onMapTap={handleMapTap}
+          onShotTap={(shotNum) => {
+            const shot = playerShots.find((s) => s.shotNumber === shotNum)
+            if (shot?.serverId) setEditingShot({ shotNumber: shotNum, serverId: shot.serverId })
+          }}
         />
       )}
+      {editingShot &&
+        (() => {
+          const shot = playerShots.find((s) => s.shotNumber === editingShot.shotNumber)
+          return shot ? (
+            <EditShotPanel
+              shotId={editingShot.serverId}
+              initialClubId={shot.clubId}
+              initialOutcome={shot.outcome}
+              clubs={props.clubs}
+              onSave={() => setEditingShot(null)}
+              onCancel={() => setEditingShot(null)}
+            />
+          ) : null
+        })()}
       {showTurnPicker ? (
         <TurnPicker
           members={turnMembers}
