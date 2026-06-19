@@ -7,8 +7,10 @@ import { ShotCapture } from './shot-capture'
 import { TurnPicker } from './turn-picker'
 import { HoleProgressPill } from './hole-progress-pill'
 import { EditShotPanel } from './edit-shot-panel'
+import { OfflineBanner } from './offline-banner'
 import { computeFrame, staticMapUrl } from '@/lib/round/frame'
 import { fetchAndCacheStaticMap } from '@/lib/round/static-map'
+import { getShotsForRound, getQueue } from '@/lib/round/idb'
 import { useRoundStore } from '@/lib/round/store'
 import { createShotAction } from '@/lib/actions/shots'
 import { nextPhysicalHole } from '@/lib/round/shotgun'
@@ -97,6 +99,34 @@ export function ActiveHole(props: Props) {
     // frame is deterministic from props; holeId keys the cache
   }, [props.holeId, props.mapboxToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Gap 1 + Gap 2: Hydrate from IDB on mount; wire reconnect flush
+  useEffect(() => {
+    Promise.all([getShotsForRound(props.roundId), getQueue()])
+      .then(([shots, queue]) => useRoundStore.getState().hydrate(shots, queue))
+      .catch(() => {}) // IDB unavailable — continue with empty store (graceful degradation)
+
+    function handleOnline() {
+      useRoundStore.getState().flushQueue((s) =>
+        createShotAction({
+          roundId: s.roundId,
+          holeNumber: s.holeNumber,
+          shotNumber: s.shotNumber,
+          playerId: s.playerId,
+          clubId: s.clubId,
+          originLat: s.originLat,
+          originLng: s.originLng,
+          outcome: s.outcome,
+          strokeCount: s.strokeCount,
+          accuracyM: s.accuracyM,
+          rehitFromShotId: s.rehitFromShotLocalId ?? null,
+          rehitOrigin: s.rehitOrigin,
+        })
+      )
+    }
+    window.addEventListener('online', handleOnline)
+    return () => window.removeEventListener('online', handleOnline)
+  }, [])
+
   useEffect(() => {
     if (!navigator.geolocation) return
     const watchId = navigator.geolocation.watchPosition(
@@ -173,6 +203,7 @@ export function ActiveHole(props: Props) {
           Next: Hole {nextPhysicalHole(props.holeNumber)}
         </span>
       </div>
+      <OfflineBanner />
       {baseUrl && (
         <HoleMap
           baseImageUrl={baseUrl}

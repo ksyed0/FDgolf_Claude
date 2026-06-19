@@ -42,6 +42,9 @@ export default defineConfig({
         'app/round/[roundId]/hole/[n]/summary/page.tsx', // Server Component, integration/smoke-tested
         'app/round/[roundId]/complete/page.tsx', // Server Component, integration/smoke-tested
         'app/t/[slug]/leaderboard/page.tsx', // Server Component, integration-tested
+        'app/admin/layout.tsx', // Server Component layout
+        'app/admin/dashboard/page.tsx', // Server Component, integration-tested
+        'app/admin/scores/[roundId]/page.tsx', // Server Component, integration-tested
         '**/*.config.*',
         '**/node_modules/**',
         '**/.next/**',
