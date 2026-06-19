@@ -48,7 +48,7 @@ BUG-0002: Invariant comment contradicts actual saveClubsAction behavior
 Severity: Medium
 Related Story: US-0015
 Related Task: TASK-0068
-Status: Open
+Status: Verified
 GH Issue: #6
 Fix Branch: bugfix/BUG-0002-invariant-comment
 Lesson Encoded: No

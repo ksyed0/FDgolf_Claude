@@ -3,7 +3,17 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
-## Session 13 — 2026-06-17
+## Session 16 — 2026-06-19
+
+### What Was Done
+
+- EPIC-0005 remaining stories (US-0035/0039/0041/0048): live GPS `watchPosition` in `ActiveHole`, shot trail on `HoleMap`, mulligan pre-fill skips GPS re-acquire, `EditShotPanel` for tap-to-edit shots, `updateShot` Zustand action with IDB persistence — 782 tests passing; PR #59 opened to develop
+- Review cycle (3 passes): Task 1 review fixed GPS cleanup optional chaining; Task 2 review fixed store sync + tapMode guard; final whole-branch review fixed IDB persistence for `updateShot` + unsynced marker dimming
+- EPIC-0005 fully closed: all 14 stories (US-0035–US-0048) Done in RELEASE_PLAN.md
+
+---
+
+## Session 15 — 2026-06-19
 
 ### What Was Done
 

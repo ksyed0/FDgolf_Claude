@@ -15,7 +15,7 @@
 EPIC-0001: Foundation & Infrastructure
 Description: Next.js scaffold, Supabase project, schema migrations, RLS policies, Mapbox integration, master club seed. Dependency for every other epic.
 Release Target: MVP
-Status: Planned
+Status: Done
 Dependencies: None
 ```
 
@@ -23,7 +23,7 @@ Dependencies: None
 EPIC-0002: Tournament Setup (Admin)
 Description: Four-step wizard to create tournament, configure course holes, drop pin coordinates on satellite map, and activate. Makes every other admin and player feature workable.
 Release Target: MVP
-Status: Planned
+Status: Done
 Dependencies: EPIC-0001
 ```
 
@@ -31,7 +31,7 @@ Dependencies: EPIC-0001
 EPIC-0003: Registration & Profile
 Description: Invite-driven player self-registration (4-step), team search, captain/concierge mode for bulk team registration, profile page. Enables players to enter the system.
 Release Target: MVP
-Status: Planned
+Status: Done
 Dependencies: EPIC-0001
 ```
 
@@ -39,7 +39,7 @@ Dependencies: EPIC-0001
 EPIC-0004: Pre-Round Setup
 Description: Post-login tournament home with countdown to tee, team confirmation, bag review, and Start Round CTA. Bridges registration to active play.
 Release Target: MVP
-Status: Planned
+Status: Done
 Dependencies: EPIC-0002, EPIC-0003
 ```
 
@@ -55,7 +55,7 @@ Dependencies: EPIC-0001, EPIC-0004
 EPIC-0006: Scoring Engine
 Description: PostgreSQL RPC functions for Best Ball calculation, provisional vs final hole status, team standings view. Variable team_size support. Phase 1 ships Best Ball only.
 Release Target: MVP
-Status: Planned
+Status: Done
 Dependencies: EPIC-0001, EPIC-0005
 ```
 
@@ -71,7 +71,7 @@ Dependencies: EPIC-0006
 EPIC-0008: Admin Operations
 Description: Admin panel for live ops dashboard, player management, score editing with audit trail, team assignment, master club list management. Tournament organizer role scopes admin actions per tournament.
 Release Target: MVP
-Status: In Progress
+Status: Done
 Dependencies: EPIC-0001, EPIC-0002
 ```
 
@@ -392,124 +392,124 @@ Acceptance Criteria:
 US-0021 (EPIC-0003): As a player, I want a tournament-branded invite landing page, so that I know what I'm signing up for before I start the form.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0021-invite-landing
+Status: Done
+Branch: develop (PR #26)
 Dependencies: US-0009
 Acceptance Criteria:
-  - [ ] AC-0086: Route `/register/{slug}` resolves the tournament from the slug
-  - [ ] AC-0087: Tournament name, venue, date, format displayed
-  - [ ] AC-0088: Sponsor logos visible (if configured)
-  - [ ] AC-0089: "Register" CTA and "I have an account" link
+  - [x] AC-0086: Route `/register/{slug}` resolves the tournament from the slug
+  - [x] AC-0087: Tournament name, venue, date, format displayed
+  - [x] AC-0088: Sponsor logos visible (if configured)
+  - [x] AC-0089: "Register" CTA and "I have an account" link
 ```
 
 ```
 US-0022 (EPIC-0003): As a player, I want to enter my personal info, so that the system knows who I am and how to contact me.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0022-personal-info
+Status: Done
+Branch: develop (PR #26)
 Dependencies: US-0021
 Acceptance Criteria:
-  - [ ] AC-0090: Required fields: full name, title, company, email, mobile phone
-  - [ ] AC-0091: Optional fields explicitly labelled: year of birth (opt), gender (opt with prefer-not-to-say)
-  - [ ] AC-0092: Email format and phone format validated client-side and server-side
-  - [ ] AC-0093: Form values persist across step navigation
+  - [x] AC-0090: Required fields: full name, title, company, email, mobile phone
+  - [x] AC-0091: Optional fields explicitly labelled: year of birth (opt), gender (opt with prefer-not-to-say)
+  - [x] AC-0092: Email format and phone format validated client-side and server-side
+  - [x] AC-0093: Form values persist across step navigation
 ```
 
 ```
 US-0023 (EPIC-0003): As a player, I want to set a password with confirmation, so that I can log in next time.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0023-password-set
+Status: Done
+Branch: develop (PR #26)
 Dependencies: US-0022
 Acceptance Criteria:
-  - [ ] AC-0094: Two password fields with match validation
-  - [ ] AC-0095: Minimum 8 characters required in Phase 1 (Phase 2 strengthens)
-  - [ ] AC-0096: On submit, account created via Supabase Auth and player row inserted
-  - [ ] AC-0097: Player is auto-logged-in after account creation
+  - [x] AC-0094: Two password fields with match validation
+  - [x] AC-0095: Minimum 8 characters required in Phase 1 (Phase 2 strengthens)
+  - [x] AC-0096: On submit, account created via Supabase Auth and player row inserted
+  - [x] AC-0097: Player is auto-logged-in after account creation
 ```
 
 ```
 US-0024 (EPIC-0003): As a player, I want to choose my team and search for foursome members, so that I'm grouped with my colleagues for play.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0024-team-search
+Status: Done
+Branch: develop (PR #26)
 Dependencies: US-0023
 Acceptance Criteria:
-  - [ ] AC-0098: Team number selector lists 1 to tournament max teams
-  - [ ] AC-0099: Member search returns existing registered players by name or email
-  - [ ] AC-0100: "Add member" can add placeholder rows for non-registered players (email-only)
-  - [ ] AC-0101: tournament_registrations row created with team_id linked
+  - [x] AC-0098: Team number selector lists 1 to tournament max teams
+  - [x] AC-0099: Member search returns existing registered players by name or email
+  - [x] AC-0100: "Add member" can add placeholder rows for non-registered players (email-only)
+  - [x] AC-0101: tournament_registrations row created with team_id linked
 ```
 
 ```
 US-0025 (EPIC-0003): As a team captain, I want to register and assign all my team members in one flow, so that non-tech executives don't have to use the app themselves.
 Priority: High
 Estimate: M
-Status: Planned
-Branch: feature/US-0025-captain-concierge
+Status: Done
+Branch: develop (PR #26)
 Dependencies: US-0024
 Acceptance Criteria:
-  - [ ] AC-0102: During registration, player can check "I'm the team captain"
-  - [ ] AC-0103: Captain dashboard at /team/{teamId}/captain accessible post-login
-  - [ ] AC-0104: Captain can add new team members by name + email
-  - [ ] AC-0105: Each added member gets a signed invite link sent (stub email; logged to console in Phase 1)
-  - [ ] AC-0106: Invite link goes to a one-step "Set password" page with profile pre-filled by captain
+  - [x] AC-0102: During registration, player can check "I'm the team captain"
+  - [x] AC-0103: Captain dashboard at /team/{teamId}/captain accessible post-login
+  - [x] AC-0104: Captain can add new team members by name + email
+  - [x] AC-0105: Each added member gets a signed invite link sent (stub email; logged to console in Phase 1)
+  - [x] AC-0106: Invite link goes to a one-step "Set password" page with profile pre-filled by captain
 ```
 
 ```
 US-0026 (EPIC-0003): As a developer, I want a signed invite link generator and verifier, so that captain-issued invites are tamper-proof.
 Priority: Medium
 Estimate: S
-Status: Planned
-Branch: feature/US-0026-invite-tokens
+Status: Done
+Branch: develop (PR #26)
 Dependencies: US-0025
 Acceptance Criteria:
-  - [ ] AC-0107: Generator produces a JWT signed with Supabase service role key containing player_id and team_id
-  - [ ] AC-0108: Verifier rejects expired (>14 days) and invalid signatures
-  - [ ] AC-0109: Email send is stubbed in Phase 1 (logged); real send wired in Phase 2
+  - [x] AC-0107: Generator produces a JWT signed with Supabase service role key containing player_id and team_id
+  - [x] AC-0108: Verifier rejects expired (>14 days) and invalid signatures
+  - [x] AC-0109: Email send is stubbed in Phase 1 (logged); real send wired in Phase 2
 ```
 
 ```
 US-0027 (EPIC-0003): As a player, I want a profile page where I can view and edit my info, so that I can correct mistakes and see my tournament history.
 Priority: Medium
 Estimate: S
-Status: Planned
-Branch: feature/US-0027-profile-page
+Status: Done
+Branch: develop (PR #26)
 Dependencies: US-0023
 Acceptance Criteria:
-  - [ ] AC-0110: Route `/profile` shows current player's profile
-  - [ ] AC-0111: Editable: name, title, company, phone, year of birth, gender
-  - [ ] AC-0112: Read-only: email, handicap (Phase 2 edits handicap)
-  - [ ] AC-0113: Tournament history list (Phase 1 shows current tournament only)
+  - [x] AC-0110: Route `/profile` shows current player's profile
+  - [x] AC-0111: Editable: name, title, company, phone, year of birth, gender
+  - [x] AC-0112: Read-only: email, handicap (Phase 2 edits handicap)
+  - [x] AC-0113: Tournament history list (Phase 1 shows current tournament only)
 ```
 
 ```
 US-0028 (EPIC-0003): As a player, I want to request a password reset link, so that I can recover my account if I forget my password.
 Priority: Medium
 Estimate: S
-Status: Planned
-Branch: feature/US-0028-password-reset
+Status: Done
+Branch: develop (PR #26)
 Dependencies: US-0023
 Acceptance Criteria:
-  - [ ] AC-0114: `/forgot-password` accepts email, calls Supabase Auth reset
-  - [ ] AC-0115: Confirmation shown ("Check your inbox") regardless of whether the email exists
-  - [ ] AC-0116: Reset link from email opens `/reset-password?token=...` page where new password can be set
+  - [x] AC-0114: `/forgot-password` accepts email, calls Supabase Auth reset
+  - [x] AC-0115: Confirmation shown ("Check your inbox") regardless of whether the email exists
+  - [x] AC-0116: Reset link from email opens `/reset-password?token=...` page where new password can be set
 ```
 
 ```
 US-0029 (EPIC-0003): As an admin, I want teams to support 2-, 3-, 4-, or 5-player sizes, so that drop-outs and oversized teams are handled cleanly.
 Priority: High
 Estimate: S
-Status: Planned
-Branch: feature/US-0029-variable-team-size
+Status: Done
+Branch: develop (PR #26)
 Dependencies: US-0005
 Acceptance Criteria:
-  - [ ] AC-0117: Team form has team_size selector 2-5 (default 4)
-  - [ ] AC-0118: Team detail UI says "Foursome" when team_size=4, "team of N" otherwise
-  - [ ] AC-0119: Best Ball calculation in EPIC-0006 uses actual team_size (not hardcoded 4)
+  - [x] AC-0117: Team form has team_size selector 2-5 (default 4)
+  - [x] AC-0118: Team detail UI says "Foursome" when team_size=4, "team of N" otherwise
+  - [x] AC-0119: Best Ball calculation in EPIC-0006 uses actual team_size (not hardcoded 4)
 ```
 
 ---
