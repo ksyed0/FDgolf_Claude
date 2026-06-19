@@ -58,6 +58,14 @@ describe('OfflineBanner', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/syncing 3 shots/i)
   })
 
+  it('uses singular "shot" when exactly 1 item is queued', () => {
+    setOnline(true)
+    mockQueueLength = 1
+    render(<OfflineBanner />)
+    expect(screen.getByRole('status')).toHaveTextContent(/syncing 1 shot…/i)
+    expect(screen.getByRole('status')).not.toHaveTextContent(/shots/i)
+  })
+
   it('dismisses when online event fires and queue drains', () => {
     setOnline(false)
     mockQueueLength = 0
