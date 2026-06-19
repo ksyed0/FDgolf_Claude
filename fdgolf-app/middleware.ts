@@ -18,11 +18,14 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Protect / and all /admin/* routes.
+  // /t/[slug]/leaderboard and /t/[slug]/tv are public (AC-0204, AC-0307).
   const isProtected =
     pathname === '/' ||
     pathname.startsWith('/admin') ||
     pathname.startsWith('/profile') ||
-    pathname.startsWith('/t/') ||
+    (pathname.startsWith('/t/') &&
+      !pathname.endsWith('/leaderboard') &&
+      !pathname.endsWith('/tv')) ||
     pathname.startsWith('/round/')
 
   if (isProtected && !user) {

@@ -9,6 +9,7 @@ import { haversineMeters } from '@/lib/round/distance'
 import type { Mock } from 'vitest'
 import {
   fetchBirdieStats,
+  fetchMomentumStats,
   fetchHoleDifficulty,
   fetchBestAchievement,
   fetchShotStats,
@@ -97,6 +98,75 @@ describe('fetchBirdieStats', () => {
     // Sorted descending by birdieCount
     expect(result[0]).toEqual({ teamName: 'Eagles', birdieCount: 2 })
     expect(result[1]).toEqual({ teamName: 'Hawks', birdieCount: 1 })
+  })
+})
+
+// ─── fetchMomentumStats ──────────────────────────────────────────────────────
+
+describe('fetchMomentumStats', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('AC-0318: returns last 3 holes sorted descending by holeNumber', async () => {
+    const mockClient = {
+      from: vi.fn((table: string) => {
+        if (table === 'team_hole_scores') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({
+              data: [
+                { team_id: 't1', team_name: 'Eagles', hole_number: 1, best_ball_score: 3, par: 4 },
+                { team_id: 't1', team_name: 'Eagles', hole_number: 5, best_ball_score: 5, par: 5 },
+                { team_id: 't1', team_name: 'Eagles', hole_number: 3, best_ball_score: 4, par: 4 },
+                { team_id: 't1', team_name: 'Eagles', hole_number: 7, best_ball_score: 3, par: 3 },
+                { team_id: 't1', team_name: 'Eagles', hole_number: 9, best_ball_score: 4, par: 5 },
+              ],
+              error: null,
+            }),
+          }
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }
+      }),
+    }
+
+    const result = await fetchMomentumStats(mockClient as never, 'tournament-1')
+    expect(result).toHaveLength(1)
+    const team = result[0]
+    expect(team.teamId).toBe('t1')
+    expect(team.teamName).toBe('Eagles')
+    // last 3 should be holes 9, 7, 5 (descending)
+    expect(team.last3).toHaveLength(3)
+    expect(team.last3[0].holeNumber).toBe(9)
+    expect(team.last3[1].holeNumber).toBe(7)
+    expect(team.last3[2].holeNumber).toBe(5)
+    // vsPar values
+    expect(team.last3[0].vsPar).toBe(-1) // 4 - 5 = -1
+    expect(team.last3[1].vsPar).toBe(0) // 3 - 3 = 0
+    expect(team.last3[2].vsPar).toBe(0) // 5 - 5 = 0
+  })
+
+  it('AC-0319: returns empty last3 array when no hole score data exists', async () => {
+    const mockClient = {
+      from: vi.fn((table: string) => {
+        if (table === 'team_hole_scores') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }
+      }),
+    }
+
+    const result = await fetchMomentumStats(mockClient as never, 'tournament-1')
+    expect(result).toHaveLength(0)
   })
 })
 

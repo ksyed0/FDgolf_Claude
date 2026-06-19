@@ -37,14 +37,6 @@ async function fetchHoleScoreRows(
     par: number
   }>
 > {
-  const { data: tournamentData } = await supabase
-    .from('tournaments')
-    .select('course_id')
-    .eq('id', tournamentId)
-    .single()
-
-  if (!tournamentData) return []
-
   const { data } = await supabase
     .from('team_hole_scores')
     .select('team_id, team_name, hole_number, best_ball_score, par')

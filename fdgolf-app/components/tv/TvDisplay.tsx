@@ -18,6 +18,7 @@ import type {
 } from '@/lib/tv-stats'
 import { TvLeaderboard } from '@/components/tv/TvLeaderboard'
 import { TvStatsRotator } from '@/components/tv/TvStatsRotator'
+import { fetchLeaderboard } from '@/lib/leaderboard'
 import type { LeaderboardRow } from '@/lib/leaderboard'
 
 export type TvTournamentMeta = {
@@ -57,14 +58,14 @@ export function TvDisplay({ tournamentId, tournamentMeta, initialLeaderboard }: 
     const supabase = createClient()
     const fetchAll = async () => {
       const [lb, bird, mom, diff, best, shots] = await Promise.all([
-        supabase.from('team_standings').select('*').eq('tournament_id', tournamentId).order('rank'),
+        fetchLeaderboard(supabase, tournamentId),
         fetchBirdieStats(supabase, tournamentId),
         fetchMomentumStats(supabase, tournamentId),
         fetchHoleDifficulty(supabase, tournamentId),
         fetchBestAchievement(supabase, tournamentId),
         fetchShotStats(supabase, tournamentId),
       ])
-      if (lb.data) setLeaderboard(lb.data)
+      setLeaderboard(lb)
       setBirdies(bird)
       setMomentum(mom)
       setHoleDifficulty(diff)

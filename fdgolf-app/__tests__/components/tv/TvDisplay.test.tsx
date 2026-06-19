@@ -8,6 +8,12 @@ vi.mock('@/lib/supabase/client', () => ({
   createClient: () => mockCreateClient(),
 }))
 
+// Mock leaderboard
+const mockFetchLeaderboard = vi.fn()
+vi.mock('@/lib/leaderboard', () => ({
+  fetchLeaderboard: (...args: unknown[]) => mockFetchLeaderboard(...args),
+}))
+
 // Mock tv-stats
 const mockFetchBirdieStats = vi.fn()
 const mockFetchMomentumStats = vi.fn()
@@ -72,6 +78,7 @@ beforeEach(() => {
   }
   mockCreateClient.mockReturnValue(mockSupabase)
 
+  mockFetchLeaderboard.mockResolvedValue(ROWS)
   mockFetchBirdieStats.mockResolvedValue([])
   mockFetchMomentumStats.mockResolvedValue([])
   mockFetchHoleDifficulty.mockResolvedValue([])

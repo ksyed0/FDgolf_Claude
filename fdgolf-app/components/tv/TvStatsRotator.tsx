@@ -28,13 +28,24 @@ export function TvStatsRotator({
   stats,
   activePanel,
 }: Props) {
+  const panels = [
+    <TvBirdiesPanel key={0} birdies={birdies} momentum={momentum} />,
+    <TvHoleMapPanel key={1} holes={holes} bestAchievement={bestAchievement} />,
+    <TvShotStatsPanel key={2} stats={stats} />,
+  ]
+
   return (
-    <div data-testid="tv-stats-rotator" className="h-full relative overflow-hidden">
-      <div className="transition-opacity duration-[400ms] opacity-100 h-full">
-        {activePanel === 0 && <TvBirdiesPanel birdies={birdies} momentum={momentum} />}
-        {activePanel === 1 && <TvHoleMapPanel holes={holes} bestAchievement={bestAchievement} />}
-        {activePanel === 2 && <TvShotStatsPanel stats={stats} />}
-      </div>
+    <div className="relative h-full" data-testid="tv-stats-rotator">
+      {panels.map((panel, i) => (
+        <div
+          key={i}
+          className={`absolute inset-0 transition-opacity duration-[400ms] ${
+            activePanel === i ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          {panel}
+        </div>
+      ))}
     </div>
   )
 }
