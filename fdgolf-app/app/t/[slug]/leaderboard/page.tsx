@@ -1,70 +1,108 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-import { SponsorBar } from '@/components/sponsor-bar'
-import { LeaderboardClient } from '@/components/leaderboard/leaderboard-client'
-import {
-  getTournamentBySlug,
-  getStandings,
-  getRosters,
-  getCurrentTeamForUser,
-} from '@/lib/leaderboard/queries'
+import { fetchLeaderboard } from '@/lib/leaderboard'
+import { LeaderboardTable } from '@/components/leaderboard/LeaderboardTable'
+import type { TournamentMeta } from '@/components/leaderboard/LeaderboardTable'
 
-// V2: never serve a stale cached board for first paint.
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+
+async function getTournament(
+  supabase: SupabaseClient,
+  slug: string
+): Promise<TournamentMeta | null> {
+  const { data } = await supabase
+    .from('tournaments')
+    .select('id, name, slug, starts_at, format, status, sponsor_logos, course_id, venues(name)')
+    .eq('slug', slug)
+    .single()
+  return data as unknown as TournamentMeta | null
+}
 
 export async function generateMetadata({
   params,
 }: {
   params: { slug: string }
 }): Promise<Metadata> {
-  const t = await getTournamentBySlug(params.slug)
-  if (!t) return { title: 'Leaderboard' }
-  const title = `${t.name} — Live Leaderboard`
-  const description = `Follow the ${t.name} leaderboard at ${t.venue}.`
+  const supabase = await createClient()
+  const tournament = await getTournament(supabase, params.slug)
+  if (!tournament) return { title: 'Leaderboard' }
+  const name = tournament.name
   return {
-    title,
-    description,
-    openGraph: { title, description },
+    title: `${name} Leaderboard`,
+    openGraph: {
+      title: `${name} Leaderboard`,
+      description: `Live standings for ${name}`,
+    },
   }
 }
 
-export default async function PublicLeaderboardPage({ params }: { params: { slug: string } }) {
-  const tournament = await getTournamentBySlug(params.slug)
-  if (!tournament) notFound()
-
-  const [standings, rosters] = await Promise.all([
-    getStandings(tournament.id),
-    getRosters(tournament.id),
-  ])
-
-  // Logged-in viewer → resolve their team for the hero card (optional, no auth required).
-  const supabase = await createClient()
+async function getMyTeamInfo(
+  supabase: SupabaseClient,
+  tournamentId: string
+): Promise<{ teamId: string; memberNames: string[] } | null> {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  const currentTeam = user
-    ? await getCurrentTeamForUser(tournament.id, user.id, standings, rosters)
-    : null
+  if (!user) return null
 
-  const isPaused = tournament.status === 'paused'
+  // Find the player record for the current user
+  const { data: player } = await supabase
+    .from('players')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+  if (!player) return null
+
+  // Find the team this player belongs to in this tournament
+  const { data: membership } = await supabase
+    .from('team_members')
+    .select('team_id, teams!inner(id, name, tournament_id)')
+    .eq('player_id', player.id)
+    .eq('teams.tournament_id', tournamentId)
+    .single()
+  if (!membership) return null
+
+  const teamId = membership.team_id
+
+  // Fetch all member names for this team
+  const { data: members } = await supabase
+    .from('team_members')
+    .select('players(full_name)')
+    .eq('team_id', teamId)
+
+  const memberNames = (members ?? [])
+    .map((m) => {
+      const p = m.players as unknown as { full_name: string } | null
+      return p?.full_name ?? ''
+    })
+    .filter(Boolean)
+
+  return { teamId, memberNames }
+}
+
+export default async function LeaderboardPage({ params }: { params: { slug: string } }) {
+  const supabase = await createClient()
+  const tournament = await getTournament(supabase, params.slug)
+  if (!tournament) notFound()
+
+  const [rows, myTeamInfo] = await Promise.all([
+    fetchLeaderboard(supabase, tournament.id),
+    getMyTeamInfo(supabase, tournament.id),
+  ])
+
+  const isPaused = tournament.status === 'paused' || tournament.status === 'suspended'
 
   return (
-    <main className="min-h-screen bg-[#0b1f14]">
-      <header className="bg-[#0e2818] px-4 pt-6 pb-2 text-white">
-        <h1 className="text-2xl font-bold">{tournament.name}</h1>
-        <p className="text-sm text-slate-300">
-          {tournament.venue} · {new Date(tournament.startsAt).toLocaleDateString()}
-        </p>
-      </header>
-      <SponsorBar slug={tournament.slug} />
-      <LeaderboardClient
-        slug={tournament.slug}
+    <main className="min-h-screen">
+      <LeaderboardTable
+        tournament={tournament}
+        initialRows={rows}
         tournamentId={tournament.id}
-        initialStandings={standings}
-        rosters={rosters}
-        currentTeam={currentTeam}
+        myTeamId={myTeamInfo?.teamId}
+        myMemberNames={myTeamInfo?.memberNames}
         isPaused={isPaused}
       />
     </main>
