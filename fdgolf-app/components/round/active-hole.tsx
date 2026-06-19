@@ -64,7 +64,12 @@ export function ActiveHole(props: Props) {
   // Map LocalShot[] → ShotMarker[] for HoleMap (only shots with recorded origin coords)
   const shotMarkers = playerShots
     .filter((s) => s.originLat != null && s.originLng != null)
-    .map((s) => ({ lat: s.originLat!, lng: s.originLng!, shotNumber: s.shotNumber }))
+    .map((s) => ({
+      lat: s.originLat!,
+      lng: s.originLng!,
+      shotNumber: s.shotNumber,
+      synced: !!s.serverId,
+    }))
 
   // Derive turn member state from store for TurnPicker
   const turnMembers = props.teamMembers.map((m) => {

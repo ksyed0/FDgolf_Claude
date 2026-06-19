@@ -67,15 +67,22 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
   updateShot: (localId, patch) => {
     set((s) => {
       const localHoles = { ...s.localHoles }
+      let patched: LocalShot | null = null
       for (const holeNum of Object.keys(localHoles)) {
-        const hole = { ...localHoles[Number(holeNum)] }
+        const hNum = Number(holeNum)
+        const hole = { ...localHoles[hNum] }
         for (const playerId of Object.keys(hole)) {
-          hole[playerId] = hole[playerId].map((sh) =>
-            sh.localId === localId ? { ...sh, ...patch } : sh
-          )
+          hole[playerId] = hole[playerId].map((sh) => {
+            if (sh.localId === localId) {
+              patched = { ...sh, ...patch }
+              return patched
+            }
+            return sh
+          })
         }
-        localHoles[Number(holeNum)] = hole
+        localHoles[hNum] = hole
       }
+      if (patched) putShot(patched) // fire-and-forget; durable IDB write like commitShot
       return { localHoles }
     })
   },

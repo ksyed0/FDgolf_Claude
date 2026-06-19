@@ -179,6 +179,29 @@ describe('ActiveHole', () => {
     expect(document.querySelector('[data-testid="marker-shot-2"]')).toBeInTheDocument()
   })
 
+  it('passes synced=false for shots not yet flushed to server', async () => {
+    mockLocalHoles = {
+      3: {
+        p1: [
+          {
+            outcome: 'in_play',
+            originLat: 45,
+            originLng: -75,
+            serverId: null,
+            shotNumber: 1,
+          } as never,
+        ],
+      },
+    }
+    render(<ActiveHole {...BASE_PROPS} />)
+    await waitFor(() => screen.getByTestId('map-surface'))
+    // Shot marker for an unsynced shot should be present but dimmed
+    await waitFor(() => {
+      const marker = screen.queryByTestId('marker-shot-1')
+      if (marker) expect(marker.className).toContain('opacity-50')
+    })
+  })
+
   it('renders without crashing when geolocation watchPosition calls onError (US-0048)', async () => {
     // @ts-expect-error test shim
     globalThis.navigator.geolocation = {

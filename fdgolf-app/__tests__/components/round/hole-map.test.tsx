@@ -67,4 +67,10 @@ describe('HoleMap', () => {
     const marker = screen.getByTestId('marker-shot-1')
     expect(marker.className).not.toContain('cursor-pointer')
   })
+
+  it('dims shot marker when synced is false', () => {
+    render(<HoleMap {...BASE} shots={[{ lat: 43.7, lng: -79.4, shotNumber: 1, synced: false }]} />)
+    const marker = screen.getByTestId('marker-shot-1')
+    expect(marker.className).toContain('opacity-50')
+  })
 })

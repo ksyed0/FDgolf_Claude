@@ -4,7 +4,7 @@ import { project, unproject, type Frame } from '@/lib/round/projection'
 import { formatYardsToPin, haversineMeters } from '@/lib/round/distance'
 import type { LatLng } from '@/lib/round/types'
 
-type ShotMarker = { lat: number; lng: number; shotNumber: number }
+type ShotMarker = { lat: number; lng: number; shotNumber: number; synced?: boolean }
 
 type Props = {
   baseImageUrl: string
@@ -76,7 +76,9 @@ export function HoleMap({
         <span
           key={p.shotNumber}
           data-testid={`marker-shot-${p.shotNumber}`}
-          className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-1 text-[10px] font-bold text-slate-900${onShotTap ? ' cursor-pointer' : ''}`}
+          className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-1 text-[10px] font-bold text-slate-900${
+            onShotTap && p.synced !== false ? ' cursor-pointer' : ''
+          }${p.synced === false ? ' opacity-50' : ''}`}
           style={{ left: p.x, top: p.y }}
           onClick={
             onShotTap
