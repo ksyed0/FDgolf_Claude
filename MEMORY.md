@@ -6,7 +6,7 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 16 — 2026-06-19
+Session 17 — 2026-06-19
 
 ---
 
@@ -16,10 +16,10 @@ Session 16 — 2026-06-19
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `d3a9796` (Session 16 — EPIC-0005 remaining complete, PR #59 merged)
+- **Develop tip:** `99d3140` (Session 17 — BUG-0019, EPIC-0009, tracking cleanup merged)
 - **Pending PRs:** none
-- **Stories done:** EPIC-0001, EPIC-0002, EPIC-0003, **EPIC-0004**, **EPIC-0005** (all 14 stories Done — PR #59 pending merge), **EPIC-0006**, **EPIC-0007** (US-0056–0064, US-0090–0095 Done — PR #58 pending merge), **EPIC-0008** (US-0065/0066/0067/0071/0072 Done) complete
-- **Stories planned next:** EPIC-0009 (offline sync) and EPIC-0010 (race day ops) next epics.
+- **Stories done:** EPIC-0001 through EPIC-0009 (US-0077/0078/0079 Done). EPIC-0010 (Race Day Ops / Security 2FA) is Phase 2 / v1.1 scope.
+- **Dependabot:** 0 open alerts. #7 (postcss) + #17 (js-yaml) dismissed `tolerable_risk` — build-time only, no upstream patch available.
 
 ---
 
@@ -82,6 +82,14 @@ Next up — **both epics are specced AND planned (Session 12); next action is ex
 - **EPIC-0005 — Round Tracking** (US-0035–0048): spec `docs/superpowers/specs/2026-06-17-epic0005-round-tracking-design.md`, plan `docs/superpowers/plans/2026-06-17-epic0005-round-tracking.md` (29 tasks, 24 spine / 5 deferrable) on `feature/epic0005-round-tracking`. Build order: projection→migration→store→capture. Writes SHOTS ONLY; HoleEntryScreen (US-0034) hands off via `/round/[roundId]/shot/new?lat=&lng=&club=`; `bag_clubs`/`first_player_id` on the rounds row.
 - **EPIC-0007 — Leaderboard** (US-0056–0064): spec `docs/superpowers/specs/2026-06-17-epic0007-leaderboard-design.md`, plan `docs/superpowers/plans/2026-06-17-epic0007-leaderboard.md` (23 tasks, 12 spine / 11 enhancement) on `feature/epic0007-leaderboard`. **Build-step #1 = anon-view access spike** (prove anon reads `team_standings`/`public_team_roster`, denied on base `players`).
 - **Latent follow-up:** audit EPIC-0003 actions for stale `players.name` references (`searchPlayersAction` already fixed to `full_name`).
+
+## Known Patterns / Gotchas (additions from Session 17 — EPIC-0009 offline wiring)
+
+- **IDB hydrate pattern:** `Promise.all([getShotsForRound(roundId), getQueue()]).then(([shots, queue]) => useRoundStore.getState().hydrate(shots, queue)).catch(() => {})` called in `ActiveHole` mount `useEffect([], [])`. The `hydrate` action has an early-return guard (`if Object.keys(localHoles).length > 0 return`) so re-mounts are safe no-ops.
+- **Online reconnect drain:** `window.addEventListener('online', handleOnline)` in the same mount effect; `handleOnline` calls `flushQueue(createShotAction)`. Always cleanup with `removeEventListener` in the effect return.
+- **OfflineBanner SSR pattern:** `useState(() => typeof window !== 'undefined' ? navigator.onLine : true)` — lazy initializer with `typeof window` guard is the canonical Next.js SSR-safe pattern. Avoids `react-hooks/set-state-in-effect` lint error. Mark the lambda with `/* v8 ignore next */` so the untestable server-side branch doesn't break coverage.
+- **vitest.config.ts exclusion list:** `app/admin/layout.tsx`, `app/admin/dashboard/page.tsx`, `app/admin/scores/[roundId]/page.tsx` are EPIC-0008 Server Components — added to coverage exclude list in Session 17. Always add new Server Component pages here when they have 0% coverage.
+- **HoleEntryScreen yardage label:** Shows `~{hole.yardage} yds (hole length)` — static tee-to-green distance from DB, NOT live GPS. The live GPS haversine distance is in the GPS overlay on the map (separate `gpsPos` state in `ActiveHole`).
 
 ## Known Patterns / Gotchas (additions from Session 11)
 

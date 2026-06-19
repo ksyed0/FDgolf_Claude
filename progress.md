@@ -3,6 +3,17 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 17 — 2026-06-19
+
+### What Was Done
+
+- BUG-0019 fixed: `HoleEntryScreen` yardage label changed from "yds to pin" (implied live GPS) to "~N yds (hole length)"; regression test added; merged PR #61
+- EPIC-0009 offline resilience wired (US-0077/0078/0079): `hydrate()` called on `ActiveHole` mount from IDB (shots survive reload); `window.addEventListener('online', ...)` triggers `flushQueue` on reconnect; `OfflineBanner` component (amber when offline, muted syncing count, auto-dismiss); 795 tests, 81.3% branch coverage; merged PR #62
+- RELEASE_PLAN.md + BUGS.md tracking cleanup: EPIC-0001–0008 Status → Done, US-0021–0029 → Done with ACs, BUG-0002 → Verified; merged PR #60
+- Dependabot alerts #7 (postcss CVE-2026-41305) and #17 (js-yaml CVE-2026-53550) dismissed as `tolerable_risk` — both are build-time-only transitive deps with no patched version available upstream; 0 open security alerts
+
+---
+
 ## Session 16 — 2026-06-19
 
 ### What Was Done
