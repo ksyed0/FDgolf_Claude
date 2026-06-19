@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRoundStore } from '@/lib/round/store'
 
 export function OfflineBanner() {
-  const [online, setOnline] = useState(() =>
-    typeof window !== 'undefined' ? navigator.onLine : true
+  const [online, setOnline] = useState(
+    /* v8 ignore next */ () => (typeof window !== 'undefined' ? navigator.onLine : true)
   )
   const queueDepth = useRoundStore((s) => s.queue.length)
 
