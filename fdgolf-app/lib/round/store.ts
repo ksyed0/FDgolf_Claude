@@ -20,6 +20,10 @@ type RoundStore = {
   claim: ClaimState
   commitShot: (shot: LocalShot) => Promise<void>
   flushQueue: (send: SendFn) => Promise<void>
+  updateShot: (
+    localId: string,
+    patch: Pick<LocalShot, 'clubId' | 'outcome' | 'strokeCount'>
+  ) => void
   hydrate: (shots: LocalShot[], queue: QueueItem[]) => void
 }
 
@@ -58,6 +62,22 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
         break
       }
     }
+  },
+
+  updateShot: (localId, patch) => {
+    set((s) => {
+      const localHoles = { ...s.localHoles }
+      for (const holeNum of Object.keys(localHoles)) {
+        const hole = { ...localHoles[Number(holeNum)] }
+        for (const playerId of Object.keys(hole)) {
+          hole[playerId] = hole[playerId].map((sh) =>
+            sh.localId === localId ? { ...sh, ...patch } : sh
+          )
+        }
+        localHoles[Number(holeNum)] = hole
+      }
+      return { localHoles }
+    })
   },
 
   hydrate: (shots, queue) => {

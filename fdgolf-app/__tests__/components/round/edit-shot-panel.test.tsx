@@ -42,7 +42,11 @@ describe('EditShotPanel', () => {
     mockEditShotAction.mockResolvedValue({ ok: true, serverId: 's1' })
     render(<EditShotPanel {...BASE_PROPS} />)
     fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
-    await waitFor(() => expect(BASE_PROPS.onSave).toHaveBeenCalled())
+    await waitFor(() =>
+      expect(BASE_PROPS.onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ clubId: 'c1', outcome: 'in_play', strokeCount: 1 })
+      )
+    )
     expect(mockEditShotAction).toHaveBeenCalledWith({
       shotId: 'shot1',
       clubId: 'c1',
@@ -65,5 +69,30 @@ describe('EditShotPanel', () => {
     render(<EditShotPanel {...BASE_PROPS} />)
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
     expect(BASE_PROPS.onCancel).toHaveBeenCalled()
+  })
+
+  it('changes outcome to mulligan and saves with strokeCount 0', async () => {
+    const onSave = vi.fn()
+    vi.mocked(editShotAction).mockResolvedValue({ ok: true, serverId: 'shot1' })
+    render(
+      <EditShotPanel
+        shotId="shot1"
+        initialClubId="c1"
+        initialOutcome="in_play"
+        clubs={CLUBS}
+        onSave={onSave}
+        onCancel={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /mulligan/i }))
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() =>
+      expect(editShotAction).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: 'mulligan', strokeCount: 0 })
+      )
+    )
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: 'mulligan', strokeCount: 0 })
+    )
   })
 })

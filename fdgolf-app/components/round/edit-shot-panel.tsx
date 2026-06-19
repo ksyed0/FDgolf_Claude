@@ -12,7 +12,7 @@ type Props = {
   initialClubId: string | null
   initialOutcome: ShotOutcome
   clubs: Club[]
-  onSave: () => void
+  onSave: (patch: { clubId: string | null; outcome: ShotOutcome; strokeCount: 0 | 1 | 2 }) => void
   onCancel: () => void
 }
 
@@ -42,7 +42,7 @@ export function EditShotPanel({
     })
     setSaving(false)
     if (res.ok) {
-      onSave()
+      onSave({ clubId, outcome, strokeCount: strokeCountFor(outcome) })
     } else {
       setError('Save failed. Try again.')
     }

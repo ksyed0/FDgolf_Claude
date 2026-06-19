@@ -61,4 +61,10 @@ describe('HoleMap', () => {
     fireEvent.click(screen.getByTestId('marker-shot-1'))
     expect(onShotTap).toHaveBeenCalledWith(1)
   })
+
+  it('shot marker has no cursor-pointer when onShotTap not provided', () => {
+    render(<HoleMap {...BASE} shots={[{ lat: 43.7, lng: -79.4, shotNumber: 1 }]} />)
+    const marker = screen.getByTestId('marker-shot-1')
+    expect(marker.className).not.toContain('cursor-pointer')
+  })
 })

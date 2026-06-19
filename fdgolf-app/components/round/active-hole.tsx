@@ -33,9 +33,10 @@ type Props = {
 
 export function ActiveHole(props: Props) {
   const router = useRouter()
-  const { commitShot, flushQueue } = useRoundStore((s) => ({
+  const { commitShot, flushQueue, updateShot } = useRoundStore((s) => ({
     commitShot: s.commitShot,
     flushQueue: s.flushQueue,
+    updateShot: s.updateShot,
   }))
   const localHoles = useRoundStore((s) => s.localHoles)
 
@@ -176,10 +177,15 @@ export function ActiveHole(props: Props) {
           gps={gpsPos}
           tapMode={tapMode}
           onMapTap={handleMapTap}
-          onShotTap={(shotNum) => {
-            const shot = playerShots.find((s) => s.shotNumber === shotNum)
-            if (shot?.serverId) setEditingShot({ shotNumber: shotNum, serverId: shot.serverId })
-          }}
+          onShotTap={
+            tapMode
+              ? undefined
+              : (shotNum) => {
+                  const shot = playerShots.find((s) => s.shotNumber === shotNum)
+                  if (shot?.serverId)
+                    setEditingShot({ shotNumber: shotNum, serverId: shot.serverId })
+                }
+          }
         />
       )}
       {editingShot &&
@@ -191,7 +197,13 @@ export function ActiveHole(props: Props) {
               initialClubId={shot.clubId}
               initialOutcome={shot.outcome}
               clubs={props.clubs}
-              onSave={() => setEditingShot(null)}
+              onSave={(patch) => {
+                if (editingShot) {
+                  const shot = playerShots.find((s) => s.shotNumber === editingShot.shotNumber)
+                  if (shot) updateShot(shot.localId, patch)
+                }
+                setEditingShot(null)
+              }}
               onCancel={() => setEditingShot(null)}
             />
           ) : null

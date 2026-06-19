@@ -14,6 +14,7 @@ vi.mock('@/lib/actions/shots', () => ({
 
 const mockCommitShot = vi.fn().mockResolvedValue(undefined)
 const mockFlushQueue = vi.fn().mockResolvedValue(undefined)
+const mockUpdateShot = vi.fn()
 let mockLocalHoles: Record<
   number,
   Record<string, { outcome: string; originLat?: number; originLng?: number }[]>
@@ -31,6 +32,7 @@ vi.mock('@/lib/round/store', () => {
       localHoles: mockLocalHoles,
       commitShot: mockCommitShot,
       flushQueue: mockFlushQueue,
+      updateShot: mockUpdateShot,
     })
   useRoundStore.getState = mockGetState
   return { useRoundStore }
@@ -83,6 +85,7 @@ beforeEach(() => {
     localHoles: mockLocalHoles,
     commitShot: mockCommitShot,
     flushQueue: mockFlushQueue,
+    updateShot: mockUpdateShot,
     activeHole: 1,
     activePlayerId: null,
     queue: [],
