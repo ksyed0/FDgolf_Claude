@@ -97,13 +97,11 @@ export function ActiveHole(props: Props) {
           accuracyM: pos.coords.accuracy ?? null,
         })
       },
-      () => {
-        // silently ignore GPS errors — map still works without live position
-      },
+      () => {},
       { enableHighAccuracy: true }
     )
     return () => {
-      navigator.geolocation.clearWatch(watchId)
+      navigator.geolocation?.clearWatch(watchId)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
