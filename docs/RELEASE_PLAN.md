@@ -915,11 +915,11 @@ Acceptance Criteria:
 US-0058 (EPIC-0007): As a player, I want a LIVE indicator on the leaderboard, so that I trust the data is fresh.
 Priority: Medium
 Estimate: S
-Status: Partial
+Status: Done
 Branch: feature/US-0058-live-indicator
 Dependencies: US-0059
 Acceptance Criteria:
-  - [~] AC-0210: Red blinking pill when websocket connected (Deferred to post-ship)
+  - [x] AC-0210: Red blinking pill when websocket connected
   - [x] AC-0211: "AUTO 30s" pill when polling-only
 ```
 
@@ -927,25 +927,25 @@ Acceptance Criteria:
 US-0059 (EPIC-0007): As a player, I want the leaderboard to update in real time, so that I see new scores as they come in.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0059-realtime-channel
 Dependencies: US-0056
 Acceptance Criteria:
-  - [~] AC-0212: Client subscribes to Supabase Realtime channel tournament:{slug} (Deferred to post-ship)
-  - [~] AC-0213: Broadcasts on team_hole_scores changes only (Deferred to post-ship)
-  - [~] AC-0214: Reconnects on disconnect (Deferred to post-ship)
+  - [x] AC-0212: Client subscribes to Supabase Realtime channel tournament:{slug}
+  - [x] AC-0213: Broadcasts on team_hole_scores changes only
+  - [x] AC-0214: Reconnects on disconnect
 ```
 
 ```
 US-0060 (EPIC-0007): As a player, I want leaderboard updates coalesced, so that the UI doesn't thrash during heavy scoring activity.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0060-render-coalescing
 Dependencies: US-0059
 Acceptance Criteria:
-  - [~] AC-0215: Multiple incoming events within 5s coalesce into one render (Deferred to post-ship)
-  - [~] AC-0216: Uses requestAnimationFrame for batching (Deferred to post-ship)
+  - [x] AC-0215: Multiple incoming events within 5s coalesce into one render
+  - [x] AC-0216: Uses requestAnimationFrame for batching
 ```
 
 ```
@@ -957,22 +957,22 @@ Branch: feature/US-0061-polling-fallback
 Dependencies: US-0059
 Acceptance Criteria:
   - [x] AC-0217: If websocket fails or stays disconnected >10s, switch to 30s polling
-  - [~] AC-0218: Resume websocket when it comes back available (Deferred to post-ship)
+  - [x] AC-0218: Resume websocket when it comes back available
 ```
 
 ```
 US-0062 (EPIC-0007): As a player, I want to drill into a team to see their hole-by-hole scores, so that I can see how they're playing.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0062-team-drilldown
 Dependencies: US-0056
 Acceptance Criteria:
-  - [~] AC-0219: Tap team row opens detail view (Deferred to post-ship)
-  - [~] AC-0220: 9-hole strip x 2 (front and back nine) (Deferred to post-ship)
-  - [~] AC-0221: Rows: par, best score per hole (Deferred to post-ship)
-  - [~] AC-0222: Birdies+ highlighted gold (Deferred to post-ship)
-  - [~] AC-0223: Provisional scores italic grey (Deferred to post-ship)
+  - [x] AC-0219: Tap team row opens detail view
+  - [x] AC-0220: 9-hole strip x 2 (front and back nine)
+  - [x] AC-0221: Rows: par, best score per hole
+  - [x] AC-0222: Birdies+ highlighted gold
+  - [x] AC-0223: Provisional scores italic grey
 ```
 
 ```
@@ -997,6 +997,89 @@ Dependencies: US-0056
 Acceptance Criteria:
   - [x] AC-0226: When tournaments.status=paused, banner shows "Tournament paused"
   - [x] AC-0227: LIVE pill disabled; data still visible
+```
+
+```
+US-0090 (EPIC-0007): As a tournament organiser, I want a full-screen TV leaderboard display at /t/{slug}/tv, so that I can show live standings on a projector without browser chrome.
+Priority: High
+Estimate: M
+Status: Done
+Branch: feature/epic-0007-tv-leaderboard
+Dependencies: US-0056
+Acceptance Criteria:
+  - [x] AC-0307: Route /t/[slug]/tv is public — no auth check, accessible without login
+  - [x] AC-0308: viewport export sets width=1920, initialScale=1
+  - [x] AC-0309: Header shows tournament name, venue name, format, and a green LIVE dot
+  - [x] AC-0310: Full-screen overlay (fixed inset-0 z-[100]) — no AppChrome nav visible
+  - [x] AC-0311: Server component fetches tournament + initial leaderboard; passes as props to TvDisplay
+  - [x] AC-0312: TvDisplay polls team_standings + all stat functions every 30s via setInterval
+```
+
+```
+US-0091 (EPIC-0007): As a spectator watching the projector, I want a persistent leaderboard on the left of the TV display, so that I can always see the current standings.
+Priority: High
+Estimate: S
+Status: Done
+Branch: feature/epic-0007-tv-leaderboard
+Dependencies: US-0090
+Acceptance Criteria:
+  - [x] AC-0313: Renders team rows from team_standings: rank, teamName, total_vs_par (formatted), thru
+  - [x] AC-0314: Under par = text-red-400, even par = text-white, over par = text-slate-400
+  - [x] AC-0315: Footer shows "Showing N of M teams"
+  - [x] AC-0316: 3 panel indicator dots at bottom; active dot = bg-white, inactive = bg-slate-600
+```
+
+```
+US-0092 (EPIC-0007): As a spectator, I want to see birdie leaders and recent momentum on the rotating stats panel, so that I can follow which teams are on a hot streak.
+Priority: Medium
+Estimate: S
+Status: Done
+Branch: feature/epic-0007-tv-leaderboard
+Dependencies: US-0090
+Acceptance Criteria:
+  - [x] AC-0317: Birdie leaders table: teamName + count, sorted descending
+  - [x] AC-0318: Empty state: "No birdies yet — keep swinging!" centred when no birdies
+  - [x] AC-0319: Momentum: per-team last-3-holes mini bars (green/grey/red by vsPar)
+```
+
+```
+US-0093 (EPIC-0007): As a spectator, I want a hole difficulty map with best achievement callout, so that I can see which holes are playing hard and if anyone made an eagle.
+Priority: Medium
+Estimate: S
+Status: Done
+Branch: feature/epic-0007-tv-leaderboard
+Dependencies: US-0090
+Acceptance Criteria:
+  - [x] AC-0320: 18 hole circles (2 rows x 9): bg-green-500 (<-0.5 avg vs par), bg-yellow-400 (±0.5), bg-red-500 (>0.5), bg-slate-700 (no data)
+  - [x] AC-0321: Best achievement callout: hole number + team name + label (Eagle/Birdie); omit if no vsPar <= -1
+  - [x] AC-0322: Circles are 48x48px (w-12 h-12) with hole number label below
+```
+
+```
+US-0094 (EPIC-0007): As a spectator, I want a shot stats panel showing longest drive, club of the day, and cleanest teams, so that individual shot achievements are recognised.
+Priority: Medium
+Estimate: S
+Status: Done
+Branch: feature/epic-0007-tv-leaderboard
+Dependencies: US-0090
+Acceptance Criteria:
+  - [x] AC-0323: Longest drive: haversineMeters(shot1.origin, shot2.origin) max across tournament; "GPS data pending" if null
+  - [x] AC-0324: Club of the day: most-used club among contributing-player shots; "-" if none
+  - [x] AC-0325: Cleanest teams: top 3 by out_of_bounds shot count; "All teams playing clean!" if all zero
+```
+
+```
+US-0095 (EPIC-0007): As a spectator, I want the stats panel to rotate automatically, so that I see all stats without any interaction.
+Priority: Medium
+Estimate: S
+Status: Done
+Branch: feature/epic-0007-tv-leaderboard
+Dependencies: US-0091, US-0092, US-0093, US-0094
+Acceptance Criteria:
+  - [x] AC-0326: Panels cycle A→B→C→A every 15 seconds
+  - [x] AC-0327: 400ms opacity fade transition (transition-opacity duration-[400ms])
+  - [x] AC-0328: Panel indicator dots update with active panel
+  - [x] AC-0329: Panel timer resets from A on page load
 ```
 
 ---
