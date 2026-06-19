@@ -1,11 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 
 const mockRouterPush = vi.fn()
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mockRouterPush }) }))
 
 vi.mock('@/lib/round/static-map', () => ({
   fetchAndCacheStaticMap: vi.fn().mockResolvedValue('blob:test-url'),
+}))
+
+const mockGetShotsForRound = vi.fn().mockResolvedValue([])
+const mockGetQueue = vi.fn().mockResolvedValue([])
+vi.mock('@/lib/round/idb', () => ({
+  getShotsForRound: (...args: unknown[]) => mockGetShotsForRound(...args),
+  getQueue: (...args: unknown[]) => mockGetQueue(...args),
+  putShot: vi.fn().mockResolvedValue(undefined),
+  putQueueItem: vi.fn().mockResolvedValue(undefined),
+  deleteQueueItem: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('@/components/round/offline-banner', () => ({
+  OfflineBanner: () => null,
 }))
 
 vi.mock('@/lib/actions/shots', () => ({
@@ -81,6 +95,8 @@ function mockGeoDenied() {
 beforeEach(() => {
   vi.clearAllMocks()
   mockLocalHoles = {}
+  mockGetShotsForRound.mockResolvedValue([])
+  mockGetQueue.mockResolvedValue([])
   mockGetState.mockReturnValue({
     localHoles: mockLocalHoles,
     commitShot: mockCommitShot,
@@ -216,5 +232,53 @@ describe('ActiveHole', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: /start shot/i })).toBeInTheDocument()
     )
+  })
+
+  it('calls hydrate with shots and queue on mount (EPIC-0009 Gap 1)', async () => {
+    const mockHydrate = vi.fn()
+    mockGetShotsForRound.mockResolvedValueOnce([{ localId: 'x', holeNumber: 3, playerId: 'p1' }])
+    mockGetQueue.mockResolvedValueOnce([{ localId: 'x', kind: 'create' }])
+    mockGetState.mockReturnValue({
+      localHoles: {},
+      commitShot: mockCommitShot,
+      flushQueue: mockFlushQueue,
+      updateShot: mockUpdateShot,
+      activeHole: 1,
+      activePlayerId: null,
+      queue: [],
+      claim: null,
+      hydrate: mockHydrate,
+    } as unknown as ReturnType<typeof storeModule.useRoundStore.getState>)
+
+    render(<ActiveHole {...BASE_PROPS} />)
+
+    await waitFor(() => expect(mockHydrate).toHaveBeenCalledTimes(1))
+    expect(mockHydrate).toHaveBeenCalledWith(
+      [{ localId: 'x', holeNumber: 3, playerId: 'p1' }],
+      [{ localId: 'x', kind: 'create' }]
+    )
+  })
+
+  it('calls flushQueue when online event fires (EPIC-0009 Gap 2)', async () => {
+    const mockFlushQueueLocal = vi.fn().mockResolvedValue(undefined)
+    mockGetState.mockReturnValue({
+      localHoles: {},
+      commitShot: mockCommitShot,
+      flushQueue: mockFlushQueueLocal,
+      updateShot: mockUpdateShot,
+      activeHole: 1,
+      activePlayerId: null,
+      queue: [],
+      claim: null,
+      hydrate: vi.fn(),
+    } as unknown as ReturnType<typeof storeModule.useRoundStore.getState>)
+
+    render(<ActiveHole {...BASE_PROPS} />)
+
+    await act(async () => {
+      window.dispatchEvent(new Event('online'))
+    })
+
+    await waitFor(() => expect(mockFlushQueueLocal).toHaveBeenCalledTimes(1))
   })
 })

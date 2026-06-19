@@ -88,6 +88,8 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
   },
 
   hydrate: (shots, queue) => {
+    // No-op if in-memory state is already populated (avoids overwriting live data on re-mount)
+    if (Object.keys(get().localHoles).length > 0) return
     const localHoles: LocalHoles = {}
     for (const sh of shots) {
       const hole = (localHoles[sh.holeNumber] ??= {})
