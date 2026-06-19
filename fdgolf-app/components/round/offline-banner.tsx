@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react'
 import { useRoundStore } from '@/lib/round/store'
 
 export function OfflineBanner() {
-  const [online, setOnline] = useState(true) // safe SSR default — no flash of offline banner
+  const [online, setOnline] = useState(() =>
+    typeof window !== 'undefined' ? navigator.onLine : true
+  )
   const queueDepth = useRoundStore((s) => s.queue.length)
 
   useEffect(() => {
-    setOnline(navigator.onLine)
     function handleOnline() {
       setOnline(true)
     }

@@ -125,7 +125,7 @@ export function ActiveHole(props: Props) {
     }
     window.addEventListener('online', handleOnline)
     return () => window.removeEventListener('online', handleOnline)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (!navigator.geolocation) return
