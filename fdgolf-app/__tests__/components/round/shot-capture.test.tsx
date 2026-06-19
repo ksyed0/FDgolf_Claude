@@ -209,4 +209,38 @@ describe('ShotCapture', () => {
     expect(rehitCall.rehitFromShotLocalId).toBe(oobLocalId)
     expect(rehitCall.rehitOrigin).toBe('oob_location')
   })
+
+  it('uses stored nextOrigin after mulligan instead of calling GPS again (US-0039)', async () => {
+    mockGeoSuccess(45, -75)
+    const onCommit = vi.fn()
+    render(<ShotCapture {...baseProps} onCommit={onCommit} />)
+
+    // Shot 1: start, then mulligan
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /mulligan/i }))
+    fireEvent.click(screen.getByRole('button', { name: /mulligan/i }))
+    await waitFor(() => expect(onCommit).toHaveBeenCalledTimes(1))
+    expect(onCommit.mock.calls[0][0].outcome).toBe('mulligan')
+
+    // After mulligan, state.nextOrigin is set. Replace getCurrentPosition with a spy
+    // that should NOT be called — the component must use nextOrigin instead.
+    const gpsSpy = vi.fn()
+    // @ts-expect-error test shim
+    globalThis.navigator.geolocation = { getCurrentPosition: gpsSpy }
+
+    // Shot 2: clicking Start shot should bypass GPS and go straight to outcome
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /in play/i }))
+
+    // GPS must NOT have been called
+    expect(gpsSpy).not.toHaveBeenCalled()
+
+    // Commit the second shot
+    fireEvent.click(screen.getByRole('button', { name: /in play/i }))
+    await waitFor(() => expect(onCommit).toHaveBeenCalledTimes(2))
+    // Second shot should carry the same origin as the mulligan (45, -75)
+    expect(onCommit.mock.calls[1][0].originLat).toBe(45)
+    expect(onCommit.mock.calls[1][0].originLng).toBe(-75)
+    expect(onCommit.mock.calls[1][0].outcome).toBe('in_play')
+  })
 })

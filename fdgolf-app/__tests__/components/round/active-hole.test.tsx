@@ -61,6 +61,8 @@ function mockGeoSuccess(lat = 45, lng = -75) {
   globalThis.navigator.geolocation = {
     getCurrentPosition: (ok: PositionCallback) =>
       ok({ coords: { latitude: lat, longitude: lng, accuracy: 5 } } as GeolocationPosition),
+    watchPosition: vi.fn().mockReturnValue(42),
+    clearWatch: vi.fn(),
   }
 }
 
@@ -69,6 +71,8 @@ function mockGeoDenied() {
   globalThis.navigator.geolocation = {
     getCurrentPosition: (_ok: PositionCallback, err: PositionErrorCallback) =>
       err({ code: 1, message: 'denied' } as GeolocationPositionError),
+    watchPosition: vi.fn().mockReturnValue(42),
+    clearWatch: vi.fn(),
   }
 }
 
@@ -85,6 +89,13 @@ beforeEach(() => {
     claim: null,
     hydrate: vi.fn(),
   } as unknown as ReturnType<typeof storeModule.useRoundStore.getState>)
+  // Provide a no-op watchPosition/clearWatch so the live GPS effect doesn't crash
+  // @ts-expect-error test shim
+  globalThis.navigator.geolocation = {
+    getCurrentPosition: vi.fn(),
+    watchPosition: vi.fn().mockReturnValue(42),
+    clearWatch: vi.fn(),
+  }
 })
 
 describe('ActiveHole', () => {
@@ -147,5 +158,37 @@ describe('ActiveHole', () => {
     await waitFor(() => screen.getByRole('button', { name: /start shot/i }))
     fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
     await waitFor(() => expect(screen.getAllByText(/tap the map/i).length).toBeGreaterThan(0))
+  })
+
+  it('renders shot markers from round store for current hole/player (US-0035)', async () => {
+    mockLocalHoles = {
+      3: {
+        p1: [
+          { outcome: 'in_play', originLat: 43.69, originLng: -79.39, shotNumber: 1 } as never,
+          { outcome: 'in_play', originLat: 43.695, originLng: -79.395, shotNumber: 2 } as never,
+        ],
+      },
+    }
+    render(<ActiveHole {...BASE_PROPS} />)
+    await waitFor(() =>
+      expect(document.querySelector('[data-testid="marker-shot-1"]')).toBeInTheDocument()
+    )
+    expect(document.querySelector('[data-testid="marker-shot-2"]')).toBeInTheDocument()
+  })
+
+  it('renders without crashing when geolocation watchPosition calls onError (US-0048)', async () => {
+    // @ts-expect-error test shim
+    globalThis.navigator.geolocation = {
+      getCurrentPosition: vi.fn(),
+      watchPosition: (_ok: PositionCallback, err: PositionErrorCallback) => {
+        err({ code: 1, message: 'denied' } as GeolocationPositionError)
+        return 99
+      },
+      clearWatch: vi.fn(),
+    }
+    render(<ActiveHole {...BASE_PROPS} />)
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /start shot/i })).toBeInTheDocument()
+    )
   })
 })

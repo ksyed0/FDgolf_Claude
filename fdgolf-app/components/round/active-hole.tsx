@@ -44,17 +44,17 @@ export function ActiveHole(props: Props) {
   const [showTurnPicker, setShowTurnPicker] = useState(false)
   const [tapMode, setTapMode] = useState(false)
   const [tapGps, setTapGps] = useState<LatLng | null>(null)
+  const [gpsPos, setGpsPos] = useState<{
+    lat: number
+    lng: number
+    accuracyM: number | null
+  } | null>(null)
 
   const frame = computeFrame([props.pin, props.tee], { w: 390, h: 520 })
 
   // Derive shot trail for current player on this hole
   const holeShots = localHoles[props.holeNumber] ?? {}
   const playerShots = holeShots[currentPlayerId] ?? []
-  const lastShot = playerShots[playerShots.length - 1] ?? null
-  const lastGps: { lat: number; lng: number; accuracyM: number | null } | null =
-    lastShot?.originLat != null
-      ? { lat: lastShot.originLat, lng: lastShot.originLng!, accuracyM: lastShot.accuracyM }
-      : null
 
   // Map LocalShot[] → ShotMarker[] for HoleMap (only shots with recorded origin coords)
   const shotMarkers = playerShots
@@ -86,6 +86,26 @@ export function ActiveHole(props: Props) {
     }
     // frame is deterministic from props; holeId keys the cache
   }, [props.holeId, props.mapboxToken]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setGpsPos({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracyM: pos.coords.accuracy ?? null,
+        })
+      },
+      () => {
+        // silently ignore GPS errors — map still works without live position
+      },
+      { enableHighAccuracy: true }
+    )
+    return () => {
+      navigator.geolocation.clearWatch(watchId)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleCommit(
     shot: Omit<LocalShot, 'localId' | 'roundId' | 'serverId'> & { localId: string }
@@ -151,7 +171,7 @@ export function ActiveHole(props: Props) {
           frame={frame}
           hole={{ pin: props.pin, tee: props.tee }}
           shots={shotMarkers}
-          gps={lastGps}
+          gps={gpsPos}
           tapMode={tapMode}
           onMapTap={handleMapTap}
         />
