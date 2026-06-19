@@ -14,7 +14,7 @@ vi.mock('@/lib/actions/teams', () => ({
 }))
 
 import { StepTeam } from '@/app/register/[slug]/step-team'
-import { joinTeamByCode } from '@/lib/actions/teams'
+import { joinTeamByCode, switchTeam, createTeam } from '@/lib/actions/teams'
 
 const PROPS = {
   tournamentId: 't1',
@@ -61,5 +61,66 @@ describe('StepTeam', () => {
     await waitFor(() => {
       expect(onComplete).toHaveBeenCalledWith('Eagles', 'ABC123')
     })
+  })
+
+  it('uses switchTeam when prefillTeamId is set', async () => {
+    const onComplete = vi.fn()
+    render(<StepTeam {...PROPS} prefillTeamId="existing-team-id" onComplete={onComplete} />)
+    fireEvent.click(screen.getByRole('button', { name: /join a team/i }))
+    fireEvent.change(screen.getByPlaceholderText(/join code/i), { target: { value: 'OTH001' } })
+    fireEvent.click(screen.getByRole('button', { name: /join team/i }))
+    await waitFor(() => {
+      expect(switchTeam).toHaveBeenCalledWith('p1', 'OTH001', 'existing-team-id')
+      expect(onComplete).toHaveBeenCalledWith('Other', 'OTH001')
+    })
+  })
+
+  it('shows error when switchTeam fails', async () => {
+    vi.mocked(switchTeam).mockResolvedValueOnce({ data: null, error: 'Switch failed' })
+    render(<StepTeam {...PROPS} prefillTeamId="existing-team-id" />)
+    fireEvent.click(screen.getByRole('button', { name: /join a team/i }))
+    fireEvent.change(screen.getByPlaceholderText(/join code/i), { target: { value: 'XXXXXX' } })
+    fireEvent.click(screen.getByRole('button', { name: /join team/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Switch failed')
+    })
+  })
+
+  it('shows create team form and calls onComplete on success', async () => {
+    const onComplete = vi.fn()
+    render(<StepTeam {...PROPS} onComplete={onComplete} />)
+    fireEvent.click(screen.getByRole('button', { name: /create a new team/i }))
+    expect(screen.getByPlaceholderText(/team name/i)).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText(/team name/i), { target: { value: 'New Team' } })
+    fireEvent.click(screen.getByRole('button', { name: /create team/i }))
+    await waitFor(() => {
+      expect(createTeam).toHaveBeenCalledWith('t1', 'New Team', 'p1')
+      expect(onComplete).toHaveBeenCalledWith('New Team', 'XYZ999')
+    })
+  })
+
+  it('shows error when createTeam fails', async () => {
+    vi.mocked(createTeam).mockResolvedValueOnce({ data: null, error: 'Name taken' })
+    render(<StepTeam {...PROPS} />)
+    fireEvent.click(screen.getByRole('button', { name: /create a new team/i }))
+    fireEvent.change(screen.getByPlaceholderText(/team name/i), { target: { value: 'Taken' } })
+    fireEvent.click(screen.getByRole('button', { name: /create team/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Name taken')
+    })
+  })
+
+  it('back button from join returns to choose mode', () => {
+    render(<StepTeam {...PROPS} />)
+    fireEvent.click(screen.getByRole('button', { name: /join a team/i }))
+    fireEvent.click(screen.getByRole('button', { name: /← back/i }))
+    expect(screen.getByRole('button', { name: /join a team/i })).toBeInTheDocument()
+  })
+
+  it('back button from create returns to choose mode', () => {
+    render(<StepTeam {...PROPS} />)
+    fireEvent.click(screen.getByRole('button', { name: /create a new team/i }))
+    fireEvent.click(screen.getByRole('button', { name: /← back/i }))
+    expect(screen.getByRole('button', { name: /create a new team/i })).toBeInTheDocument()
   })
 })
