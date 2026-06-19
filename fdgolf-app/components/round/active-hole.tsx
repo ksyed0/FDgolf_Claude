@@ -6,6 +6,7 @@ import { HoleMap } from './hole-map'
 import { ShotCapture } from './shot-capture'
 import { TurnPicker } from './turn-picker'
 import { HoleProgressPill } from './hole-progress-pill'
+import { EditShotPanel } from './edit-shot-panel'
 import { computeFrame, staticMapUrl } from '@/lib/round/frame'
 import { fetchAndCacheStaticMap } from '@/lib/round/static-map'
 import { useRoundStore } from '@/lib/round/store'
@@ -32,9 +33,10 @@ type Props = {
 
 export function ActiveHole(props: Props) {
   const router = useRouter()
-  const { commitShot, flushQueue } = useRoundStore((s) => ({
+  const { commitShot, flushQueue, updateShot } = useRoundStore((s) => ({
     commitShot: s.commitShot,
     flushQueue: s.flushQueue,
+    updateShot: s.updateShot,
   }))
   const localHoles = useRoundStore((s) => s.localHoles)
 
@@ -44,22 +46,30 @@ export function ActiveHole(props: Props) {
   const [showTurnPicker, setShowTurnPicker] = useState(false)
   const [tapMode, setTapMode] = useState(false)
   const [tapGps, setTapGps] = useState<LatLng | null>(null)
+  const [gpsPos, setGpsPos] = useState<{
+    lat: number
+    lng: number
+    accuracyM: number | null
+  } | null>(null)
+  const [editingShot, setEditingShot] = useState<{ shotNumber: number; serverId: string } | null>(
+    null
+  )
 
   const frame = computeFrame([props.pin, props.tee], { w: 390, h: 520 })
 
   // Derive shot trail for current player on this hole
   const holeShots = localHoles[props.holeNumber] ?? {}
   const playerShots = holeShots[currentPlayerId] ?? []
-  const lastShot = playerShots[playerShots.length - 1] ?? null
-  const lastGps: { lat: number; lng: number; accuracyM: number | null } | null =
-    lastShot?.originLat != null
-      ? { lat: lastShot.originLat, lng: lastShot.originLng!, accuracyM: lastShot.accuracyM }
-      : null
 
   // Map LocalShot[] → ShotMarker[] for HoleMap (only shots with recorded origin coords)
   const shotMarkers = playerShots
     .filter((s) => s.originLat != null && s.originLng != null)
-    .map((s) => ({ lat: s.originLat!, lng: s.originLng!, shotNumber: s.shotNumber }))
+    .map((s) => ({
+      lat: s.originLat!,
+      lng: s.originLng!,
+      shotNumber: s.shotNumber,
+      synced: !!s.serverId,
+    }))
 
   // Derive turn member state from store for TurnPicker
   const turnMembers = props.teamMembers.map((m) => {
@@ -86,6 +96,24 @@ export function ActiveHole(props: Props) {
     }
     // frame is deterministic from props; holeId keys the cache
   }, [props.holeId, props.mapboxToken]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setGpsPos({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracyM: pos.coords.accuracy ?? null,
+        })
+      },
+      () => {},
+      { enableHighAccuracy: true }
+    )
+    return () => {
+      navigator.geolocation?.clearWatch(watchId)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleCommit(
     shot: Omit<LocalShot, 'localId' | 'roundId' | 'serverId'> & { localId: string }
@@ -151,11 +179,40 @@ export function ActiveHole(props: Props) {
           frame={frame}
           hole={{ pin: props.pin, tee: props.tee }}
           shots={shotMarkers}
-          gps={lastGps}
+          gps={gpsPos}
           tapMode={tapMode}
           onMapTap={handleMapTap}
+          onShotTap={
+            tapMode
+              ? undefined
+              : (shotNum) => {
+                  const shot = playerShots.find((s) => s.shotNumber === shotNum)
+                  if (shot?.serverId)
+                    setEditingShot({ shotNumber: shotNum, serverId: shot.serverId })
+                }
+          }
         />
       )}
+      {editingShot &&
+        (() => {
+          const shot = playerShots.find((s) => s.shotNumber === editingShot.shotNumber)
+          return shot ? (
+            <EditShotPanel
+              shotId={editingShot.serverId}
+              initialClubId={shot.clubId}
+              initialOutcome={shot.outcome}
+              clubs={props.clubs}
+              onSave={(patch) => {
+                if (editingShot) {
+                  const shot = playerShots.find((s) => s.shotNumber === editingShot.shotNumber)
+                  if (shot) updateShot(shot.localId, patch)
+                }
+                setEditingShot(null)
+              }}
+              onCancel={() => setEditingShot(null)}
+            />
+          ) : null
+        })()}
       {showTurnPicker ? (
         <TurnPicker
           members={turnMembers}

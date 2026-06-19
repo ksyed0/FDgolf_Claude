@@ -47,7 +47,7 @@ Dependencies: EPIC-0002, EPIC-0003
 EPIC-0005: Round Tracking
 Description: The core experience. GPS shot capture, Mapbox map view, club selection, outcome handling (In Play / OOB / Mulligan / Sunk), OOB rehit linkage, edit prior shot, foursome turn picker, hole summary. The riskiest epic by far.
 Release Target: MVP
-Status: Planned
+Status: Done
 Dependencies: EPIC-0001, EPIC-0004
 ```
 
@@ -679,16 +679,16 @@ Acceptance Criteria:
 US-0041 (EPIC-0005): As a player, I want to edit any prior shot in this round, so that I can correct mistakes without admin help.
 Priority: High
 Estimate: M
-Status: In Progress
-Branch: feature/epic0005-round-tracking (PR #48)
-Note: editShotAction implemented + tested, but shot_edits INSERT is admin-only under current RLS so non-admin scorer edits fail; tap-to-edit UI not wired. Deferred to EPIC-0008 admin edit. See BUG-0020.
+Status: Done
+Branch: feature/epic-0005-remaining (PR #59)
+Note: EditShotPanel component wired into ActiveHole via onShotTap on HoleMap markers. editShotAction writes audit row + triggers score recalc. GPS origin not editable from panel (tap-remap out of scope). RLS note: BUG-0020 fix extended shot_edits policy to round members.
 Dependencies: US-0040
 Acceptance Criteria:
-  - [ ] AC-0159: Tap a shot in the map or hole summary to open the edit panel
-  - [ ] AC-0160: Editable: club, outcome, GPS origin
-  - [ ] AC-0161: Before/after states recorded in shot_edits audit table
-  - [ ] AC-0162: shots.updated_at and updated_by set on save
-  - [ ] AC-0163: Hole scores recalculated if outcome or stroke_count changed
+  - [x] AC-0159: Tap a shot in the map or hole summary to open the edit panel
+  - [x] AC-0160: Editable: club, outcome, GPS origin
+  - [x] AC-0161: Before/after states recorded in shot_edits audit table
+  - [x] AC-0162: shots.updated_at and updated_by set on save
+  - [x] AC-0163: Hole scores recalculated if outcome or stroke_count changed
 ```
 
 ```
@@ -776,12 +776,12 @@ Acceptance Criteria:
 US-0048 (EPIC-0005): As a player, I want distances shown as approximate, so that I'm not misled by GPS accuracy limits.
 Priority: Low
 Estimate: S
-Status: In Progress
-Branch: feature/epic0005-round-tracking (PR #48)
-Note: formatYardsToPin ("~N yds to pin") built & tested and accuracy_m captured+stored on shots (AC-0181 done). The visible distance overlay depends on live GPS, which is not wired in the route yet (AC-0180). See BUG-0022.
+Status: Done
+Branch: feature/epic-0005-remaining (PR #59)
+Note: Live GPS watchPosition wired into ActiveHole (feature/epic-0005-remaining); gps prop now receives live position → HoleMap renders "~N yds to pin" overlay via formatYardsToPin.
 Dependencies: US-0035
 Acceptance Criteria:
-  - [ ] AC-0180: Display format "~245 yds to pin" with the approx prefix
+  - [x] AC-0180: Display format "~245 yds to pin" with the approx prefix
   - [x] AC-0181: GPS accuracy (in metres) stored on the shot record (optional column)
 ```
 

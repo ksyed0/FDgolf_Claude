@@ -95,6 +95,18 @@ export function ShotCapture({
 
   function startShot() {
     setGpsDenied(false)
+    if (state.nextOrigin) {
+      const draft: ShotDraft = {
+        playerId,
+        holeNumber,
+        clubId,
+        originLat: state.nextOrigin.lat,
+        originLng: state.nextOrigin.lng,
+        accuracyM: null,
+      }
+      dispatch({ type: 'START_SHOT', draft })
+      return
+    }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const draft: ShotDraft = {

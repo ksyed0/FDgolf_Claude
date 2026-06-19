@@ -48,4 +48,29 @@ describe('HoleMap', () => {
     fireEvent.click(screen.getByTestId('map-surface'), { clientX: 100, clientY: 100 })
     expect(onMapTap).toHaveBeenCalled()
   })
+
+  it('calls onShotTap when a shot marker is clicked', () => {
+    const onShotTap = vi.fn()
+    render(
+      <HoleMap
+        {...BASE}
+        shots={[{ lat: 45.0, lng: -75.0009, shotNumber: 1 }]}
+        onShotTap={onShotTap}
+      />
+    )
+    fireEvent.click(screen.getByTestId('marker-shot-1'))
+    expect(onShotTap).toHaveBeenCalledWith(1)
+  })
+
+  it('shot marker has no cursor-pointer when onShotTap not provided', () => {
+    render(<HoleMap {...BASE} shots={[{ lat: 43.7, lng: -79.4, shotNumber: 1 }]} />)
+    const marker = screen.getByTestId('marker-shot-1')
+    expect(marker.className).not.toContain('cursor-pointer')
+  })
+
+  it('dims shot marker when synced is false', () => {
+    render(<HoleMap {...BASE} shots={[{ lat: 43.7, lng: -79.4, shotNumber: 1, synced: false }]} />)
+    const marker = screen.getByTestId('marker-shot-1')
+    expect(marker.className).toContain('opacity-50')
+  })
 })

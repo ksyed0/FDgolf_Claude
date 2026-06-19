@@ -20,6 +20,10 @@ type RoundStore = {
   claim: ClaimState
   commitShot: (shot: LocalShot) => Promise<void>
   flushQueue: (send: SendFn) => Promise<void>
+  updateShot: (
+    localId: string,
+    patch: Pick<LocalShot, 'clubId' | 'outcome' | 'strokeCount'>
+  ) => void
   hydrate: (shots: LocalShot[], queue: QueueItem[]) => void
 }
 
@@ -58,6 +62,29 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
         break
       }
     }
+  },
+
+  updateShot: (localId, patch) => {
+    set((s) => {
+      const localHoles = { ...s.localHoles }
+      let patched: LocalShot | null = null
+      for (const holeNum of Object.keys(localHoles)) {
+        const hNum = Number(holeNum)
+        const hole = { ...localHoles[hNum] }
+        for (const playerId of Object.keys(hole)) {
+          hole[playerId] = hole[playerId].map((sh) => {
+            if (sh.localId === localId) {
+              patched = { ...sh, ...patch }
+              return patched
+            }
+            return sh
+          })
+        }
+        localHoles[hNum] = hole
+      }
+      if (patched) putShot(patched) // fire-and-forget; durable IDB write like commitShot
+      return { localHoles }
+    })
   },
 
   hydrate: (shots, queue) => {
