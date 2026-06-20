@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { fetchLeaderboard } from '@/lib/leaderboard'
 import { LeaderboardTable } from '@/components/leaderboard/LeaderboardTable'
 import type { TournamentMeta } from '@/components/leaderboard/LeaderboardTable'
+import { SponsorBar } from '@/components/sponsor-bar'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -97,6 +98,7 @@ export default async function LeaderboardPage({ params }: { params: { slug: stri
 
   return (
     <main className="min-h-screen">
+      <SponsorBar sponsorLogos={tournament.sponsor_logos} />
       <LeaderboardTable
         tournament={tournament}
         initialRows={rows}

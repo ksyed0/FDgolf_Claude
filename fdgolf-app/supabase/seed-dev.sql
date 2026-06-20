@@ -86,3 +86,11 @@ VALUES
   ('00000000-0000-0000-0000-000000000099', 'p0000001-0000-0000-0000-000000000002', 'registered', now()),
   ('00000000-0000-0000-0000-000000000099', 'p0000001-0000-0000-0000-000000000003', 'invited', NULL)
 ON CONFLICT DO NOTHING;
+
+-- ── Sponsor logos for dev tournament ──────────────────────────────────
+UPDATE tournaments
+SET sponsor_logos = '[
+  {"name":"First Derivative","slug":"firstderivative","url":"/sponsors/firstderivative.svg"},
+  {"name":"AI/RUN","slug":"airun","url":"/sponsors/airun.svg"}
+]'::jsonb
+WHERE slug = 'cibc-arc-2026-dev';

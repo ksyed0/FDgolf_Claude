@@ -15,7 +15,7 @@ export type TournamentMeta = {
   starts_at: string
   format: string
   status: string
-  sponsor_logos: Record<string, string> | null
+  sponsor_logos: Array<{ name: string; slug: string; url: string }> | null
   course_id: string
   venues: { name: string } | null
 }
