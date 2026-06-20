@@ -220,46 +220,77 @@ bag_clubs:       [driver, 3-wood, 5-iron, 7-iron, 9-iron, PW, SW, putter] — re
 first_player_id: team captain's player ID
 ```
 
-### Shot outcome coverage
+### Player profiles
 
-| Hole | Par | Outcome pattern | Strokes | Notes |
-|------|-----|----------------|---------|-------|
-| 1  | 4 | drive(in_play) → approach(in_play) → sunk | 3 | birdie |
-| 2  | 5 | drive(in_play) → layup(in_play) → approach(in_play) → sunk | 4 | birdie |
-| 3  | 3 | drive(OOB) → rehit(in_play) → sunk | 3 | par; OOB+rehit link |
-| 4  | 4 | drive(in_play) → approach(in_play) → chip(in_play) → sunk | 4 | par |
-| 5  | 5 | drive(in_play) → layup(in_play) → approach(in_play) → chip(in_play) → sunk | 5 | par |
-| 6  | 4 | drive(in_play) → approach(in_play) → sunk | 3 | birdie |
-| 7  | 3 | drive(in_play) → sunk | 2 | birdie |
-| 8  | 4 | drive(OOB) → rehit(in_play) → approach(in_play) → chip(in_play) → sunk | 5 | bogey; second OOB |
-| 9  | 4 | drive(in_play) → approach(in_play) → sunk | 3 | birdie |
-| 10 | 4 | drive(in_play) → approach(in_play) → chip(in_play) → sunk | 4 | par |
-| 11 | 5 | mulligan on drive → drive(in_play) → approach(in_play) → sunk | 3 | birdie; mulligan on hole 11 |
-| 12 | 3 | drive(in_play) → chip(in_play) → sunk | 3 | par |
-| 13 | 4 | drive(in_play) → approach(in_play) → sunk | 3 | birdie |
-| 14 | 4 | drive(in_play) → approach(in_play) → chip(in_play) → sunk | 4 | par |
-| 15 | 5 | drive(in_play) → layup(in_play) → approach(in_play) → sunk | 4 | birdie |
-| 16 | 4 | drive(in_play) → approach(in_play) → sunk | 3 | birdie |
-| 17 | 3 | drive(in_play) → sunk | 2 | birdie |
-| 18 | 4 | drive(in_play) → approach(in_play) → chip(in_play) → sunk | 4 | par |
+Each team of 4 gets a mix of handicap profiles producing realistic amateur individual scores. The simulation assigns one profile per player slot — profiles A/B/C/D repeat across teams with slight score variation.
 
-Player variation: players 2–16 get slight score variation (±1 stroke on random holes) so Best Ball produces meaningful team-vs-team differentiation.
+| Profile | Handicap | Typical score | Birdie% | Par% | Bogey% | Double+% |
+|---------|----------|--------------|---------|------|--------|----------|
+| A (captain) | 12 | 83 (+11) | 15% | 33% | 35% | 17% |
+| B           | 18 | 90 (+18) | 8%  | 22% | 38% | 32% |
+| C           | 24 | 97 (+25) | 3%  | 14% | 38% | 45% |
+| D           | 30 | 103 (+31)| 1%  | 8%  | 33% | 58% |
 
-**Mulligan detail (hole 11):** Player 1 (James Wilson):
-- Shot 1: `outcome=in_play`, `stroke_count=0` (mulligan taken — counts 0)
+### Detailed shot patterns — Profile A (James Wilson, hole by hole)
+
+Profile A is the simulation's "featured" player, with shots inserted explicitly to exercise every `shot_outcome` type. All other players use simplified sequences (N × `in_play` → `sunk`) matching their per-hole stroke count.
+
+| Hole | Par | Shot sequence | Strokes | vs par | Feature tested |
+|------|-----|--------------|---------|--------|----------------|
+| 1  | 4 | drive(in_play) → approach(in_play) → chip(in_play) → sunk | 4 | par | standard 4-shot hole |
+| 2  | 5 | drive(in_play) → layup(in_play) → approach(in_play) → chip(in_play) → sunk | 5 | par | 5-shot par-5 |
+| 3  | 3 | drive(OOB) → rehit(in_play) → chip(in_play) → sunk | 4 | bogey | OOB + rehit linkage |
+| 4  | 4 | drive(in_play) → approach(in_play) → chip(in_play) → chip(in_play) → sunk | 5 | bogey | 3-putt chip sequence |
+| 5  | 5 | drive(in_play) → layup(in_play) → approach(in_play) → sunk | 4 | birdie | par-5 birdie |
+| 6  | 4 | drive(in_play) → approach(in_play) → chip(in_play) → chip(in_play) → sunk | 5 | bogey | another bogey |
+| 7  | 3 | drive(in_play) → chip(in_play) → sunk | 3 | par | par-3 standard |
+| 8  | 4 | drive(OOB) → rehit(in_play) → approach(in_play) → chip(in_play) → chip(in_play) → sunk | 6 | double | OOB → double bogey |
+| 9  | 4 | drive(in_play) → approach(in_play) → sunk | 3 | birdie | front-9 closer birdie |
+| 10 | 4 | drive(in_play) → approach(in_play) → chip(in_play) → sunk | 4 | par | solid back-9 opener |
+| 11 | 5 | mulligan(stroke_count=0) → drive(in_play) → layup(in_play) → approach(in_play) → chip(in_play) → sunk | 5 | par | mulligan; stroke_count=0 |
+| 12 | 3 | drive(in_play) → chip(in_play) → chip(in_play) → sunk | 4 | bogey | par-3 bogey (3-putt) |
+| 13 | 4 | drive(in_play) → approach(in_play) → chip(in_play) → sunk | 4 | par | recovery par |
+| 14 | 4 | drive(OOB) → rehit(in_play) → approach(in_play) → chip(in_play) → chip(in_play) → sunk | 6 | double | third OOB; double |
+| 15 | 5 | drive(in_play) → layup(in_play) → approach(in_play) → chip(in_play) → sunk | 5 | par | par-5 par |
+| 16 | 4 | drive(in_play) → approach(in_play) → chip(in_play) → sunk | 4 | par | standard |
+| 17 | 3 | drive(in_play) → chip(in_play) → sunk | 3 | par | par-3 par |
+| 18 | 4 | drive(in_play) → approach(in_play) → chip(in_play) → chip(in_play) → sunk | 5 | bogey | finishing bogey |
+
+**Profile A total: 83 (+11)** — 2 birdies, 8 pars, 5 bogeys, 2 doubles.
+
+**Mulligan detail (hole 11):**
+- Shot 1: `outcome=in_play`, `stroke_count=0`, (mulligan ball — not counted)
 - Shot 2: `outcome=in_play`, `stroke_count=1`, `rehit_from_shot_id=shot1.id`, `rehit_origin=tee`
+- Remaining shots proceed normally
+
+### Team Best Ball scores
+
+Best Ball picks the lowest stroke count among all 4 players per hole. With profiles A/B/C/D, the per-team Best Ball results spread realistically across the leaderboard:
+
+**Fairway Falcons** — A(12)+B(18)+C(24)+D(30): best team, captain is a 12-hdcp
+- Holes where A or B saves the team: 9 holes with par or better
+- Per-hole Best Ball: 5 birdies, 9 pars, 4 bogeys = **-1 (71)**
+
+**Iron Eagles** — A(14)+B(20)+C(26)+D(28): slightly weaker captain
+- Per-hole Best Ball: 3 birdies, 8 pars, 7 bogeys = **+4 (76)**
+
+**Birdie Brigade** — A(18)+B(22)+C(26)+D(30): all mid-to-high handicappers
+- Per-hole Best Ball: 1 birdie, 6 pars, 9 bogeys, 2 doubles = **+10 (82)**
+
+**Eagle Chasers** — A(20)+B(26)+C(30)+D(34): weakest team, everyone struggles
+- Per-hole Best Ball: 0 birdies, 3 pars, 10 bogeys, 5 doubles = **+20 (92)**
 
 ### Stdout summary
 
 ```
 Scoring simulation complete.
 
-Team                 │ Front 9 │ Back 9 │ Total │ vs Par
+Team                 │ Front 9 │ Back 9 │ Total │ Score
 ─────────────────────┼─────────┼────────┼───────┼───────
-Fairway Falcons      │   -5    │   -6   │  -11  │  61
-Iron Eagles          │   -4    │   -5   │   -9  │  63
-Birdie Brigade       │   -3    │   -4   │   -7  │  65
-Eagle Chasers        │   -2    │   -3   │   -5  │  67
+Fairway Falcons      │   -1    │    E   │   -1  │  71
+Iron Eagles          │   +2    │   +2   │   +4  │  76
+Birdie Brigade       │   +5    │   +5   │  +10  │  82
+Eagle Chasers        │   +9    │  +11   │  +20  │  92
 
 Leaderboard: http://localhost:3000/t/cibc-lionhead-2026/leaderboard
 ```
