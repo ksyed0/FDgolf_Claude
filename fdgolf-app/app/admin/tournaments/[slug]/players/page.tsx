@@ -1,11 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { requireTournamentAccess } from '@/lib/supabase/auth-guards'
 import { PlayerListClient } from './player-list-client'
 
 export default async function PlayersPage({ params }: { params: { slug: string } }) {
   const supabase = await createClient()
-  const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
-  if (!isAdmin) redirect('/login')
 
   const { data: tournament } = await supabase
     .from('tournaments')
@@ -13,6 +12,8 @@ export default async function PlayersPage({ params }: { params: { slug: string }
     .eq('slug', params.slug)
     .single()
   if (!tournament) redirect('/admin/tournaments')
+
+  await requireTournamentAccess(tournament.id)
 
   const { data: registrations } = await supabase
     .from('tournament_registrations')

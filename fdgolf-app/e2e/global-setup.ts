@@ -6,8 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 
 dotenv.config({ path: path.resolve(__dirname, '../.env.test') })
 
-const TOURNAMENT_SLUG = 'cibc-lionhead-2026'
-const TOURNAMENT_ID = 'a0000000-0000-0000-0000-000000000003'
+const TOURNAMENT_SLUG = process.env.E2E_TOURNAMENT_SLUG ?? 'cibc-lionhead-2026'
 
 export default async function globalSetup() {
   const email = process.env.TEST_ADMIN_EMAIL
@@ -31,11 +30,11 @@ export default async function globalSetup() {
     const context = await browser.newContext()
     const page = await context.newPage()
 
-    await page.goto('http://localhost:3000/login')
+    await page.goto('http://localhost:3001/login')
     await page.fill('input[name="email"]', email)
     await page.fill('input[name="password"]', password)
     await page.getByRole('button', { name: 'Sign in' }).click()
-    await page.waitForURL('http://localhost:3000/', { timeout: 10_000 })
+    await page.waitForURL('http://localhost:3001/', { timeout: 10_000 })
 
     const stateDir = path.resolve(__dirname, '../.playwright')
     if (!fs.existsSync(stateDir)) fs.mkdirSync(stateDir, { recursive: true })
@@ -44,6 +43,22 @@ export default async function globalSetup() {
   } finally {
     await browser.close()
   }
+
+  // Resolve tournament ID from slug
+  const { data: tournament } = await supabase
+    .from('tournaments')
+    .select('id')
+    .eq('slug', TOURNAMENT_SLUG)
+    .single()
+
+  if (!tournament) {
+    console.warn(
+      `[global-setup] Tournament not found: ${TOURNAMENT_SLUG} — run npm run seed:lionhead first`
+    )
+    return
+  }
+
+  const TOURNAMENT_ID = tournament.id
 
   // Create E2E player round if not already present
   const { data: player } = await supabase
@@ -81,7 +96,7 @@ export default async function globalSetup() {
     .delete()
     .eq('player_id', player.id)
     .eq('tournament_id', TOURNAMENT_ID)
-    .eq('status', 'active')
+    .eq('status', 'in_progress')
 
   const { data: round, error } = await supabase
     .from('rounds')
@@ -90,7 +105,7 @@ export default async function globalSetup() {
       player_id: player.id,
       team_id: membership.team_id,
       start_hole: team.start_hole,
-      status: 'active',
+      status: 'in_progress',
       bag_clubs: bagClubs,
       first_player_id: player.id,
       started_at: new Date().toISOString(),

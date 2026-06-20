@@ -1,12 +1,20 @@
-// fdgolf-app/app/admin/scores/[roundId]/page.tsx
-import { redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { requireTournamentAccess } from '@/lib/supabase/auth-guards'
 import { ScoreEditor, type Shot } from '@/components/admin/score-editor'
 
 export default async function ScoresPage({ params }: { params: { roundId: string } }) {
   const supabase = await createClient()
-  const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
-  if (!isAdmin) redirect('/')
+
+  // Resolve tournament via round so we can check organizer scope
+  const { data: round } = await supabase
+    .from('rounds')
+    .select('tournament_id')
+    .eq('id', params.roundId)
+    .single()
+  if (!round) notFound()
+
+  await requireTournamentAccess(round.tournament_id)
 
   const { data: shots } = (await supabase
     .from('shots')

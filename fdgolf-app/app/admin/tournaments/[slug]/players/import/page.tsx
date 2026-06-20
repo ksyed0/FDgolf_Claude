@@ -1,11 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { requireTournamentAccess } from '@/lib/supabase/auth-guards'
 import { CsvImportClient } from './csv-import-client'
 
 export default async function ImportPage({ params }: { params: { slug: string } }) {
   const supabase = await createClient()
-  const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
-  if (!isAdmin) redirect('/login')
 
   const { data: tournament } = await supabase
     .from('tournaments')
@@ -13,6 +12,8 @@ export default async function ImportPage({ params }: { params: { slug: string } 
     .eq('slug', params.slug)
     .single()
   if (!tournament) redirect('/admin/tournaments')
+
+  await requireTournamentAccess(tournament.id)
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-8">

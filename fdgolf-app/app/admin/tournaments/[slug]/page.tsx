@@ -1,6 +1,7 @@
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { requireTournamentAccess } from '@/lib/supabase/auth-guards'
 import { getPreflightChecks } from '@/lib/actions/tournament-lifecycle'
 import { LifecycleClient } from './lifecycle-client'
 
@@ -8,24 +9,10 @@ interface PageProps {
   params: { slug: string }
 }
 
-/**
- * /admin/tournaments/[slug] — Tournament detail page (US-0015).
- *
- * Server Component. Replaces the US-0009 placeholder stub with a nav card
- * layout linking to the main configuration sub-pages for the tournament.
- *
- * Guard: requires admin role (fdgolf_is_admin RPC). Redirects to / if false.
- */
 export default async function TournamentDetailPage({ params }: PageProps) {
   const supabase = await createClient()
 
-  // Guard: must be admin
-  const { data: isAdmin, error: adminError } = await supabase.rpc('fdgolf_is_admin')
-  if (adminError || !isAdmin) {
-    redirect('/')
-  }
-
-  // Fetch tournament by slug — join venues and courses via course_id FK
+  // Fetch tournament first (SELECT is public) then check access
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
     .select(
@@ -34,9 +21,9 @@ export default async function TournamentDetailPage({ params }: PageProps) {
     .eq('slug', params.slug)
     .single()
 
-  if (tournamentError || !tournament) {
-    notFound()
-  }
+  if (tournamentError || !tournament) notFound()
+
+  const { isAdmin } = await requireTournamentAccess(tournament.id)
 
   // Compute next status and pre-flight checks
   const NEXT_STATUS: Record<string, 'registration_open' | 'active' | 'completed' | null> = {
@@ -67,12 +54,16 @@ export default async function TournamentDetailPage({ params }: PageProps) {
       description: 'Choose which clubs from the master list are available in this tournament.',
       icon: '🏌️',
     },
-    {
-      href: `/admin/organizers`,
-      title: 'Organizers',
-      description: 'Assign or remove tournament organizers.',
-      icon: '👤',
-    },
+    ...(isAdmin
+      ? [
+          {
+            href: `${base}/organizers`,
+            title: 'Tournament Admins',
+            description: 'Assign or remove tournament admins for this event.',
+            icon: '👤',
+          },
+        ]
+      : []),
   ]
 
   const formattedDate = tournament.starts_at

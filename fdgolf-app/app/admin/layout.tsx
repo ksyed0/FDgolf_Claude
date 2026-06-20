@@ -4,8 +4,8 @@ import { AdminSidebar } from '@/components/admin/admin-sidebar'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
-  if (!isAdmin) redirect('/')
+  const { data: hasAccess } = await supabase.rpc('fdgolf_has_any_admin_access')
+  if (!hasAccess) redirect('/')
 
   return (
     <div className="flex min-h-screen">

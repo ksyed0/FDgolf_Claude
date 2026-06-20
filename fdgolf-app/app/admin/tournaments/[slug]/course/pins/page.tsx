@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { requireTournamentAccess } from '@/lib/supabase/auth-guards'
 import { PinPlacementMap, type HoleCoords } from './pin-placement-map'
 
 interface PageProps {
@@ -29,22 +30,15 @@ type HoleRow = {
 export default async function PinsPage({ params }: PageProps) {
   const supabase = await createClient()
 
-  // Guard: must be admin
-  const { data: isAdmin, error: adminError } = await supabase.rpc('fdgolf_is_admin')
-  if (adminError || !isAdmin) {
-    redirect('/')
-  }
-
-  // Fetch tournament — join venues for display name
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
     .select('id,name,slug,course_id,venues(name)')
     .eq('slug', params.slug)
     .single()
 
-  if (tournamentError || !tournament) {
-    notFound()
-  }
+  if (tournamentError || !tournament) notFound()
+
+  await requireTournamentAccess(tournament.id)
 
   // Must have a course linked to place pins
   if (!tournament.course_id) {

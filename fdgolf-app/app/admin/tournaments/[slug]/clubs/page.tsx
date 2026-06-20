@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { requireTournamentAccess } from '@/lib/supabase/auth-guards'
 import { ClubPickerForm } from './club-picker-form'
 
 interface PageProps {
@@ -33,22 +34,16 @@ type TournamentClubRow = {
 export default async function TournamentClubsPage({ params }: PageProps) {
   const supabase = await createClient()
 
-  // Guard: must be admin
-  const { data: isAdmin, error: adminError } = await supabase.rpc('fdgolf_is_admin')
-  if (adminError || !isAdmin) {
-    redirect('/')
-  }
-
-  // Fetch tournament by slug
+  // Fetch tournament first (public SELECT), then check access
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
     .select('id,name,slug')
     .eq('slug', params.slug)
     .single()
 
-  if (tournamentError || !tournament) {
-    notFound()
-  }
+  if (tournamentError || !tournament) notFound()
+
+  await requireTournamentAccess(tournament.id)
 
   // Fetch all master clubs ordered by display_order
   const { data: allClubs, error: clubsError } = await supabase

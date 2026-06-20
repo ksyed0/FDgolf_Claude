@@ -6,11 +6,23 @@ import { getClubIds } from '../e2e/helpers/seed'
 
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') })
 
+const TOURNAMENT_SLUG = process.env.SIMULATE_TOURNAMENT_SLUG ?? 'cibc-lionhead-2026'
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { persistSession: false } }
 )
+
+async function getTournamentId(): Promise<string> {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .select('id')
+    .eq('slug', TOURNAMENT_SLUG)
+    .single()
+  if (error || !data) throw new Error(`Tournament not found: ${TOURNAMENT_SLUG}`)
+  return data.id
+}
 
 type Outcome = 'in_play' | 'oob' | 'sunk' | 'mulligan'
 
@@ -200,11 +212,11 @@ interface PlayerRow {
   slot: number
 }
 
-async function loadPlayers(): Promise<PlayerRow[]> {
+async function loadPlayers(tournamentId: string): Promise<PlayerRow[]> {
   const { data: tm } = await supabase
     .from('team_members')
     .select('player_id, team_id, players(email)')
-    .eq('teams.tournament_id', 'a0000000-0000-0000-0000-000000000003')
+    .eq('teams.tournament_id', tournamentId)
 
   const byTeam: Record<string, PlayerRow[]> = {}
   for (const row of tm ?? []) {
@@ -265,6 +277,9 @@ async function insertShots(
 }
 
 async function main() {
+  const tournamentId = await getTournamentId()
+  console.log(`Tournament: ${TOURNAMENT_SLUG} (${tournamentId})`)
+
   console.log('Loading clubs…')
   const clubs = await getClubIds([
     'Driver',
@@ -280,7 +295,7 @@ async function main() {
   const bagClubs = Object.values(clubs)
 
   console.log('Loading players…')
-  const players = await loadPlayers()
+  const players = await loadPlayers(tournamentId)
   if (!players.length) {
     console.error('No players found — run npm run seed:lionhead first.')
     process.exit(1)
@@ -294,7 +309,7 @@ async function main() {
     const { data: round } = await supabase
       .from('rounds')
       .insert({
-        tournament_id: 'a0000000-0000-0000-0000-000000000003',
+        tournament_id: tournamentId,
         player_id: player.id,
         team_id: player.team_id,
         start_hole: startHole,
@@ -336,7 +351,7 @@ async function main() {
   const { data: teams } = await supabase
     .from('teams')
     .select('id, name')
-    .eq('tournament_id', 'a0000000-0000-0000-0000-000000000003')
+    .eq('tournament_id', tournamentId)
 
   console.log('\nScoring simulation complete.\n')
   console.log('Team                 │ Front 9 │ Back 9 │ Total │ Score')

@@ -1,12 +1,11 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { requireTournamentAccess } from '@/lib/supabase/auth-guards'
 import { TournamentForm } from '@/app/admin/tournaments/new/tournament-form'
 
 export default async function EditTournamentPage({ params }: { params: { slug: string } }) {
   const supabase = await createClient()
-  const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
-  if (!isAdmin) redirect('/')
 
   const { data: tournament } = await supabase
     .from('tournaments')
@@ -16,6 +15,8 @@ export default async function EditTournamentPage({ params }: { params: { slug: s
     .eq('slug', params.slug)
     .single()
   if (!tournament) notFound()
+
+  await requireTournamentAccess(tournament.id)
 
   const { data: venues } = await supabase.from('venues').select('id, name').order('name')
 
