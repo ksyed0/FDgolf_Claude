@@ -79,7 +79,7 @@ Dependencies: EPIC-0001, EPIC-0002
 EPIC-0009: Offline & Sync
 Description: IndexedDB shot queue with write-through pattern, sync-on-reconnect with newer-wins conflict resolution, offline UI indicator. Phase 1 ships IndexedDB only; Service Worker proper deferred to Phase 2.
 Release Target: MVP
-Status: Planned
+Status: Done
 Dependencies: EPIC-0005
 ```
 
@@ -1256,52 +1256,52 @@ Acceptance Criteria:
 US-0077 (EPIC-0009): As a developer, I want IndexedDB set up via idb library, so that the shot queue has a reliable client storage layer.
 Priority: High
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0077-indexeddb-setup
 Dependencies: US-0036
 Acceptance Criteria:
-  - [ ] AC-0270: idb library installed
-  - [ ] AC-0271: Versioned schema with shots store (key=tempId)
-  - [ ] AC-0272: Database opens on app boot
+  - [x] AC-0270: idb library installed
+  - [x] AC-0271: Versioned schema with shots store (key=tempId)
+  - [x] AC-0272: Database opens on app boot
 ```
 
 ```
 US-0078 (EPIC-0009): As a player, I want shots written to IndexedDB first, so that no data is lost when the network drops.
 Priority: High
 Estimate: M
-Status: Planned
+Status: Done
 Branch: feature/US-0078-write-through
 Dependencies: US-0077
 Acceptance Criteria:
-  - [ ] AC-0273: Every shot insert writes IndexedDB first with status=pending
-  - [ ] AC-0274: Background process drains pending shots to Supabase
-  - [ ] AC-0275: On Supabase success, IndexedDB row status=synced
+  - [x] AC-0273: Every shot insert writes IndexedDB first with status=pending
+  - [x] AC-0274: Background process drains pending shots to Supabase
+  - [x] AC-0275: On Supabase success, IndexedDB row status=synced
 ```
 
 ```
 US-0079 (EPIC-0009): As a player, I want a visible offline indicator with queue depth, so that I know when sync is pending.
 Priority: Medium
 Estimate: S
-Status: Planned
+Status: Done
 Branch: feature/US-0079-offline-banner
 Dependencies: US-0078
 Acceptance Criteria:
-  - [ ] AC-0276: Banner appears when navigator.onLine=false
-  - [ ] AC-0277: Banner shows queue depth (e.g., "3 shots queued")
-  - [ ] AC-0278: Auto-dismisses when online and queue is empty
+  - [x] AC-0276: Banner appears when navigator.onLine=false
+  - [x] AC-0277: Banner shows queue depth (e.g., "3 shots queued")
+  - [x] AC-0278: Auto-dismisses when online and queue is empty
 ```
 
 ```
 US-0080 (EPIC-0009): As a player, I want my queue to drain on reconnect with newer-wins resolution, so that my latest edits stick.
 Priority: High
 Estimate: M
-Status: Planned
+Status: Done
 Branch: feature/US-0080-sync-reconnect
 Dependencies: US-0078
 Acceptance Criteria:
-  - [ ] AC-0279: Online event triggers queue drain
-  - [ ] AC-0280: Upsert by id; server compares updated_at and rejects older
-  - [ ] AC-0281: Rejected upserts logged to dev console for debugging
+  - [x] AC-0279: Online event triggers queue drain
+  - [x] AC-0280: Upsert by id; server compares updated_at and rejects older
+  - [x] AC-0281: Rejected upserts logged to dev console for debugging
 ```
 
 ```
@@ -3627,7 +3627,7 @@ Notes: Stores active tournament in admin session cookie.
 TASK-0242 (US-0077): Install idb package
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0077-indexeddb-setup
 Notes: `npm i idb`.
 ```
@@ -3636,7 +3636,7 @@ Notes: `npm i idb`.
 TASK-0243 (US-0077): Create lib/offline/db.ts with versioned schema
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0077-indexeddb-setup
 Notes: shots store with tempId key.
 ```
@@ -3645,7 +3645,7 @@ Notes: shots store with tempId key.
 TASK-0244 (US-0077): Open IndexedDB on app boot via provider
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0077-indexeddb-setup
 Notes: OfflineProvider in app/layout.tsx.
 ```
@@ -3654,7 +3654,7 @@ Notes: OfflineProvider in app/layout.tsx.
 TASK-0245 (US-0078): Wrap saveShot to write IndexedDB first
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0078-write-through
 Notes: lib/offline/queue.ts.
 ```
@@ -3663,7 +3663,7 @@ Notes: lib/offline/queue.ts.
 TASK-0246 (US-0078): Implement drain worker
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0078-write-through
 Notes: Polls pending rows; upserts to Supabase; updates status to synced.
 ```
@@ -3672,7 +3672,7 @@ Notes: Polls pending rows; upserts to Supabase; updates status to synced.
 TASK-0247 (US-0078): Test offline shot persists then drains on reconnect
 Type: Test
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0078-write-through
 Notes: Mock navigator.onLine.
 ```
@@ -3681,7 +3681,7 @@ Notes: Mock navigator.onLine.
 TASK-0248 (US-0079): Build OfflineBanner component
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0079-offline-banner
 Notes: Subscribes to navigator.onLine + queue depth.
 ```
@@ -3690,7 +3690,7 @@ Notes: Subscribes to navigator.onLine + queue depth.
 TASK-0249 (US-0079): Compute queue depth from IndexedDB
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0079-offline-banner
 Notes: Count rows with status=pending.
 ```
@@ -3699,7 +3699,7 @@ Notes: Count rows with status=pending.
 TASK-0250 (US-0080): Listen to online event and trigger drain
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0080-sync-reconnect
 Notes: window.addEventListener("online", drain).
 ```
@@ -3708,7 +3708,7 @@ Notes: window.addEventListener("online", drain).
 TASK-0251 (US-0080): Implement newer-wins via updated_at comparison
 Type: Dev
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0080-sync-reconnect
 Notes: Server-side check in saveShot RPC.
 ```
@@ -3717,7 +3717,7 @@ Notes: Server-side check in saveShot RPC.
 TASK-0252 (US-0080): Test stale upsert rejected
 Type: Test
 Assignee: Agent
-Status: To Do
+Status: Done
 Branch: feature/US-0080-sync-reconnect
 Notes: Integration: send shot with old updated_at; assert rejection.
 ```

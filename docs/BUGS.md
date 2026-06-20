@@ -619,9 +619,12 @@ BUG-0019: HoleEntryScreen displays static hole yardage as "yds to pin" — not l
 Severity: Medium
 Related Story: US-0034
 Related Task: TASK-0124
-Status: Open
-Fix Branch: feature/US-0030-0034-epic0004-pre-round
+Status: Verified
+Fix Branch: bugfix/BUG-0019-hole-yardage-label
 Lesson Encoded: No
+
+Verified fix (PR #61, Session 17): label changed from "~{hole.yardage} yds to pin" to
+"~{hole.yardage} yds (hole length)". Regression test added. Merged to develop.
 
 `components/round/hole-entry-screen.tsx` (line 83-85) renders:
   `<p className="text-lg font-bold text-blue-400">~{hole.yardage} yds to pin</p>`
@@ -650,7 +653,7 @@ BUG-0020: editShotAction fails for non-admin users — shot_edits INSERT is admi
 Severity: Medium
 Related Story: US-0041
 Related Task: TASK-0154
-Status: Fixed
+Status: Verified
 Fix Branch: feature/epic-0005-wiring-bug0022
 Lesson Encoded: No
 
@@ -669,6 +672,9 @@ Fix options:
   (b) Perform the audit insert via the service-role client inside the Server Action (server-only),
       keeping client RLS unchanged.
 Decision needed before US-0041 is promoted from DEFER to spine.
+
+Verified fix (feature/epic-0005-wiring-bug0022, Session 16): shot editing wired via EPIC-0008 admin
+edit path as the accepted fallback. Non-admin self-edit remains deferred to v1.1 per project decision.
 
 ---
 
