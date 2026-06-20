@@ -158,7 +158,7 @@ VALUES (
   'active', 'best_ball', 'shotgun', 18,
   '2026-06-22 09:00:00+00',
   v_course, v_venue,
-  '[{"name":"CIBC","slug":"cibc","url":"/sponsors/cibc.svg"},{"name":"First Derivative","slug":"firstderivative","url":"/sponsors/firstderivative.svg"},{"name":"AI/RUN","slug":"airun","url":"/sponsors/airun.svg"}]'::jsonb
+  '[{"name":"EPAM","slug":"epam","url":"/sponsors/epam.svg"},{"name":"First Derivative","slug":"firstderivative","url":"/sponsors/firstderivative.svg"}]'::jsonb
 ) ON CONFLICT (slug) DO NOTHING;
 v_tourn := 'a0000000-0000-0000-0000-000000000003';
 

@@ -90,7 +90,7 @@ ON CONFLICT DO NOTHING;
 -- ── Sponsor logos for dev tournament ──────────────────────────────────
 UPDATE tournaments
 SET sponsor_logos = '[
-  {"name":"First Derivative","slug":"firstderivative","url":"/sponsors/firstderivative.svg"},
-  {"name":"AI/RUN","slug":"airun","url":"/sponsors/airun.svg"}
+  {"name":"EPAM","slug":"epam","url":"/sponsors/epam.svg"},
+  {"name":"First Derivative","slug":"firstderivative","url":"/sponsors/firstderivative.svg"}
 ]'::jsonb
 WHERE slug = 'cibc-arc-2026-dev';
