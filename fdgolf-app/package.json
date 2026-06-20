@@ -21,7 +21,13 @@
     "e2e:report": "playwright show-report e2e/playwright-report",
     "seed:dev": "bash scripts/seed-dev.sh",
     "db:reset": "bash scripts/reset-db.sh",
-    "test:db": "supabase test db"
+    "test:db": "supabase test db",
+    "check:local": "bash scripts/check-local.sh",
+    "seed:lionhead": "bash scripts/seed-lionhead.sh",
+    "seed:tournament": "bash scripts/seed-tournament.sh",
+    "simulate:round": "npx tsx scripts/simulate-round.ts",
+    "e2e:round": "playwright test --config e2e/playwright.config.ts e2e/round-flow.spec.ts",
+    "e2e:admin": "playwright test --config e2e/playwright.config.ts e2e/admin-setup.spec.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
