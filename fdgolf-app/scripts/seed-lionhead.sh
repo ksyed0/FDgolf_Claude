@@ -111,7 +111,7 @@ BEGIN
 
 -- Roles
 INSERT INTO user_roles (user_id, role) VALUES ('$ADMIN_ID', 'admin') ON CONFLICT DO NOTHING;
-INSERT INTO user_roles (user_id, role) VALUES ('$JAMES_ID', 'organizer') ON CONFLICT DO NOTHING;
+INSERT INTO user_roles (user_id, role) VALUES ('$JAMES_ID', 'tournament_organizer') ON CONFLICT DO NOTHING;
 
 -- Venue
 INSERT INTO venues (id, name, address1, city, state_province, zip_postal)
