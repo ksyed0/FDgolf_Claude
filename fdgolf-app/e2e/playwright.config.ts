@@ -17,7 +17,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3001',
     storageState: storageStatePath,
-    trace: 'on-first-retry',
+    trace: 'on',
+    screenshot: 'on',
   },
   projects: [
     {

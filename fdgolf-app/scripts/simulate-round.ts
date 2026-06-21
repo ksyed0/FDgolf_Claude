@@ -215,7 +215,7 @@ interface PlayerRow {
 async function loadPlayers(tournamentId: string): Promise<PlayerRow[]> {
   const { data: tm } = await supabase
     .from('team_members')
-    .select('player_id, team_id, players(email)')
+    .select('player_id, team_id, players(email), teams!inner(tournament_id)')
     .eq('teams.tournament_id', tournamentId)
 
   const byTeam: Record<string, PlayerRow[]> = {}
