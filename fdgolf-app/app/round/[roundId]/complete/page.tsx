@@ -2,19 +2,24 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { completeRoundAction } from '@/lib/actions/rounds'
 
-export default async function RoundCompletePage({ params }: { params: { roundId: string } }) {
+export default async function RoundCompletePage({
+  params,
+}: {
+  params: Promise<{ roundId: string }>
+}) {
+  const { roundId } = await params
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  await completeRoundAction(params.roundId) // AC-0176: idempotent; only completes when 18 finals
+  await completeRoundAction(roundId) // AC-0176: idempotent; only completes when 18 finals
 
   const { data: finals } = await supabase
     .from('hole_scores')
     .select('gross_score')
-    .eq('round_id', params.roundId)
+    .eq('round_id', roundId)
     .eq('status', 'final')
 
   const total = (finals ?? []).reduce((sum, h) => sum + Number(h.gross_score), 0)

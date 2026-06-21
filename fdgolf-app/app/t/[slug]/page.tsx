@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getPlayerContext } from '@/lib/supabase/player'
 import { PreRoundWizard } from '@/components/pre-round/pre-round-wizard'
 
-export default async function TournamentPage({ params }: { params: { slug: string } }) {
+export default async function TournamentPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = await createClient()
   const {
     data: { user },
@@ -11,7 +12,7 @@ export default async function TournamentPage({ params }: { params: { slug: strin
 
   if (!user) redirect('/login')
 
-  const context = await getPlayerContext(params.slug, user.id)
+  const context = await getPlayerContext(slug, user.id)
 
   if (!context) {
     return (

@@ -35,17 +35,19 @@ async function getTournament(
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
+  const { slug } = await params
   const supabase = await createClient()
-  const tournament = await getTournament(supabase, params.slug)
+  const tournament = await getTournament(supabase, slug)
   if (!tournament) return { title: 'Live Leaderboard TV' }
   return { title: `${tournament.name} — Live Leaderboard TV` }
 }
 
-export default async function TvPage({ params }: { params: { slug: string } }) {
+export default async function TvPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = await createClient()
-  const tournament = await getTournament(supabase, params.slug)
+  const tournament = await getTournament(supabase, slug)
   if (!tournament) notFound()
 
   const initialLeaderboard = await fetchLeaderboard(supabase, tournament.id)

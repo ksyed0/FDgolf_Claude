@@ -4,7 +4,8 @@ import { HoleEntryScreen } from '@/components/round/hole-entry-screen'
 
 type Tee = { colour: string; yardage: number }
 
-export default async function RoundPage({ params }: { params: { roundId: string } }) {
+export default async function RoundPage({ params }: { params: Promise<{ roundId: string }> }) {
+  const { roundId } = await params
   const supabase = await createClient()
   const {
     data: { user },
@@ -15,7 +16,7 @@ export default async function RoundPage({ params }: { params: { roundId: string 
   const { data: round } = await supabase
     .from('rounds')
     .select('id, start_hole, status, bag_clubs, tournament_id, player_id, tournaments(course_id)')
-    .eq('id', params.roundId)
+    .eq('id', roundId)
     .single()
 
   if (!round) {

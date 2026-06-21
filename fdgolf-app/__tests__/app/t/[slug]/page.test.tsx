@@ -47,7 +47,7 @@ beforeEach(() => {
 describe('TournamentPage /t/[slug]', () => {
   it('shows not-found when context is null', async () => {
     mockGetPlayerContext.mockResolvedValue(null)
-    render(await TournamentPage({ params: { slug: 'bad' } }))
+    render(await TournamentPage({ params: Promise.resolve({ slug: 'bad' }) }))
     expect(screen.getByText(/not found/i)).toBeInTheDocument()
   })
 
@@ -56,13 +56,13 @@ describe('TournamentPage /t/[slug]', () => {
       ...CTX,
       existingRound: { id: 'r1', status: 'in_progress' },
     })
-    await TournamentPage({ params: { slug: 'cibc-2026' } })
+    await TournamentPage({ params: Promise.resolve({ slug: 'cibc-2026' }) })
     expect(mockRedirect).toHaveBeenCalledWith('/round/r1')
   })
 
   it('renders wizard when no existing round', async () => {
     mockGetPlayerContext.mockResolvedValue(CTX)
-    render(await TournamentPage({ params: { slug: 'cibc-2026' } }))
+    render(await TournamentPage({ params: Promise.resolve({ slug: 'cibc-2026' }) }))
     expect(screen.getByText('wizard:CIBC 2026')).toBeInTheDocument()
   })
 })

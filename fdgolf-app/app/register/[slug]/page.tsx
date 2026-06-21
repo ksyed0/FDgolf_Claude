@@ -6,14 +6,16 @@ export default async function RegisterPage({
   params,
   searchParams,
 }: {
-  params: { slug: string }
-  searchParams: { token?: string }
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ token?: string }>
 }) {
+  const { slug } = await params
+  const { token } = await searchParams
   const supabase = await createClient()
   const { data: tournament } = await supabase
     .from('tournaments')
     .select('id, name, slug, status')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
 
   if (!tournament) {
@@ -36,8 +38,8 @@ export default async function RegisterPage({
     player: NonNullable<Awaited<ReturnType<typeof validateInviteToken>>['data']>['player']
     token: string
   } | null = null
-  if (searchParams.token) {
-    const { data } = await validateInviteToken(searchParams.token)
+  if (token) {
+    const { data } = await validateInviteToken(token)
     if (!data) {
       return (
         <main className="min-h-screen flex items-center justify-center p-4">
@@ -45,7 +47,7 @@ export default async function RegisterPage({
         </main>
       )
     }
-    prefill = { player: data.player, token: searchParams.token }
+    prefill = { player: data.player, token }
   }
 
   return (

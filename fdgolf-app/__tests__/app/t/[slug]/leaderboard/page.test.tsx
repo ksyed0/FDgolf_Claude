@@ -95,14 +95,16 @@ describe('LeaderboardPage /t/[slug]/leaderboard', () => {
     mockNotFound.mockImplementation(() => {
       throw new Error('NOT_FOUND')
     })
-    await expect(LeaderboardPage({ params: { slug: 'bad-slug' } })).rejects.toThrow('NOT_FOUND')
+    await expect(
+      LeaderboardPage({ params: Promise.resolve({ slug: 'bad-slug' }) })
+    ).rejects.toThrow('NOT_FOUND')
     expect(mockNotFound).toHaveBeenCalled()
   })
 
   it('leaderboard renders for unauthenticated users (AC-0204)', async () => {
     // auth.getUser returns null user — page still renders leaderboard
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } })
-    render(await LeaderboardPage({ params: { slug: 'cibc-arc-2026' } }))
+    render(await LeaderboardPage({ params: Promise.resolve({ slug: 'cibc-arc-2026' }) }))
     // Tournament data is fetched
     expect(mockSupabase.from).toHaveBeenCalledWith('tournaments')
     // Leaderboard table is rendered
@@ -110,12 +112,12 @@ describe('LeaderboardPage /t/[slug]/leaderboard', () => {
   })
 
   it('passes initial rows to LeaderboardTable', async () => {
-    render(await LeaderboardPage({ params: { slug: 'cibc-arc-2026' } }))
+    render(await LeaderboardPage({ params: Promise.resolve({ slug: 'cibc-arc-2026' }) }))
     expect(screen.getByTestId('row-count').textContent).toBe('2')
   })
 
   it('generateMetadata returns og:title containing tournament name (AC-0205)', async () => {
-    const metadata = await generateMetadata({ params: { slug: 'cibc-arc-2026' } })
+    const metadata = await generateMetadata({ params: Promise.resolve({ slug: 'cibc-arc-2026' }) })
     expect((metadata.openGraph as { title?: string })?.title).toContain('CIBC ARC 2026')
   })
 
@@ -127,7 +129,7 @@ describe('LeaderboardPage /t/[slug]/leaderboard', () => {
         }),
       }),
     })
-    const metadata = await generateMetadata({ params: { slug: 'bad-slug' } })
+    const metadata = await generateMetadata({ params: Promise.resolve({ slug: 'bad-slug' }) })
     expect(metadata.title).toBe('Leaderboard')
   })
 })

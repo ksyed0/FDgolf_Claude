@@ -25,10 +25,11 @@ async function getTournament(
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
+  const { slug } = await params
   const supabase = await createClient()
-  const tournament = await getTournament(supabase, params.slug)
+  const tournament = await getTournament(supabase, slug)
   if (!tournament) return { title: 'Leaderboard' }
   const name = tournament.name
   return {
@@ -84,9 +85,10 @@ async function getMyTeamInfo(
   return { teamId, memberNames }
 }
 
-export default async function LeaderboardPage({ params }: { params: { slug: string } }) {
+export default async function LeaderboardPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = await createClient()
-  const tournament = await getTournament(supabase, params.slug)
+  const tournament = await getTournament(supabase, slug)
   if (!tournament) notFound()
 
   const [rows, myTeamInfo] = await Promise.all([

@@ -53,7 +53,7 @@ beforeEach(() => {
 describe('RoundPage /round/[roundId]', () => {
   it('shows not-found when round missing', async () => {
     mockFrom.mockReturnValue(buildChain(null))
-    render(await RoundPage({ params: { roundId: 'bad' } }))
+    render(await RoundPage({ params: Promise.resolve({ roundId: 'bad' }) }))
     expect(screen.getByText(/not found/i)).toBeInTheDocument()
   })
 
@@ -65,7 +65,7 @@ describe('RoundPage /round/[roundId]', () => {
       if (call === 2) return buildChain(HOLE)
       return buildChain(CLUBS)
     })
-    render(await RoundPage({ params: { roundId: 'r1' } }))
+    render(await RoundPage({ params: Promise.resolve({ roundId: 'r1' }) }))
     expect(screen.getByText('hole-screen:r1')).toBeInTheDocument()
   })
 })

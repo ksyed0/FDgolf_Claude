@@ -99,23 +99,25 @@ describe('TvPage /t/[slug]/tv', () => {
     mockNotFound.mockImplementation(() => {
       throw new Error('NOT_FOUND')
     })
-    await expect(TvPage({ params: { slug: 'bad-slug' } })).rejects.toThrow('NOT_FOUND')
+    await expect(TvPage({ params: Promise.resolve({ slug: 'bad-slug' }) })).rejects.toThrow(
+      'NOT_FOUND'
+    )
     expect(mockNotFound).toHaveBeenCalled()
   })
 
   it('renders TvDisplay when tournament found (AC-0307)', async () => {
-    render(await TvPage({ params: { slug: 'cibc-arc-2026' } }))
+    render(await TvPage({ params: Promise.resolve({ slug: 'cibc-arc-2026' }) }))
     expect(screen.getByTestId('tv-display')).toBeInTheDocument()
   })
 
   it('no auth redirect for public route', async () => {
     // Should render without any auth check
-    render(await TvPage({ params: { slug: 'cibc-arc-2026' } }))
+    render(await TvPage({ params: Promise.resolve({ slug: 'cibc-arc-2026' }) }))
     expect(screen.getByTestId('tv-display')).toBeInTheDocument()
   })
 
   it('generateMetadata returns correct title (AC-0308)', async () => {
-    const metadata = await generateMetadata({ params: { slug: 'cibc-arc-2026' } })
+    const metadata = await generateMetadata({ params: Promise.resolve({ slug: 'cibc-arc-2026' }) })
     expect(metadata.title).toBe('CIBC ARC 2026 — Live Leaderboard TV')
   })
 
@@ -127,7 +129,7 @@ describe('TvPage /t/[slug]/tv', () => {
         }),
       }),
     })
-    const metadata = await generateMetadata({ params: { slug: 'bad-slug' } })
+    const metadata = await generateMetadata({ params: Promise.resolve({ slug: 'bad-slug' }) })
     expect(metadata.title).toBe('Live Leaderboard TV')
   })
 })

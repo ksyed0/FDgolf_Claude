@@ -1,7 +1,7 @@
 import { LoginForm } from './login-form'
 
 interface LoginPageProps {
-  searchParams: { next?: string }
+  searchParams: Promise<{ next?: string }>
 }
 
 /**
@@ -13,8 +13,9 @@ interface LoginPageProps {
  *
  * Branding: FDgolf forest green card design matching AppChrome (AC-0016).
  */
-export default function LoginPage({ searchParams }: LoginPageProps) {
-  const next = searchParams.next ?? '/'
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { next: nextParam } = await searchParams
+  const next = nextParam ?? '/'
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">
