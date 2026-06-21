@@ -40,10 +40,16 @@ test.describe('Tournament creation (US-0009, US-0010)', () => {
     await page.fill('input[name="name"]', `Dup Source ${Date.now()}`)
     await page.waitForTimeout(400)
     await page.locator('input[name="slug_override"]').click({ clickCount: 3 })
-    await page
-      .locator('input[name="slug_override"]')
-      .pressSequentially(TEST_SLUG_DUP, { delay: 10 })
+    await page.keyboard.type(TEST_SLUG_DUP)
+    await expect(page.locator('input[name="slug_override"]')).toHaveValue(TEST_SLUG_DUP, {
+      timeout: 2_000,
+    })
     await page.fill('input[name="starts_at"]', '2026-12-01T09:00')
+    await page.waitForFunction(
+      () => !(document.querySelector('input[name="slug_override"]') as HTMLInputElement)?.readOnly,
+      undefined,
+      { timeout: 5_000 }
+    )
     await page.getByRole('button', { name: 'Create tournament' }).click()
     await expect(page).toHaveURL(new RegExp(`/admin/tournaments/${TEST_SLUG_DUP}`), {
       timeout: 10_000,
@@ -54,9 +60,10 @@ test.describe('Tournament creation (US-0009, US-0010)', () => {
     await page.fill('input[name="name"]', 'Another Tournament')
     await page.waitForTimeout(400)
     await page.locator('input[name="slug_override"]').click({ clickCount: 3 })
-    await page
-      .locator('input[name="slug_override"]')
-      .pressSequentially(TEST_SLUG_DUP, { delay: 10 })
+    await page.keyboard.type(TEST_SLUG_DUP)
+    await expect(page.locator('input[name="slug_override"]')).toHaveValue(TEST_SLUG_DUP, {
+      timeout: 2_000,
+    })
     await page.locator('input[name="slug_override"]').blur()
     const errorMsg = page.getByRole('alert').or(page.getByText('already taken'))
     await expect(errorMsg).toBeVisible({ timeout: 5_000 })
@@ -70,9 +77,17 @@ test.describe('Tournament creation (US-0009, US-0010)', () => {
     await page.fill('input[name="name"]', 'E2E Test Tournament')
     await page.waitForTimeout(400)
     await page.locator('input[name="slug_override"]').click({ clickCount: 3 })
-    await page.locator('input[name="slug_override"]').pressSequentially(TEST_SLUG, { delay: 10 })
+    await page.keyboard.type(TEST_SLUG)
+    await expect(page.locator('input[name="slug_override"]')).toHaveValue(TEST_SLUG, {
+      timeout: 2_000,
+    })
     // Venue is optional — leave it unset; only name + starts_at are required
     await page.fill('input[name="starts_at"]', '2026-12-01T09:00')
+    await page.waitForFunction(
+      () => !(document.querySelector('input[name="slug_override"]') as HTMLInputElement)?.readOnly,
+      undefined,
+      { timeout: 5_000 }
+    )
 
     await page.getByRole('button', { name: 'Create tournament' }).click()
 

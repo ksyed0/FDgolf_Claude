@@ -12,6 +12,7 @@ import { computeFrame, staticMapUrl } from '@/lib/round/frame'
 import { fetchAndCacheStaticMap } from '@/lib/round/static-map'
 import { getShotsForRound, getQueue } from '@/lib/round/idb'
 import { useRoundStore } from '@/lib/round/store'
+import { useShallow } from 'zustand/react/shallow'
 import { createShotAction } from '@/lib/actions/shots'
 import { nextPhysicalHole } from '@/lib/round/shotgun'
 import type { LatLng, LocalShot } from '@/lib/round/types'
@@ -35,11 +36,13 @@ type Props = {
 
 export function ActiveHole(props: Props) {
   const router = useRouter()
-  const { commitShot, flushQueue, updateShot } = useRoundStore((s) => ({
-    commitShot: s.commitShot,
-    flushQueue: s.flushQueue,
-    updateShot: s.updateShot,
-  }))
+  const { commitShot, flushQueue, updateShot } = useRoundStore(
+    useShallow((s) => ({
+      commitShot: s.commitShot,
+      flushQueue: s.flushQueue,
+      updateShot: s.updateShot,
+    }))
+  )
   const localHoles = useRoundStore((s) => s.localHoles)
 
   const [baseUrl, setBaseUrl] = useState<string | null>(null)
@@ -137,8 +140,7 @@ export function ActiveHole(props: Props) {
           accuracyM: pos.coords.accuracy ?? null,
         })
       },
-      () => {},
-      { enableHighAccuracy: true }
+      () => {}
     )
     return () => {
       navigator.geolocation?.clearWatch(watchId)
@@ -178,10 +180,12 @@ export function ActiveHole(props: Props) {
       )
       if (allSunk) {
         router.push(`/round/${props.roundId}/hole/${props.holeNumber}/summary`)
-      } else {
+      } else if (props.teamMembers.length > 1) {
         setShowTurnPicker(true)
       }
-    } else {
+    } else if (shot.outcome !== 'out_of_bounds' && props.teamMembers.length > 1) {
+      // OOB: ShotCapture handles the OOB_REHIT phase internally; no turn change.
+      // Skip TurnPicker when only one player is in the round (solo / E2E).
       setShowTurnPicker(true)
     }
   }

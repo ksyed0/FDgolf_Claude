@@ -1,14 +1,20 @@
 import { test, expect } from '@playwright/test'
+import * as fs from 'fs'
+import * as path from 'path'
 
-// Assumes a seeded in-progress round for the signed-in test player (see e2e fixtures).
-// ROUND_ID and START_HOLE are provided by the e2e env (seeded in global setup).
-const ROUND_ID = process.env.E2E_ROUND_ID ?? ''
-const START_HOLE = process.env.E2E_START_HOLE ?? '1'
+function loadE2EEnv(): { E2E_ROUND_ID: string; E2E_START_HOLE: number } {
+  const envPath = path.resolve(__dirname, '../.playwright/e2e-env.json')
+  if (!fs.existsSync(envPath)) throw new Error('e2e-env.json not found — run global setup first')
+  return JSON.parse(fs.readFileSync(envPath, 'utf-8'))
+}
 
 test('single-hole flow: capture a shot, sink it, see the summary, advance', async ({
   page,
   context,
 }) => {
+  const { E2E_ROUND_ID: ROUND_ID, E2E_START_HOLE } = loadE2EEnv()
+  const START_HOLE = String(E2E_START_HOLE)
+
   // Grant geolocation so Start shot captures coords.
   await context.grantPermissions(['geolocation'])
   await context.setGeolocation({ latitude: 45.0, longitude: -75.0 })

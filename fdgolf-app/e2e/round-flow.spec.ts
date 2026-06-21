@@ -87,7 +87,13 @@ test.describe('Round flow (3 holes)', () => {
     await expect(page.getByRole('button', { name: /oob/i })).toBeVisible()
     await page.getByRole('button', { name: /oob/i }).click()
 
-    // Rehit prompt appears
+    // OOB_REHIT UI appears — pick rehit from OOB location
+    await expect(page.getByRole('button', { name: /rehit from oob/i })).toBeVisible({
+      timeout: 10_000,
+    })
+    await page.getByRole('button', { name: /rehit from oob/i }).click()
+
+    // State resets to IDLE — "Start shot" now visible for the penalty stroke
     await expect(page.getByRole('button', { name: /start shot/i })).toBeVisible()
 
     // Shot 2 — rehit from tee, in play

@@ -74,7 +74,6 @@ export default async function HoleSummaryPage({
         bestPlayerId={best?.contributing_player_id ?? null}
         teamStanding={null}
         stale={false}
-        onNext={() => {}}
       />
     </HoleSummaryClient>
   )

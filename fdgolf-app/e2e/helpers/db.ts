@@ -52,6 +52,23 @@ export async function deleteRound(roundId: string): Promise<void> {
   await db.from('rounds').delete().eq('id', roundId)
 }
 
+/** Delete all rounds for a player in a tournament (by email + tournament slug). */
+export async function deleteRoundsForPlayer(
+  playerEmail: string,
+  tournamentSlug: string
+): Promise<void> {
+  const db = getServiceClient()
+  const { data: tournament } = await db
+    .from('tournaments')
+    .select('id')
+    .eq('slug', tournamentSlug)
+    .single()
+  if (!tournament) return
+  const { data: player } = await db.from('players').select('id').eq('email', playerEmail).single()
+  if (!player) return
+  await db.from('rounds').delete().eq('player_id', player.id).eq('tournament_id', tournament.id)
+}
+
 /**
  * Create a fresh in_progress round for a player in a tournament (looked up by slug).
  * Returns the round ID and the team's start hole.

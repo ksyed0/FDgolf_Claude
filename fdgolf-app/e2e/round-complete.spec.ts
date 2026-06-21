@@ -1,17 +1,20 @@
 import { test, expect } from '@playwright/test'
-import { createE2ERound, deleteRound } from './helpers/db'
+import { createE2ERound, deleteRound, deleteRoundsForPlayer } from './helpers/db'
 
 // Complete all 18 holes for a fresh round (separate from the 3-hole round-flow tests).
 // Each hole uses a single "start shot → sunk" to keep the suite fast.
 
 const TOURNAMENT_SLUG = 'cibc-lionhead-2026'
-const PLAYER_EMAIL = process.env.E2E_PLAYER_EMAIL ?? 'ksyed0+jameswilson@gmail.com'
+// Use Sarah Chen (not James Wilson) to avoid conflicting with the global-setup round
+const PLAYER_EMAIL = 'ksyed0+sarahchen@gmail.com'
 
 test.describe('Full 18-hole round completion', () => {
   let roundId: string
   let startHole: number
 
   test.beforeAll(async () => {
+    // Clean up any stale round from a previous failed run
+    await deleteRoundsForPlayer(PLAYER_EMAIL, TOURNAMENT_SLUG)
     const result = await createE2ERound(PLAYER_EMAIL, TOURNAMENT_SLUG)
     roundId = result.roundId
     startHole = result.startHole
@@ -49,11 +52,13 @@ test.describe('Full 18-hole round completion', () => {
         timeout: 8_000,
       })
 
-      // Continue to next hole (last hole may show "Finish round" instead)
+      // Continue to next hole; last hole shows "View Final Score" or "Finish round"
       const continueBtn = page
         .getByRole('button', { name: /continue/i })
         .or(page.getByRole('link', { name: /continue/i }))
         .or(page.getByRole('button', { name: /finish/i }))
+        .or(page.getByRole('button', { name: /view final score/i }))
+        .or(page.getByRole('link', { name: /view final score/i }))
       await expect(continueBtn.first()).toBeVisible({ timeout: 5_000 })
       await continueBtn.first().click()
     }

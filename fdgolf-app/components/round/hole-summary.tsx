@@ -12,7 +12,7 @@ type Props = {
   bestPlayerId: string | null
   teamStanding: { position: number; of: number } | null
   stale: boolean
-  onNext: () => void
+  onNext?: () => void
 }
 
 export function HoleSummary({
@@ -62,9 +62,11 @@ export function HoleSummary({
         </div>
       )}
 
-      <button onClick={onNext} className="rounded bg-green-700 py-3 font-bold">
-        Next: Hole {next}
-      </button>
+      {onNext && (
+        <button onClick={onNext} className="rounded bg-green-700 py-3 font-bold">
+          Next: Hole {next}
+        </button>
+      )}
     </div>
   )
 }

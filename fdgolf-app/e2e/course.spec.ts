@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test'
 
 // Uses global storageState — runs as authenticated admin.
-// Course editor moved to /admin/venues/[venueId]/courses/[courseId]/edit
+// HoleEditor lives on the course detail page (not /edit which is CourseForm)
 // Uses the seeded Lionhead venue + course from seed-lionhead.sh
 
 const LIONHEAD_VENUE_ID = 'a0000000-0000-0000-0000-000000000001'
 const LIONHEAD_COURSE_ID = 'a0000000-0000-0000-0000-000000000002'
-const COURSE_EDIT_URL = `/admin/venues/${LIONHEAD_VENUE_ID}/courses/${LIONHEAD_COURSE_ID}/edit`
+const COURSE_EDIT_URL = `/admin/venues/${LIONHEAD_VENUE_ID}/courses/${LIONHEAD_COURSE_ID}`
 
 test.describe('Course holes setup (US-0011)', () => {
   test('TC-0013: changing par values updates live par total in real time', async ({ page }) => {

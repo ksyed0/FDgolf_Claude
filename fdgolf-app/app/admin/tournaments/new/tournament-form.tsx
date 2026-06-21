@@ -146,7 +146,7 @@ export function TournamentForm({ venues, tournament }: TournamentFormProps) {
             onBlur={handleSlugBlur}
             placeholder="e.g. summer-classic-2026"
             aria-describedby={slugError ? 'slug-error' : 'slug-hint'}
-            disabled={slugChecking}
+            readOnly={slugChecking}
           />
           {slugError ? (
             <p id="slug-error" role="alert" className="text-sm text-red-600">

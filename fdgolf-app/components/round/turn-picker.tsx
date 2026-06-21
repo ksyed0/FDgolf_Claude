@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { computeNextPlayer, type TurnMember } from '@/lib/round/turn'
 import { haversineMeters, metersToYards } from '@/lib/round/distance'
 import type { LatLng } from '@/lib/round/types'
@@ -17,6 +17,15 @@ export function TurnPicker({ members, pin, onSelect }: Props) {
   const auto = useMemo(() => computeNextPlayer(members, pin), [members, pin])
   const active = members.filter((m) => !m.sunk && m.lastOrigin)
   const selectedName = members.find((m) => m.playerId === auto)?.name ?? '—'
+  const autoSelected = useRef(false)
+
+  // When only one player is active (no real choice to make), auto-advance without requiring a tap.
+  useEffect(() => {
+    if (!autoSelected.current && active.length === 1 && auto) {
+      autoSelected.current = true
+      onSelect(auto)
+    }
+  }, [active.length, auto, onSelect])
 
   return (
     <div className="flex flex-col gap-2 p-4">

@@ -21,8 +21,10 @@ test.describe('Score editor (US-0022)', () => {
     await expect(page).not.toHaveURL(/\/login/)
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Round Score Editor')
 
-    // Shots are grouped by hole — hole 1 heading should appear
-    await expect(page.getByText(/Hole 1/i)).toBeVisible({ timeout: 8_000 })
+    // Shots are grouped by hole — hole 1 heading should appear (exact: true avoids Hole 10-18)
+    await expect(page.getByRole('heading', { name: 'Hole 1', exact: true })).toBeVisible({
+      timeout: 8_000,
+    })
   })
 
   test('TC-SCR-02: clicking Edit on a shot shows inline edit form', async ({ page }) => {
