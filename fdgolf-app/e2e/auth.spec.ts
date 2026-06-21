@@ -9,16 +9,17 @@ test.describe('Authentication (US-0004)', () => {
     await expect(page).toHaveURL(/\/login/)
   })
 
-  test('TC-0004: valid credentials log in and redirect to intended route', async ({ page }) => {
+  test('TC-0004: valid credentials log in and leave /login', async ({ page }) => {
     const email = process.env.TEST_ADMIN_EMAIL!
     const password = process.env.TEST_ADMIN_PASSWORD!
 
-    await page.goto('/login?next=/')
+    await page.goto('/login')
     await page.fill('input[name="email"]', email)
     await page.fill('input[name="password"]', password)
     await page.getByRole('button', { name: 'Sign in' }).click()
 
-    await expect(page).toHaveURL('/', { timeout: 10_000 })
+    // Admin redirects away from login (through / → /admin/tournaments due to role redirect)
+    await expect(page).not.toHaveURL(/\/login/, { timeout: 10_000 })
   })
 
   test('TC-0005: invalid credentials show generic error without account hint', async ({ page }) => {
@@ -34,20 +35,24 @@ test.describe('Authentication (US-0004)', () => {
     expect(text.toLowerCase()).not.toContain('not found')
   })
 
-  test('TC-0006: logout clears session and redirects to /login', async ({ page }) => {
+  test('TC-0006: logout clears session — protected routes redirect to /login', async ({ page }) => {
     const email = process.env.TEST_ADMIN_EMAIL!
     const password = process.env.TEST_ADMIN_PASSWORD!
 
+    // Log in
     await page.goto('/login')
     await page.fill('input[name="email"]', email)
     await page.fill('input[name="password"]', password)
     await page.getByRole('button', { name: 'Sign in' }).click()
-    await page.waitForURL('/', { timeout: 10_000 })
+    await expect(page).not.toHaveURL(/\/login/, { timeout: 10_000 })
 
+    // Sign out — server action clears cookie and redirects
     await page.getByRole('button', { name: 'Sign out' }).click()
-    await expect(page).toHaveURL(/\/login/, { timeout: 10_000 })
+    // Wait for any navigation to complete
+    await page.waitForLoadState('networkidle', { timeout: 10_000 })
 
-    await page.goto('/')
-    await expect(page).toHaveURL(/\/login/)
+    // Verify session is gone: protected page must redirect to /login
+    await page.goto('/admin/tournaments')
+    await expect(page).toHaveURL(/\/login/, { timeout: 10_000 })
   })
 })

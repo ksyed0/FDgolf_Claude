@@ -11,6 +11,7 @@ test.describe('AppChrome & display (US-0001, US-0003)', () => {
     const header = page.getByRole('banner')
     await expect(header).toBeVisible()
     await expect(header).toContainText('FDgolf')
+    await expect(header).toContainText('AI/RUN')
   })
 
   test('TC-0003: authenticated user stays on / and sees AppChrome header (not redirected)', async ({

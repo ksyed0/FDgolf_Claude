@@ -99,13 +99,12 @@ export default async function globalSetup() {
   const { data: clubs } = await supabase.from('clubs').select('id').limit(8).order('display_order')
   const bagClubs = (clubs ?? []).map((c) => c.id)
 
-  // Delete existing e2e round for this player (clean slate)
+  // Delete ALL existing rounds for this player in this tournament (clean slate for E2E)
   await supabase
     .from('rounds')
     .delete()
     .eq('player_id', player.id)
     .eq('tournament_id', TOURNAMENT_ID)
-    .eq('status', 'in_progress')
 
   const { data: round, error } = await supabase
     .from('rounds')
