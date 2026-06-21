@@ -4,7 +4,7 @@ import { requireTournamentAccess } from '@/lib/supabase/auth-guards'
 import { PinPlacementMap, type HoleCoords } from './pin-placement-map'
 
 interface PageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 type HoleRow = {
@@ -28,12 +28,13 @@ type HoleRow = {
  * AC-0062: "Save and next hole" advances automatically.
  */
 export default async function PinsPage({ params }: PageProps) {
+  const { slug } = await params
   const supabase = await createClient()
 
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
     .select('id,name,slug,course_id,venues(name)')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
 
   if (tournamentError || !tournament) notFound()
@@ -42,7 +43,7 @@ export default async function PinsPage({ params }: PageProps) {
 
   // Must have a course linked to place pins
   if (!tournament.course_id) {
-    redirect(`/admin/tournaments/${params.slug}`)
+    redirect(`/admin/tournaments/${slug}`)
   }
 
   // Fetch holes with coordinates (tees JSONB replaces flat tee_lat/tee_lng)
@@ -58,7 +59,7 @@ export default async function PinsPage({ params }: PageProps) {
 
   // BUG-0011: Guard against empty holes array (course created but no holes saved yet)
   if (!holesData || holesData.length === 0) {
-    redirect(`/admin/tournaments/${params.slug}`)
+    redirect(`/admin/tournaments/${slug}`)
   }
 
   // Normalise: ensure tees is always an array (DB may return null for holes with no tees defined)
@@ -75,7 +76,7 @@ export default async function PinsPage({ params }: PageProps) {
       holes={holes}
       courseId={tournament.course_id}
       tournamentVenue={venueName}
-      tournamentSlug={params.slug}
+      tournamentSlug={slug}
     />
   )
 }

@@ -1,19 +1,22 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { requireSystemAdmin } from '@/lib/supabase/auth-guards'
 import { OrganizerSearch } from '@/components/organizer-search'
 
 interface PageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export default async function TournamentOrganizersPage({ params }: PageProps) {
+  await requireSystemAdmin()
+  const { slug } = await params
   const supabase = await createClient()
 
   // Fetch the tournament by slug
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
     .select('id, name, slug')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
 
   if (tournamentError || !tournament) {

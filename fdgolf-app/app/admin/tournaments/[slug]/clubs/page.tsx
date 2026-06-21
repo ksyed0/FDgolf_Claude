@@ -4,7 +4,7 @@ import { requireTournamentAccess } from '@/lib/supabase/auth-guards'
 import { ClubPickerForm } from './club-picker-form'
 
 interface PageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 type ClubRow = {
@@ -32,13 +32,14 @@ type TournamentClubRow = {
  *   defaults all toggles to on.
  */
 export default async function TournamentClubsPage({ params }: PageProps) {
+  const { slug } = await params
   const supabase = await createClient()
 
   // Fetch tournament first (public SELECT), then check access
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
     .select('id,name,slug')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
 
   if (tournamentError || !tournament) notFound()

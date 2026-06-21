@@ -5,24 +5,29 @@ import { ActiveHole } from '@/components/round/active-hole'
 
 type Tee = { colour: string; yardage: number; lat?: number; lng?: number }
 
-export default async function HolePage({ params }: { params: { roundId: string; n: string } }) {
+export default async function HolePage({
+  params,
+}: {
+  params: Promise<{ roundId: string; n: string }>
+}) {
+  const { roundId, n } = await params
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const holeNumber = Number(params.n)
+  const holeNumber = Number(n)
 
   const { data: round } = await supabase
     .from('rounds')
     .select('id, player_id, team_id, bag_clubs, tournament_id, tournaments(course_id)')
-    .eq('id', params.roundId)
+    .eq('id', roundId)
     .single()
   if (!round) redirect('/')
 
   // Soft claim (D3) — best-effort; read-only banner handled client-side if claimed_by_other.
-  await claimRoundAction(params.roundId)
+  await claimRoundAction(roundId)
 
   const courseId = (round.tournaments as unknown as { course_id: string } | null)?.course_id
   const { data: hole } = await supabase
@@ -43,7 +48,7 @@ export default async function HolePage({ params }: { params: { roundId: string; 
   const { count: completedCountRaw } = await supabase
     .from('hole_scores')
     .select('*', { count: 'exact', head: true })
-    .eq('round_id', params.roundId)
+    .eq('round_id', roundId)
     .eq('status', 'final')
   const completedCount = completedCountRaw ?? 0
 

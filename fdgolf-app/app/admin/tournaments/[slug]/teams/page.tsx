@@ -3,13 +3,14 @@ import { redirect } from 'next/navigation'
 import { requireTournamentAccess } from '@/lib/supabase/auth-guards'
 import { TeamListClient } from './team-list-client'
 
-export default async function TeamsPage({ params }: { params: { slug: string } }) {
+export default async function TeamsPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = await createClient()
 
   const { data: tournament } = await supabase
     .from('tournaments')
     .select('id, name, slug')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
   if (!tournament) redirect('/admin/tournaments')
 

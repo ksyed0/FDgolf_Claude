@@ -26,10 +26,8 @@ test.describe('Organizer assignment (US-0020)', () => {
     const searchInput = page.getByRole('textbox', { name: 'Search players' })
     await expect(searchInput).toBeVisible()
 
-    // Type the test admin's name (the admin is also a player record)
-    // Use at least 3 chars that match a real player in the DB
-    const searchTerm =
-      process.env.TEST_ADMIN_SEARCH_TERM ?? process.env.TEST_ADMIN_EMAIL!.split('@')[0]
+    // Use a name from the seeded players (James Wilson is always seeded)
+    const searchTerm = process.env.TEST_ADMIN_SEARCH_TERM ?? 'James'
     await searchInput.fill(searchTerm)
 
     await page.getByRole('button', { name: 'Search' }).click()

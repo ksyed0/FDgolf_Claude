@@ -6,20 +6,21 @@ import { HoleSummaryClient } from '@/components/round/hole-summary-client'
 export default async function HoleSummaryPage({
   params,
 }: {
-  params: { roundId: string; n: string }
+  params: Promise<{ roundId: string; n: string }>
 }) {
+  const { roundId, n } = await params
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const holeNumber = Number(params.n)
+  const holeNumber = Number(n)
 
   const { data: round } = await supabase
     .from('rounds')
     .select('id, team_id, tournament_id, tournaments(course_id)')
-    .eq('id', params.roundId)
+    .eq('id', roundId)
     .single()
   if (!round) redirect('/')
 
@@ -48,7 +49,7 @@ export default async function HoleSummaryPage({
   const { count: completedCountRaw } = await supabase
     .from('hole_scores')
     .select('*', { count: 'exact', head: true })
-    .eq('round_id', params.roundId)
+    .eq('round_id', roundId)
     .eq('status', 'final')
   const completedCount = completedCountRaw ?? 0
 

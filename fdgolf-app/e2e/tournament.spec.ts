@@ -39,7 +39,10 @@ test.describe('Tournament creation (US-0009, US-0010)', () => {
     await page.goto('/admin/tournaments/new')
     await page.fill('input[name="name"]', `Dup Source ${Date.now()}`)
     await page.waitForTimeout(400)
-    await page.fill('input[name="slug_override"]', TEST_SLUG_DUP)
+    await page.locator('input[name="slug_override"]').click({ clickCount: 3 })
+    await page
+      .locator('input[name="slug_override"]')
+      .pressSequentially(TEST_SLUG_DUP, { delay: 10 })
     await page.fill('input[name="starts_at"]', '2026-12-01T09:00')
     await page.getByRole('button', { name: 'Create tournament' }).click()
     await expect(page).toHaveURL(new RegExp(`/admin/tournaments/${TEST_SLUG_DUP}`), {
@@ -50,7 +53,10 @@ test.describe('Tournament creation (US-0009, US-0010)', () => {
     await page.goto('/admin/tournaments/new')
     await page.fill('input[name="name"]', 'Another Tournament')
     await page.waitForTimeout(400)
-    await page.fill('input[name="slug_override"]', TEST_SLUG_DUP)
+    await page.locator('input[name="slug_override"]').click({ clickCount: 3 })
+    await page
+      .locator('input[name="slug_override"]')
+      .pressSequentially(TEST_SLUG_DUP, { delay: 10 })
     await page.locator('input[name="slug_override"]').blur()
     const errorMsg = page.getByRole('alert').or(page.getByText('already taken'))
     await expect(errorMsg).toBeVisible({ timeout: 5_000 })
@@ -63,7 +69,8 @@ test.describe('Tournament creation (US-0009, US-0010)', () => {
 
     await page.fill('input[name="name"]', 'E2E Test Tournament')
     await page.waitForTimeout(400)
-    await page.fill('input[name="slug_override"]', TEST_SLUG)
+    await page.locator('input[name="slug_override"]').click({ clickCount: 3 })
+    await page.locator('input[name="slug_override"]').pressSequentially(TEST_SLUG, { delay: 10 })
     // Venue is optional — leave it unset; only name + starts_at are required
     await page.fill('input[name="starts_at"]', '2026-12-01T09:00')
 

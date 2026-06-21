@@ -34,7 +34,8 @@ export async function createTournamentAction(
   formData: FormData
 ): Promise<ActionState> {
   const name = (formData.get('name') as string | null)?.trim() ?? ''
-  const venue = (formData.get('venue') as string | null)?.trim() ?? ''
+  const venue_id = (formData.get('venue_id') as string | null)?.trim() || null
+  const course_id = (formData.get('course_id') as string | null)?.trim() || null
   const starts_at = (formData.get('starts_at') as string | null)?.trim() ?? ''
   const format = (formData.get('format') as string | null) ?? 'best_ball'
   const start_style = (formData.get('start_style') as string | null) ?? 'shotgun'
@@ -42,7 +43,6 @@ export async function createTournamentAction(
   const slugOverride = (formData.get('slug_override') as string | null)?.trim() ?? ''
 
   if (!name) return { error: 'Tournament name is required.' }
-  if (!venue) return { error: 'Venue is required.' }
   if (!starts_at) return { error: 'Start date and time are required.' }
 
   if (slugOverride && !/^[a-z0-9-]+$/.test(slugOverride)) {
@@ -60,7 +60,8 @@ export async function createTournamentAction(
     .insert({
       name,
       slug,
-      venue,
+      venue_id,
+      course_id,
       starts_at: new Date(starts_at).toISOString(),
       format,
       start_style,

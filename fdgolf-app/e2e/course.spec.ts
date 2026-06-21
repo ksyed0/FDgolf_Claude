@@ -12,44 +12,48 @@ test.describe('Course holes setup (US-0011)', () => {
   test('TC-0013: changing par values updates live par total in real time', async ({ page }) => {
     await page.goto(COURSE_EDIT_URL)
 
-    // AC-0053: total par displayed at bottom
-    const totalParCell = page.getByTestId('total-par')
-    await expect(totalParCell).toBeVisible({ timeout: 8_000 })
+    // AC-0053: total par displayed
+    const totalParSpan = page.getByTestId('total-par')
+    await expect(totalParSpan).toBeVisible({ timeout: 8_000 })
 
-    // Lionhead is seeded — hole 1 par is 4, read the current total
-    const initialTotal = await totalParCell.textContent()
-    const initialPar = parseInt(initialTotal ?? '72', 10)
+    // Lionhead is seeded — hole 1 par is 4; read current total
+    const initialText = await totalParSpan.textContent()
+    const initialPar = parseInt(initialText ?? '72', 10)
 
     // Change hole 1 par from 4 to 5
-    await page.selectOption('select[name="hole_1_par"]', '5')
-    await expect(totalParCell).toContainText(String(initialPar + 1))
+    await page.getByTestId('hole-1-par').fill('5')
+    await expect(totalParSpan).toContainText(String(initialPar + 1))
 
     // Change hole 1 par from 5 to 3
-    await page.selectOption('select[name="hole_1_par"]', '3')
-    await expect(totalParCell).toContainText(String(initialPar - 1))
+    await page.getByTestId('hole-1-par').fill('3')
+    await expect(totalParSpan).toContainText(String(initialPar - 1))
 
     // Restore to seeded par 4
-    await page.selectOption('select[name="hole_1_par"]', '4')
+    await page.getByTestId('hole-1-par').fill('4')
   })
 
   test('TC-0012: save holes → data persists on page reload', async ({ page }) => {
     await page.goto(COURSE_EDIT_URL)
 
-    // Set a distinctive yardage for hole 1 to verify persistence
-    await page.fill('input[name="hole_1_yardage"]', '401')
+    // Lionhead hole 1 tee 0 (Blue) is seeded — yardage input is enabled
+    const yardageInput = page.getByTestId('hole-1-tee-0-yardage')
+    await expect(yardageInput).toBeVisible({ timeout: 8_000 })
 
-    // Ensure all stroke indices are unique (required by validation)
-    for (let n = 1; n <= 18; n++) {
-      await page.fill(`input[name="hole_${n}_stroke_index"]`, String(n))
-    }
+    // Set a distinctive yardage to verify persistence
+    await yardageInput.fill('401')
 
     // AC-0054: save
-    await page.getByRole('button', { name: 'Save Course' }).click()
-    await expect(page.getByRole('status')).toContainText('Course saved!', { timeout: 8_000 })
+    await page.getByRole('button', { name: 'Save all holes' }).click()
+    await expect(page.getByTestId('holes-saved')).toBeVisible({ timeout: 8_000 })
 
     // Reload and verify data persisted
     await page.reload()
-    await expect(page.locator('input[name="hole_1_yardage"]')).toHaveValue('401')
+    await expect(page.getByTestId('hole-1-tee-0-yardage')).toHaveValue('401', { timeout: 8_000 })
+
+    // Restore original yardage
+    await page.getByTestId('hole-1-tee-0-yardage').fill('398')
+    await page.getByRole('button', { name: 'Save all holes' }).click()
+    await expect(page.getByTestId('holes-saved')).toBeVisible({ timeout: 8_000 })
   })
 
   test('TC-COURSE-01: /admin/tournaments/[slug]/course redirects to Venues', async ({ page }) => {

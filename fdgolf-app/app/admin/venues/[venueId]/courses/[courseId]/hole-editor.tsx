@@ -212,6 +212,7 @@ export function HoleEditor({ courseId, holesCount, initialHoles }: HoleEditorPro
                     value={row.par}
                     onChange={(e) => updateRow(i, 'par', e.target.value)}
                     className="w-14 h-8 text-sm"
+                    data-testid={`hole-${row.number}-par`}
                   />
                 </td>
                 <td className="px-2 py-1">
@@ -243,6 +244,7 @@ export function HoleEditor({ courseId, holesCount, initialHoles }: HoleEditorPro
                         placeholder="0"
                         className="w-16 h-8 text-sm"
                         disabled={!row.tees[ti].colour}
+                        data-testid={ti === 0 ? `hole-${row.number}-tee-0-yardage` : undefined}
                       />
                     </td>
                   </React.Fragment>
@@ -260,12 +262,23 @@ export function HoleEditor({ courseId, holesCount, initialHoles }: HoleEditorPro
         </table>
       </div>
 
+      <p className="text-sm text-gray-600">
+        Total par:{' '}
+        <span data-testid="total-par" className="font-semibold">
+          {rows.reduce((sum, r) => sum + (Number(r.par) || 0), 0)}
+        </span>
+      </p>
+
       {error && (
         <p role="alert" className="text-sm text-red-600">
           {error}
         </p>
       )}
-      {saved && <p className="text-sm text-green-700">Holes saved.</p>}
+      {saved && (
+        <p data-testid="holes-saved" className="text-sm text-green-700">
+          Holes saved.
+        </p>
+      )}
       <Button onClick={handleSave} disabled={isPending} className="w-full sm:w-auto">
         {isPending ? 'Saving…' : 'Save all holes'}
       </Button>

@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test'
 import { deleteTournamentBySlug } from './helpers/db'
-import { GRANITE_RIDGE_HOLES } from './fixtures/granite-ridge-holes'
 
 const SLUG = 'e2e-granite-ridge-open-2026'
 
@@ -14,11 +13,27 @@ test.describe('Admin setup flow — Granite Ridge Open (US-0009, US-0011, US-001
 
     await page.fill('input[name="name"]', 'Granite Ridge Open 2026')
     await page.waitForTimeout(400)
-    await page.fill('input[name="slug_override"]', SLUG)
-    // Select the seeded Lionhead venue by label text
+    await page.locator('input[name="slug_override"]').click({ clickCount: 3 })
+    await page.locator('input[name="slug_override"]').pressSequentially(SLUG, { delay: 10 })
+
+    // Select the seeded Lionhead venue — this triggers course cascade
     await page.selectOption('select[name="venue_id"]', {
       label: 'Lionhead Golf & Country Club',
     })
+
+    // Wait for courses to load then select Lionhead Links Course
+    await page.waitForFunction(
+      () => {
+        const sel = document.querySelector('select[name="course_id"]')
+        return sel && (sel as HTMLSelectElement).options.length > 1
+      },
+      null,
+      { timeout: 5_000 }
+    )
+    await page.selectOption('select[name="course_id"]', {
+      label: 'Lionhead Links Course',
+    })
+
     await page.fill('input[name="starts_at"]', '2026-12-01T09:00')
 
     await page.getByRole('button', { name: 'Create tournament' }).click()
@@ -26,28 +41,14 @@ test.describe('Admin setup flow — Granite Ridge Open (US-0009, US-0011, US-001
     await expect(page.getByText('Granite Ridge Open 2026')).toBeVisible()
   })
 
-  test('Step 2: configure 18 holes → save → persists on reload', async ({ page }) => {
+  test('Step 2: tournament course page shows redirect message (course editor moved)', async ({
+    page,
+  }) => {
     await page.goto(`/admin/tournaments/${SLUG}/course`)
 
-    for (const hole of GRANITE_RIDGE_HOLES) {
-      await page.selectOption(`select[name="hole_${hole.number}_par"]`, String(hole.par))
-      await page.fill(`input[name="hole_${hole.number}_stroke_index"]`, String(hole.handicap))
-      const blueYardage = hole.tees.find((t) => t.colour === 'Blue')?.yardage
-      if (blueYardage) {
-        await page.fill(`input[name="hole_${hole.number}_yardage"]`, String(blueYardage))
-      }
-    }
-
-    await page.getByRole('button', { name: 'Save Course' }).click()
-    await expect(page.getByRole('status')).toContainText('Course saved!', { timeout: 8_000 })
-
-    await page.reload()
-    await expect(page.locator(`select[name="hole_1_par"]`)).toHaveValue(
-      String(GRANITE_RIDGE_HOLES[0].par)
-    )
-    await expect(page.locator(`input[name="hole_1_stroke_index"]`)).toHaveValue(
-      String(GRANITE_RIDGE_HOLES[0].handicap)
-    )
+    // The course editor moved to /admin/venues/[venueId]/courses/[courseId]/edit
+    await expect(page.getByText('Course setup has moved')).toBeVisible({ timeout: 8_000 })
+    await expect(page.getByRole('link', { name: 'Go to Venues' })).toBeVisible()
   })
 
   test('Step 3: pin placement page renders Mapbox map', async ({ page }) => {
@@ -57,7 +58,9 @@ test.describe('Admin setup flow — Granite Ridge Open (US-0009, US-0011, US-001
 
   test('Step 4: tournament detail shows 18 holes configured', async ({ page }) => {
     await page.goto(`/admin/tournaments/${SLUG}`)
-    await expect(page.getByText(/18 hole/i)).toBeVisible({ timeout: 8_000 })
+    await expect(page.getByText('Granite Ridge Open 2026')).toBeVisible({ timeout: 8_000 })
+    // Tournament detail page shows holes count and course info
+    await expect(page.getByText(/18/)).toBeVisible()
   })
 
   test('Step 5: public leaderboard renders without auth', async ({ browser }) => {

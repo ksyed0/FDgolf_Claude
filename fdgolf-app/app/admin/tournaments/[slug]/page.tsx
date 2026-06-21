@@ -6,10 +6,11 @@ import { getPreflightChecks } from '@/lib/actions/tournament-lifecycle'
 import { LifecycleClient } from './lifecycle-client'
 
 interface PageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export default async function TournamentDetailPage({ params }: PageProps) {
+  const { slug } = await params
   const supabase = await createClient()
 
   // Fetch tournament first (SELECT is public) then check access
@@ -18,7 +19,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
     .select(
       'id,name,slug,status,starts_at,format,start_style,venue_id,course_id,venues(id,name),courses:course_id(id,name,venue_id)'
     )
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
 
   if (tournamentError || !tournament) notFound()

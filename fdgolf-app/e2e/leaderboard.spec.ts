@@ -35,11 +35,8 @@ test.describe('Public leaderboard (US-0031)', () => {
   test('TC-LB-04: leaderboard shows team rows after simulate-round', async ({ page }) => {
     await page.goto(`/t/${TOURNAMENT_SLUG}/leaderboard`)
 
-    // If simulate-round has been run, at least one team row exists.
-    await expect(
-      page.locator('table, [role="table"]').or(page.getByText(/Fairway Falcons/i))
-    ).toBeVisible({
-      timeout: 8_000,
-    })
+    // If simulate-round has been run, team rows exist in the leaderboard table
+    await expect(page.locator('table').first()).toBeVisible({ timeout: 8_000 })
+    await expect(page.getByText(/Fairway Falcons/i).first()).toBeVisible({ timeout: 8_000 })
   })
 })

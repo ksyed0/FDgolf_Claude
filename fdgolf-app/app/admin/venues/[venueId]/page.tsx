@@ -3,7 +3,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { CourseListClient } from './course-list-client'
 
-export default async function VenueDetailPage({ params }: { params: { venueId: string } }) {
+export default async function VenueDetailPage({
+  params,
+}: {
+  params: Promise<{ venueId: string }>
+}) {
+  const { venueId } = await params
   const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
   if (!isAdmin) redirect('/')
@@ -11,7 +16,7 @@ export default async function VenueDetailPage({ params }: { params: { venueId: s
   const { data: venue, error: venueError } = await supabase
     .from('venues')
     .select('id, name, address1, address2, city, state_province, zip_postal')
-    .eq('id', params.venueId)
+    .eq('id', venueId)
     .single()
 
   if (venueError || !venue) notFound()
@@ -19,7 +24,7 @@ export default async function VenueDetailPage({ params }: { params: { venueId: s
   const { data: courses, error: coursesError } = await supabase
     .from('courses')
     .select('id, name, holes_count, par_total, course_rating, slope_rating')
-    .eq('venue_id', params.venueId)
+    .eq('venue_id', venueId)
     .order('name')
 
   if (coursesError) throw new Error(coursesError.message)
@@ -48,13 +53,13 @@ export default async function VenueDetailPage({ params }: { params: { venueId: s
           {address && <p className="text-sm text-gray-500 mt-1">{address}</p>}
         </div>
         <Link
-          href={`/admin/venues/${params.venueId}/edit`}
+          href={`/admin/venues/${venueId}/edit`}
           className="text-sm text-gray-600 hover:underline"
         >
           Edit venue
         </Link>
       </div>
-      <CourseListClient venueId={params.venueId} courses={courses ?? []} />
+      <CourseListClient venueId={venueId} courses={courses ?? []} />
     </div>
   )
 }

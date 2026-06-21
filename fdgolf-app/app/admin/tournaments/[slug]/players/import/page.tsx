@@ -3,13 +3,14 @@ import { redirect } from 'next/navigation'
 import { requireTournamentAccess } from '@/lib/supabase/auth-guards'
 import { CsvImportClient } from './csv-import-client'
 
-export default async function ImportPage({ params }: { params: { slug: string } }) {
+export default async function ImportPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = await createClient()
 
   const { data: tournament } = await supabase
     .from('tournaments')
     .select('id, name, slug')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
   if (!tournament) redirect('/admin/tournaments')
 
@@ -19,7 +20,7 @@ export default async function ImportPage({ params }: { params: { slug: string } 
     <main className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-6">
         <a
-          href={`/admin/tournaments/${params.slug}/players`}
+          href={`/admin/tournaments/${slug}/players`}
           className="text-sm text-blue-600 hover:underline"
         >
           ← Players

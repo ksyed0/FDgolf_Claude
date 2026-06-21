@@ -20,21 +20,21 @@ test.describe('Tournament organizer scoped access', () => {
   test('organizer can access tournament detail page', async ({ page }) => {
     await page.goto(`/admin/tournaments/${TOURNAMENT_SLUG}`)
     await expect(page).not.toHaveURL(/\/login/)
-    await expect(page.getByText('CIBC ARC Lionhead 2026')).toBeVisible({ timeout: 8_000 })
+    await expect(page.getByText('CIBC ARC Lionhead 2026').first()).toBeVisible({ timeout: 8_000 })
   })
 
   test('organizer can access teams page for their tournament', async ({ page }) => {
     await page.goto(`/admin/tournaments/${TOURNAMENT_SLUG}/teams`)
     await expect(page).not.toHaveURL(/\/login/)
-    await expect(page.getByText(/Teams/i)).toBeVisible({ timeout: 8_000 })
+    await expect(page.getByText(/Teams/i).first()).toBeVisible({ timeout: 8_000 })
     // Seeded teams exist
-    await expect(page.getByText('Fairway Falcons')).toBeVisible()
+    await expect(page.getByText('Fairway Falcons').first()).toBeVisible()
   })
 
   test('organizer can access players page for their tournament', async ({ page }) => {
     await page.goto(`/admin/tournaments/${TOURNAMENT_SLUG}/players`)
     await expect(page).not.toHaveURL(/\/login/)
-    await expect(page.getByText(/Players/i)).toBeVisible({ timeout: 8_000 })
+    await expect(page.getByText(/Players/i).first()).toBeVisible({ timeout: 8_000 })
   })
 
   test('organizer cannot access organizer-assignment page (system admin only)', async ({

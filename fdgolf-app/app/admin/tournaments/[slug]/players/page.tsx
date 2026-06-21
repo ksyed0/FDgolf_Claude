@@ -3,13 +3,14 @@ import { redirect } from 'next/navigation'
 import { requireTournamentAccess } from '@/lib/supabase/auth-guards'
 import { PlayerListClient } from './player-list-client'
 
-export default async function PlayersPage({ params }: { params: { slug: string } }) {
+export default async function PlayersPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = await createClient()
 
   const { data: tournament } = await supabase
     .from('tournaments')
     .select('id, name, slug')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
   if (!tournament) redirect('/admin/tournaments')
 
@@ -32,7 +33,7 @@ export default async function PlayersPage({ params }: { params: { slug: string }
           <p className="text-sm text-gray-500 mt-1">{registrations?.length ?? 0} registrations</p>
         </div>
         <a
-          href={`/admin/tournaments/${params.slug}/players/import`}
+          href={`/admin/tournaments/${slug}/players/import`}
           className="text-sm px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800"
         >
           Import CSV
