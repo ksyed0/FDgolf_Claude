@@ -109,9 +109,8 @@ DECLARE
   v_t1 UUID; v_t2 UUID; v_t3 UUID; v_t4 UUID;
 BEGIN
 
--- Roles
+-- System admin role (no tournament scope)
 INSERT INTO user_roles (user_id, role) VALUES ('$ADMIN_ID', 'admin') ON CONFLICT DO NOTHING;
-INSERT INTO user_roles (user_id, role) VALUES ('$JAMES_ID', 'tournament_organizer') ON CONFLICT DO NOTHING;
 
 -- Venue
 INSERT INTO venues (id, name, address1, city, state_province, zip_postal)
@@ -161,6 +160,9 @@ VALUES (
   '[{"name":"EPAM","slug":"epam","url":"/sponsors/epam.svg"},{"name":"First Derivative","slug":"firstderivative","url":"/sponsors/firstderivative.svg"}]'::jsonb
 ) ON CONFLICT (slug) DO NOTHING;
 v_tourn := 'a0000000-0000-0000-0000-000000000003';
+
+-- Tournament organizer role (scoped to this tournament)
+INSERT INTO user_roles (user_id, role, tournament_id) VALUES ('$JAMES_ID', 'tournament_organizer', v_tourn) ON CONFLICT DO NOTHING;
 
 -- Teams
 INSERT INTO teams (id, tournament_id, name, join_code, captain_player_id, start_hole) VALUES
