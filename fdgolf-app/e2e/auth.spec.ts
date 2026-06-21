@@ -18,8 +18,7 @@ test.describe('Authentication (US-0004)', () => {
     await page.fill('input[name="password"]', password)
     await page.getByRole('button', { name: 'Sign in' }).click()
 
-    // AC-0017: redirects to intended route
-    await expect(page).toHaveURL('http://localhost:3000/', { timeout: 10_000 })
+    await expect(page).toHaveURL('/', { timeout: 10_000 })
   })
 
   test('TC-0005: invalid credentials show generic error without account hint', async ({ page }) => {
@@ -28,7 +27,6 @@ test.describe('Authentication (US-0004)', () => {
     await page.fill('input[name="password"]', 'definitely-wrong')
     await page.getByRole('button', { name: 'Sign in' }).click()
 
-    // AC-0018: error shown, but must NOT say "account" or "not found" (no enumeration)
     const alert = page.getByRole('alert')
     await expect(alert).toBeVisible()
     const text = (await alert.textContent()) ?? ''
@@ -40,18 +38,15 @@ test.describe('Authentication (US-0004)', () => {
     const email = process.env.TEST_ADMIN_EMAIL!
     const password = process.env.TEST_ADMIN_PASSWORD!
 
-    // Log in first
     await page.goto('/login')
     await page.fill('input[name="email"]', email)
     await page.fill('input[name="password"]', password)
     await page.getByRole('button', { name: 'Sign in' }).click()
-    await page.waitForURL('http://localhost:3000/', { timeout: 10_000 })
+    await page.waitForURL('/', { timeout: 10_000 })
 
-    // AC-0020: sign out button clears session
     await page.getByRole('button', { name: 'Sign out' }).click()
     await expect(page).toHaveURL(/\/login/, { timeout: 10_000 })
 
-    // Confirm session is gone — revisiting / should redirect again
     await page.goto('/')
     await expect(page).toHaveURL(/\/login/)
   })

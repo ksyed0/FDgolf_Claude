@@ -13,12 +13,15 @@ test.describe('Admin setup flow — Granite Ridge Open (US-0009, US-0011, US-001
     await page.goto('/admin/tournaments/new')
 
     await page.fill('input[name="name"]', 'Granite Ridge Open 2026')
-    await page.waitForTimeout(400) // slug debounce
+    await page.waitForTimeout(400)
     await page.fill('input[name="slug_override"]', SLUG)
-    await page.fill('input[name="venue"]', 'Granite Ridge GC')
+    // Select the seeded Lionhead venue by label text
+    await page.selectOption('select[name="venue_id"]', {
+      label: 'Lionhead Golf & Country Club',
+    })
     await page.fill('input[name="starts_at"]', '2026-12-01T09:00')
 
-    await page.getByRole('button', { name: 'Create Tournament' }).click()
+    await page.getByRole('button', { name: 'Create tournament' }).click()
     await expect(page).toHaveURL(new RegExp(`/admin/tournaments/${SLUG}`), { timeout: 10_000 })
     await expect(page.getByText('Granite Ridge Open 2026')).toBeVisible()
   })
@@ -49,8 +52,6 @@ test.describe('Admin setup flow — Granite Ridge Open (US-0009, US-0011, US-001
 
   test('Step 3: pin placement page renders Mapbox map', async ({ page }) => {
     await page.goto(`/admin/tournaments/${SLUG}/course/pins`)
-
-    // Mapbox renders a canvas element
     await expect(page.locator('canvas')).toBeVisible({ timeout: 10_000 })
   })
 
@@ -60,14 +61,11 @@ test.describe('Admin setup flow — Granite Ridge Open (US-0009, US-0011, US-001
   })
 
   test('Step 5: public leaderboard renders without auth', async ({ browser }) => {
-    // Use a fresh context with no storageState (no auth)
     const context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
     const page = await context.newPage()
 
     await page.goto(`/t/${SLUG}/leaderboard`)
-    // Page renders (doesn't redirect to login)
     await expect(page).not.toHaveURL(/\/login/)
-    // Tournament name visible
     await expect(page.getByText('Granite Ridge Open 2026')).toBeVisible({ timeout: 8_000 })
 
     await context.close()

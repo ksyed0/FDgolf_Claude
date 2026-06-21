@@ -15,7 +15,7 @@ export default defineConfig({
   reporter: [['html', { outputFolder: 'playwright-report' }], ['list']],
   globalSetup: require.resolve('./global-setup'),
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:3001',
     storageState: storageStatePath,
     trace: 'on-first-retry',
   },
