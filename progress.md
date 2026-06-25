@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 19 — 2026-06-25
+
+### What Was Done
+
+- EPIC-0003 (Registration Flow Refactor): 7 tasks complete — route-per-step architecture, team_size/is_captain DB columns, createInvitation+sendInvitationAction, account/team/captain pages, profile DOB/gender/history, forgot/reset-password (commits 501e948..f5243ec)
+- EPIC-0008 (Admin Operations): 7 tasks complete — sync_issue/deleted_at/display_order/pg_cron migrations, tournament status pills+filter, player server actions (tournament-scoped delete), Player Management Hub, club server actions (display_name/default_loft_degrees schema), Club Management Page (dnd-kit), Dashboard Sync Issues KPI (commits a573340..90726e3)
+- Security fixes: token email cross-validation in createAccountAction; auth guard added to sendInvitationAction (commit 601ab3d)
+
+---
+
 ## Session 18 — 2026-06-21
 
 ### What Was Done

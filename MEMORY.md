@@ -6,19 +6,19 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 18 — 2026-06-21
+Session 19 — 2026-06-25
 
 ---
 
 ## Repo State
 
-- **Branch:** `develop` (current working branch)
+- **Branch:** `develop` (current working branch; worktree: `epic-0005-remaining`)
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `99d3140` (Session 17 — BUG-0019, EPIC-0009, tracking cleanup merged)
-- **Pending PRs:** none
-- **Stories done:** EPIC-0001 through EPIC-0009 (US-0077/0078/0079 Done). EPIC-0010 (Race Day Ops / Security 2FA) is Phase 2 / v1.1 scope.
+- **Develop tip (worktree HEAD):** `601ab3d` (EPIC-0003+EPIC-0008 complete, security fixes; 28 new commits since 1d3faf6)
+- **Pending PRs:** branch `develop` in worktree needs PR to merge into main develop branch — run `superpowers:finishing-a-development-branch` next
+- **Stories done:** EPIC-0001 through EPIC-0009 (US-0077/0078/0079 Done), EPIC-0003 refactor (route-per-step), EPIC-0008 admin ops. EPIC-0010 (Race Day Ops / Security 2FA) is Phase 2 / v1.1 scope.
 - **Dependabot:** 0 open alerts. #7 (postcss) + #17 (js-yaml) dismissed `tolerable_risk` — build-time only, no upstream patch available.
 
 ---
