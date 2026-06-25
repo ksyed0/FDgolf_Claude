@@ -135,6 +135,20 @@ export async function switchTeam(
   return { data: newTeam, error: null }
 }
 
+export async function setTeamCaptain(
+  teamId: string,
+  playerId: string
+): Promise<{ error: string | null }> {
+  const supabase = createServiceClient()
+  const { error } = await supabase
+    .from('team_members')
+    .update({ is_captain: true })
+    .eq('team_id', teamId)
+    .eq('player_id', playerId)
+  if (error) return { error: error.message }
+  return { error: null }
+}
+
 export async function listTeams(tournamentId: string) {
   const supabase = createServiceClient()
   const { data, error } = await supabase
