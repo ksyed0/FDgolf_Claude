@@ -106,11 +106,41 @@ export async function sendInvitationAction(
   tournamentId: string,
   slug: string
 ): Promise<{ data: { inviteUrl: string } | null; error: string | null }> {
-  const invResult = await createInvitation(playerId, tournamentId, slug)
+  const supabase = createServiceClient()
+  let resolvedPlayerId = playerId
+
+  if (!resolvedPlayerId) {
+    // Find or create player row for the invitee
+    const { data: existing } = await supabase
+      .from('players')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle()
+    if (existing) {
+      resolvedPlayerId = existing.id
+    } else {
+      const { data: newPlayer, error: pErr } = await supabase
+        .from('players')
+        .insert({ email, full_name: fullName })
+        .select('id')
+        .single()
+      if (pErr || !newPlayer) {
+        return { data: null, error: pErr?.message ?? 'Failed to create player' }
+      }
+      // Also register the invitee so they appear in the tournament
+      await supabase.from('tournament_registrations').insert({
+        tournament_id: tournamentId,
+        player_id: newPlayer.id,
+        status: 'invited',
+      })
+      resolvedPlayerId = newPlayer.id
+    }
+  }
+
+  const invResult = await createInvitation(resolvedPlayerId, tournamentId, slug)
   if (invResult.error || !invResult.data) return { data: null, error: invResult.error }
 
   const { token, inviteUrl } = invResult.data
-  const supabase = createServiceClient()
   const { error: emailErr } = await supabase.auth.admin.inviteUserByEmail(email, {
     redirectTo: `${APP_URL}/register/${slug}?token=${token}`,
   })
