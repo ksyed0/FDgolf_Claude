@@ -36,6 +36,7 @@ export function TeamForm({ tournamentId, playerId, slug, preassignedTeam }: Prop
 
   async function handleJoin() {
     setError(null)
+    setIsCaptain(false)
     setLoading(true)
     if (preassignedTeam && joinCode) {
       const { data, error: err } = await switchTeam(playerId, joinCode, preassignedTeam.teamId)
