@@ -27,7 +27,9 @@ SELECT cron.schedule(
     SET sync_issue = false
     WHERE status = 'in_progress'
       AND sync_issue = true
-      AND (SELECT MAX(created_at) FROM shots WHERE shots.round_id = rounds.id)
-          > now() - INTERVAL '10 minutes'
+      AND COALESCE(
+        (SELECT MAX(created_at) FROM shots WHERE shots.round_id = rounds.id),
+        rounds.started_at
+      ) > now() - INTERVAL '10 minutes'
   $$
 );
