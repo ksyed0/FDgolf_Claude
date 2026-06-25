@@ -16,6 +16,8 @@ const PLAYER = {
   handicap: 12.5,
   company: 'Acme',
   title: 'VP Sales',
+  dob: '1990-05-15',
+  gender: 'female',
   user_id: 'u1',
   created_at: '',
 }
@@ -28,6 +30,12 @@ describe('ProfileForm', () => {
     expect(screen.getByDisplayValue('VP Sales')).toBeInTheDocument()
   })
 
+  it('renders dob and gender fields', () => {
+    render(<ProfileForm player={PLAYER} />)
+    expect(screen.getByDisplayValue('1990-05-15')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Female')).toBeInTheDocument()
+  })
+
   it('calls updatePlayer on save', async () => {
     render(<ProfileForm player={PLAYER} />)
     fireEvent.change(screen.getByDisplayValue('Alice'), { target: { value: 'Alice Updated' } })
@@ -36,6 +44,17 @@ describe('ProfileForm', () => {
       expect(updatePlayer).toHaveBeenCalledWith(
         'p1',
         expect.objectContaining({ full_name: 'Alice Updated' })
+      )
+    })
+  })
+
+  it('includes dob and gender in updatePlayer call', async () => {
+    render(<ProfileForm player={PLAYER} />)
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(updatePlayer).toHaveBeenCalledWith(
+        'p1',
+        expect.objectContaining({ dob: '1990-05-15', gender: 'female' })
       )
     })
   })

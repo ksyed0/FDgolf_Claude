@@ -14,6 +14,8 @@ export function ProfileForm({ player }: Props) {
   const [handicap, setHandicap] = useState(player.handicap?.toString() ?? '')
   const [company, setCompany] = useState(player.company ?? '')
   const [title, setTitle] = useState(player.title ?? '')
+  const [dob, setDob] = useState(player.dob ?? '')
+  const [gender, setGender] = useState(player.gender ?? '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -28,6 +30,8 @@ export function ProfileForm({ player }: Props) {
       handicap: handicap ? parseFloat(handicap) : null,
       company: company || null,
       title: title || null,
+      dob: dob || null,
+      gender: gender || null,
     })
     setSaving(false)
     if (err) setError(err)
@@ -64,6 +68,24 @@ export function ProfileForm({ player }: Props) {
       <div>
         <label className="text-sm font-medium text-gray-700">Title</label>
         <Input value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1" />
+      </div>
+      <div>
+        <label className="text-sm font-medium text-gray-700">Date of birth</label>
+        <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="mt-1" />
+      </div>
+      <div>
+        <label className="text-sm font-medium text-gray-700">Gender</label>
+        <select
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+          className="mt-1 w-full border rounded-md px-3 py-2 text-sm"
+        >
+          <option value="">Prefer not to say</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="non_binary">Non-binary</option>
+          <option value="prefer_not_to_say">Prefer not to say</option>
+        </select>
       </div>
       {error && (
         <p role="alert" className="text-sm text-red-600">

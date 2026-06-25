@@ -9,6 +9,8 @@ export type PlayerInput = {
   handicap?: number | null
   company?: string | null
   title?: string | null
+  dob?: string | null
+  gender?: string | null
 }
 
 export type PlayerRow = PlayerInput & {
