@@ -153,6 +153,12 @@ export async function searchPlayersAction(
     }
   })
 
+  // NOTE: The 'unassigned' filter is applied in-memory after pagination because
+  // team_member is a left-join array and Supabase does not support a DB-level
+  // .is(null) filter on an embedded relation count. As a result, when this filter
+  // is active, `total` reflects the pre-filter (paginated slice) count rather than
+  // the true count of unassigned players. Callers should treat `total` as an upper
+  // bound when the 'unassigned' filter is active.
   const filtered = filters.includes('unassigned') ? rows.filter((r) => !r.team_id) : rows
 
   return { data: filtered, total: count ?? 0, error: null }
@@ -168,10 +174,13 @@ export async function deletePlayerAction(
 
   const db = createServiceClient()
 
+  // Scoped to the given tournament so an active round in another event
+  // does not block removal from this one.
   const { data: activeRound } = await db
     .from('rounds')
     .select('id')
     .eq('player_id', playerId)
+    .eq('tournament_id', tournamentId)
     .eq('status', 'in_progress')
     .maybeSingle()
 
@@ -191,6 +200,21 @@ export async function deletePlayerAction(
     .eq('player_id', playerId)
     .eq('tournament_id', tournamentId)
   if (regErr) return { error: regErr.message }
+
+  // Clean up team membership for this tournament.
+  // If the player is a captain, promote the next member before removing.
+  const { data: membership } = await db
+    .from('team_members')
+    .select('team_id, is_captain')
+    .eq('player_id', playerId)
+    .maybeSingle()
+
+  if (membership?.team_id) {
+    if (membership.is_captain) {
+      await promoteNextCaptain(membership.team_id, playerId)
+    }
+    await db.from('team_members').delete().eq('player_id', playerId)
+  }
 
   return { error: null }
 }
