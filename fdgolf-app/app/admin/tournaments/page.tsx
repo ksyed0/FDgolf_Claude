@@ -2,7 +2,12 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { TournamentListClient } from './tournament-list-client'
 
-export default async function TournamentsPage() {
+export default async function TournamentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>
+}) {
+  const { status } = await searchParams
   const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
 
@@ -10,6 +15,10 @@ export default async function TournamentsPage() {
     .from('tournaments')
     .select('id, slug, name, starts_at, status, venue_id, venues(name)')
     .order('starts_at', { ascending: false })
+
+  if (status && status !== 'all') {
+    query = query.eq('status', status)
+  }
 
   if (!isAdmin) {
     // Organizer: fetch only tournaments they are assigned to.

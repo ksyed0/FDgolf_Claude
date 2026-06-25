@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { deleteTournamentAction } from '@/lib/actions/tournaments'
 import { Button } from '@/components/ui/button'
+import { StatusPill } from '@/components/admin/status-pill'
+
+type TournamentStatus = 'draft' | 'registration_open' | 'active' | 'completed' | 'cancelled'
 
 interface Tournament {
   id: string
@@ -19,11 +22,33 @@ interface TournamentListClientProps {
   tournaments: Tournament[]
 }
 
+const FILTER_CHIPS: { label: string; value: TournamentStatus | 'all' }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Draft', value: 'draft' },
+  { label: 'Registration Open', value: 'registration_open' },
+  { label: 'Active', value: 'active' },
+  { label: 'Completed', value: 'completed' },
+]
+
 export function TournamentListClient({ tournaments }: TournamentListClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const activeStatus = searchParams.get('status') ?? 'all'
+
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  function handleChipClick(value: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value === 'all') {
+      params.delete('status')
+    } else {
+      params.set('status', value)
+    }
+    router.replace(`${pathname}?${params.toString()}`)
+  }
 
   function handleDeleteClick(id: string) {
     setConfirmId(id)
@@ -57,6 +82,25 @@ export function TournamentListClient({ tournaments }: TournamentListClientProps)
         </Button>
       </div>
 
+      {/* Filter chips */}
+      <div className="flex flex-wrap gap-2">
+        {FILTER_CHIPS.map((chip) => (
+          <button
+            key={chip.value}
+            type="button"
+            data-active={activeStatus === chip.value ? 'true' : 'false'}
+            onClick={() => handleChipClick(chip.value)}
+            className={`text-sm px-3 py-1 rounded-full border transition-colors ${
+              activeStatus === chip.value
+                ? 'bg-slate-800 text-white border-slate-800'
+                : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'
+            }`}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+
       {error && (
         <p role="alert" className="text-sm text-red-600">
           {error}
@@ -73,10 +117,12 @@ export function TournamentListClient({ tournaments }: TournamentListClientProps)
                 <Link href={`/admin/tournaments/${t.slug}`} className="font-medium hover:underline">
                   {t.name}
                 </Link>
-                <div className="text-sm text-gray-500 space-x-2">
+                <div className="text-sm text-gray-500 space-x-2 mt-1">
                   {t.venues?.name && <span>{t.venues.name}</span>}
                   {t.starts_at && <span>· {new Date(t.starts_at).toLocaleDateString()}</span>}
-                  <span className="capitalize">· {t.status}</span>
+                  <span className="inline-block ml-1">
+                    <StatusPill status={t.status} />
+                  </span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
