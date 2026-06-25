@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 
 type ClubsActionState = { error: string | null; success: boolean }
 
@@ -72,4 +73,120 @@ export async function saveClubsAction(
   }
 
   return { error: null, success: true }
+}
+
+// ── US-0074: Club management actions ─────────────────────────────────────────
+
+export type ClubRow = {
+  club_id: string
+  name: string
+  loft: number | null
+  display_order: number
+  is_active: boolean
+}
+
+export async function getClubsForTournament(
+  tournamentId: string
+): Promise<{ data: ClubRow[]; error: string | null }> {
+  const db = createServiceClient()
+  const { data, error } = await db
+    .from('tournament_clubs')
+    .select('club_id, is_active, display_order, clubs!inner(name, loft, deleted_at)')
+    .eq('tournament_id', tournamentId)
+    .is('clubs.deleted_at', null)
+    .order('display_order', { ascending: true })
+  if (error) return { data: [], error: error.message }
+  return {
+    data: (data ?? []).map((row) => {
+      const club = row.clubs as unknown as { name: string; loft: number | null }
+      return {
+        club_id: row.club_id,
+        name: club.name,
+        loft: club.loft,
+        display_order: row.display_order,
+        is_active: row.is_active,
+      }
+    }),
+    error: null,
+  }
+}
+
+export async function reorderClubsAction(
+  tournamentId: string,
+  orderedClubIds: string[]
+): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
+  if (!isAdmin) return { error: 'Unauthorized' }
+
+  const db = createServiceClient()
+  for (let i = 0; i < orderedClubIds.length; i++) {
+    const { error } = await db
+      .from('tournament_clubs')
+      .update({ display_order: i })
+      .eq('club_id', orderedClubIds[i])
+      .eq('tournament_id', tournamentId)
+    if (error) return { error: error.message }
+  }
+  return { error: null }
+}
+
+export async function toggleClubActiveAction(
+  clubId: string,
+  tournamentId: string,
+  isActive: boolean
+): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
+  if (!isAdmin) return { error: 'Unauthorized' }
+
+  const db = createServiceClient()
+
+  if (!isActive) {
+    const { count } = await db
+      .from('tournament_clubs')
+      .select('*', { count: 'exact', head: true })
+      .eq('tournament_id', tournamentId)
+      .eq('is_active', true)
+
+    if ((count ?? 0) <= 1) {
+      return { error: 'At least one club must remain active' }
+    }
+  }
+
+  const { error } = await db
+    .from('tournament_clubs')
+    .update({ is_active: isActive })
+    .eq('club_id', clubId)
+    .eq('tournament_id', tournamentId)
+  if (error) return { error: error.message }
+  return { error: null }
+}
+
+export async function updateClubAction(
+  clubId: string,
+  updates: { name?: string; loft?: number | null }
+): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
+  if (!isAdmin) return { error: 'Unauthorized' }
+
+  const db = createServiceClient()
+  const { error } = await db.from('clubs').update(updates).eq('id', clubId)
+  if (error) return { error: error.message }
+  return { error: null }
+}
+
+export async function deleteClubAction(clubId: string): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')
+  if (!isAdmin) return { error: 'Unauthorized' }
+
+  const db = createServiceClient()
+  const { error } = await db
+    .from('clubs')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', clubId)
+  if (error) return { error: error.message }
+  return { error: null }
 }
