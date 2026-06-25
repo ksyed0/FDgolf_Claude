@@ -106,6 +106,15 @@ export async function sendInvitationAction(
   tournamentId: string,
   slug: string
 ): Promise<{ data: { inviteUrl: string } | null; error: string | null }> {
+  const authClient = await createClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await authClient.auth.getUser()
+  if (authError || !user) {
+    return { data: null, error: 'Unauthorized' }
+  }
+
   const supabase = createServiceClient()
   let resolvedPlayerId = playerId
 

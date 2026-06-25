@@ -110,7 +110,15 @@ describe('createInvitation', () => {
 })
 
 describe('sendInvitationAction', () => {
+  it('returns Unauthorized when not authenticated', async () => {
+    mockAuth.getUser.mockResolvedValue({ data: { user: null }, error: null })
+    const result = await sendInvitationAction('bob@test.com', 'Bob', 'p2', 't1', 'cibc-2026')
+    expect(result.data).toBeNull()
+    expect(result.error).toBe('Unauthorized')
+  })
+
   it('calls inviteUserByEmail with invitation token in redirectTo', async () => {
+    mockAuth.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
     const mockUpsert = {
       upsert: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
@@ -128,6 +136,7 @@ describe('sendInvitationAction', () => {
   })
 
   it('returns inviteUrl as fallback when email send fails', async () => {
+    mockAuth.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
     const mockUpsert = {
       upsert: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),

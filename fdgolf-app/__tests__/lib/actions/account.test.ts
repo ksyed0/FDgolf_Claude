@@ -60,13 +60,69 @@ describe('createAccountAction', () => {
     expect(mockInsert.insert).toHaveBeenCalled()
   })
 
+  it('rejects token with mismatched email', async () => {
+    mockSignUp.mockResolvedValue({ data: { user: { id: 'auth-x' } }, error: null })
+    // Token belongs to victim@example.com, but attacker submits attacker@evil.com
+    const mockChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      single: vi
+        .fn()
+        .mockResolvedValue({
+          data: { player_id: 'p-victim', players: { email: 'victim@example.com' } },
+          error: null,
+        }),
+    }
+    mockFrom.mockReturnValue(mockChain)
+
+    const result = await createAccountAction(
+      {
+        fullName: 'Attacker',
+        email: 'attacker@evil.com',
+        phone: null,
+        password: 'password123',
+        handicap: null,
+        company: null,
+        title: null,
+        dob: null,
+        gender: null,
+      },
+      't1',
+      'victim-invite-token'
+    )
+
+    expect(result.error).toMatch(/does not match/i)
+    expect(mockDeleteUser).toHaveBeenCalledWith('auth-x')
+  })
+
   it('CSV claim path: signUp + UPDATE players.user_id + claimInvitation', async () => {
     mockSignUp.mockResolvedValue({ data: { user: { id: 'auth-2' } }, error: null })
     const mockUpdate = {
       update: vi.fn().mockReturnThis(),
       eq: vi.fn().mockResolvedValue({ error: null }),
     }
-    mockFrom.mockReturnValue(mockUpdate)
+    // First call: player_invitations validation (email matches)
+    // Second call: players UPDATE
+    let callCount = 0
+    mockFrom.mockImplementation(() => {
+      callCount++
+      if (callCount === 1) {
+        // player_invitations lookup — email matches
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          is: vi.fn().mockReturnThis(),
+          single: vi
+            .fn()
+            .mockResolvedValue({
+              data: { player_id: 'p2', players: { email: 'bob@test.com' } },
+              error: null,
+            }),
+        }
+      }
+      return mockUpdate
+    })
 
     const result = await createAccountAction(
       {

@@ -34,6 +34,19 @@ export async function createAccountAction(
   const svc = createServiceClient()
 
   if (token) {
+    // Validate that the invitation token belongs to this email address
+    // before allowing the claim — prevents account takeover via token misuse.
+    const { data: invite } = await svc
+      .from('player_invitations')
+      .select('player_id, players!inner(email)')
+      .eq('token', token)
+      .is('claimed_at', null)
+      .single()
+    if (!invite || (invite.players as unknown as { email: string }).email !== data.email) {
+      await svc.auth.admin.deleteUser(userId)
+      return { error: 'Invitation token does not match this email address.' }
+    }
+
     // CSV claim path — update existing players row
     const { error: updateErr } = await svc
       .from('players')
