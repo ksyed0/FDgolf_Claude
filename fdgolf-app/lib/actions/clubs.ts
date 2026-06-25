@@ -79,30 +79,42 @@ export async function saveClubsAction(
 
 export type ClubRow = {
   club_id: string
-  name: string
-  loft: number | null
+  display_name: string
+  default_loft_degrees: number | null
   display_order: number
   is_active: boolean
 }
 
+/**
+ * getClubsForTournament — reads tournament_clubs joined to clubs master data.
+ *
+ * Uses the service client (bypasses RLS) intentionally: reads do not require
+ * an admin guard per the US-0074 brief — any authenticated caller may fetch
+ * the club list for a tournament.
+ */
 export async function getClubsForTournament(
   tournamentId: string
 ): Promise<{ data: ClubRow[]; error: string | null }> {
   const db = createServiceClient()
   const { data, error } = await db
     .from('tournament_clubs')
-    .select('club_id, is_active, display_order, clubs!inner(name, loft, deleted_at)')
+    .select(
+      'club_id, is_active, display_order, clubs!inner(display_name, default_loft_degrees, deleted_at)'
+    )
     .eq('tournament_id', tournamentId)
     .is('clubs.deleted_at', null)
     .order('display_order', { ascending: true })
   if (error) return { data: [], error: error.message }
   return {
     data: (data ?? []).map((row) => {
-      const club = row.clubs as unknown as { name: string; loft: number | null }
+      const club = row.clubs as unknown as {
+        display_name: string
+        default_loft_degrees: number | null
+      }
       return {
         club_id: row.club_id,
-        name: club.name,
-        loft: club.loft,
+        display_name: club.display_name,
+        default_loft_degrees: club.default_loft_degrees,
         display_order: row.display_order,
         is_active: row.is_active,
       }
@@ -120,6 +132,9 @@ export async function reorderClubsAction(
   if (!isAdmin) return { error: 'Unauthorized' }
 
   const db = createServiceClient()
+  // NOTE: These updates are not atomic — a partial failure leaves display_order
+  // in an inconsistent state. This is acceptable given Supabase JS client
+  // limitations (no multi-statement transactions from the browser layer).
   for (let i = 0; i < orderedClubIds.length; i++) {
     const { error } = await db
       .from('tournament_clubs')
@@ -165,7 +180,7 @@ export async function toggleClubActiveAction(
 
 export async function updateClubAction(
   clubId: string,
-  updates: { name?: string; loft?: number | null }
+  updates: { display_name?: string; default_loft_degrees?: number | null }
 ): Promise<{ error: string | null }> {
   const supabase = await createClient()
   const { data: isAdmin } = await supabase.rpc('fdgolf_is_admin')

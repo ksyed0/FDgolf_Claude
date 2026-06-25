@@ -20,6 +20,7 @@ vi.mock('@/lib/supabase/service', () => ({
 
 import {
   saveClubsAction,
+  getClubsForTournament,
   reorderClubsAction,
   toggleClubActiveAction,
   updateClubAction,
@@ -163,6 +164,67 @@ describe('saveClubsAction', () => {
 
 // ── New actions (US-0074) ─────────────────────────────────────────────────────
 
+describe('getClubsForTournament', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns mapped club rows on happy path', async () => {
+    const fakeRows = [
+      {
+        club_id: 'club-1',
+        is_active: true,
+        display_order: 0,
+        clubs: { display_name: 'Driver', default_loft_degrees: 9.5, deleted_at: null },
+      },
+      {
+        club_id: 'club-2',
+        is_active: false,
+        display_order: 1,
+        clubs: { display_name: '3 Wood', default_loft_degrees: 15, deleted_at: null },
+      },
+    ]
+
+    const mockIs = vi.fn().mockReturnThis()
+    const mockOrder = vi.fn().mockResolvedValue({ data: fakeRows, error: null })
+    const mockEqInner = vi.fn().mockReturnValue({ is: mockIs })
+    mockIs.mockReturnValue({ order: mockOrder })
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEqInner })
+    mockFrom.mockReturnValue({ select: mockSelect })
+
+    const result = await getClubsForTournament('tour-1')
+    expect(result.error).toBeNull()
+    expect(result.data).toHaveLength(2)
+    expect(result.data[0]).toEqual({
+      club_id: 'club-1',
+      display_name: 'Driver',
+      default_loft_degrees: 9.5,
+      display_order: 0,
+      is_active: true,
+    })
+    expect(result.data[1]).toEqual({
+      club_id: 'club-2',
+      display_name: '3 Wood',
+      default_loft_degrees: 15,
+      display_order: 1,
+      is_active: false,
+    })
+  })
+
+  it('returns empty array and error message on DB error', async () => {
+    const mockIs = vi.fn().mockReturnThis()
+    const mockOrder = vi.fn().mockResolvedValue({ data: null, error: { message: 'DB error' } })
+    const mockEqInner = vi.fn().mockReturnValue({ is: mockIs })
+    mockIs.mockReturnValue({ order: mockOrder })
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEqInner })
+    mockFrom.mockReturnValue({ select: mockSelect })
+
+    const result = await getClubsForTournament('tour-1')
+    expect(result.error).toBe('DB error')
+    expect(result.data).toEqual([])
+  })
+})
+
 describe('reorderClubsAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -264,19 +326,22 @@ describe('updateClubAction', () => {
     mockRpc.mockResolvedValue({ data: true, error: null })
   })
 
-  it('updates name and loft', async () => {
+  it('updates display_name and default_loft_degrees', async () => {
     mockEq.mockResolvedValue({ error: null })
     mockUpdate.mockReturnValue({ eq: mockEq })
     mockFrom.mockReturnValue({ update: mockUpdate })
 
-    const result = await updateClubAction('club-1', { name: 'Driver', loft: 9.5 })
+    const result = await updateClubAction('club-1', {
+      display_name: 'Driver',
+      default_loft_degrees: 9.5,
+    })
     expect(result.error).toBeNull()
-    expect(mockUpdate).toHaveBeenCalledWith({ name: 'Driver', loft: 9.5 })
+    expect(mockUpdate).toHaveBeenCalledWith({ display_name: 'Driver', default_loft_degrees: 9.5 })
   })
 
   it('returns Unauthorized when not admin', async () => {
     mockRpc.mockResolvedValue({ data: false, error: null })
-    const result = await updateClubAction('club-1', { name: 'Driver' })
+    const result = await updateClubAction('club-1', { display_name: 'Driver' })
     expect(result.error).toMatch(/unauthorized/i)
     expect(mockFrom).not.toHaveBeenCalled()
   })
@@ -286,7 +351,7 @@ describe('updateClubAction', () => {
     mockUpdate.mockReturnValue({ eq: mockEq })
     mockFrom.mockReturnValue({ update: mockUpdate })
 
-    const result = await updateClubAction('club-1', { loft: 10 })
+    const result = await updateClubAction('club-1', { default_loft_degrees: 10 })
     expect(result.error).toBe('update failed')
   })
 })
