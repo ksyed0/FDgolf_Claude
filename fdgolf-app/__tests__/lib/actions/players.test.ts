@@ -240,16 +240,11 @@ describe('deletePlayerAction', () => {
     mockRpc.mockResolvedValue({ data: true, error: null })
   })
 
-  it('soft-deletes player when no active round and player has no team', async () => {
+  it('withdraws player from tournament when no active round and player has no team', async () => {
     const mockRoundsQuery = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-    }
-    const mockDeletedAt = vi.fn().mockResolvedValue({ error: null })
-    const mockUpdateEq = vi.fn().mockReturnValue({ eq: mockDeletedAt })
-    const mockPlayersUpdate = {
-      update: vi.fn().mockReturnValue({ eq: mockUpdateEq }),
     }
     const mockRegUpdate = {
       update: vi.fn().mockReturnValue({
@@ -265,12 +260,13 @@ describe('deletePlayerAction', () => {
 
     mockFrom
       .mockReturnValueOnce(mockRoundsQuery) // rounds check
-      .mockReturnValueOnce(mockPlayersUpdate) // players soft-delete
       .mockReturnValueOnce(mockRegUpdate) // registration withdraw
       .mockReturnValueOnce(mockTeamMembersQuery) // team_members lookup
 
     const result = await deletePlayerAction('p1', 'tour-1')
     expect(result.error).toBeNull()
+    // Verify tournament_registrations was updated to 'withdrawn'
+    expect(mockRegUpdate.update).toHaveBeenCalledWith({ status: 'withdrawn' })
   })
 
   it('removes team_members row when player belongs to a team (non-captain)', async () => {
@@ -278,11 +274,6 @@ describe('deletePlayerAction', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-    }
-    const mockDeletedAt = vi.fn().mockResolvedValue({ error: null })
-    const mockUpdateEq = vi.fn().mockReturnValue({ eq: mockDeletedAt })
-    const mockPlayersUpdate = {
-      update: vi.fn().mockReturnValue({ eq: mockUpdateEq }),
     }
     const mockRegUpdate = {
       update: vi.fn().mockReturnValue({
@@ -306,7 +297,6 @@ describe('deletePlayerAction', () => {
 
     mockFrom
       .mockReturnValueOnce(mockRoundsQuery)
-      .mockReturnValueOnce(mockPlayersUpdate)
       .mockReturnValueOnce(mockRegUpdate)
       .mockReturnValueOnce(mockTeamMembersQuery)
       .mockReturnValueOnce(mockDeleteQuery)
@@ -321,11 +311,6 @@ describe('deletePlayerAction', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-    }
-    const mockDeletedAt = vi.fn().mockResolvedValue({ error: null })
-    const mockUpdateEq = vi.fn().mockReturnValue({ eq: mockDeletedAt })
-    const mockPlayersUpdate = {
-      update: vi.fn().mockReturnValue({ eq: mockUpdateEq }),
     }
     const mockRegUpdate = {
       update: vi.fn().mockReturnValue({
@@ -358,7 +343,6 @@ describe('deletePlayerAction', () => {
 
     mockFrom
       .mockReturnValueOnce(mockRoundsQuery)
-      .mockReturnValueOnce(mockPlayersUpdate)
       .mockReturnValueOnce(mockRegUpdate)
       .mockReturnValueOnce(mockTeamMembersQuery)
       .mockReturnValueOnce(mockPromoteQuery) // promoteNextCaptain internal query

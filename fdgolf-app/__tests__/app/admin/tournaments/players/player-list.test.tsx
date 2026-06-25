@@ -42,22 +42,52 @@ const MOCK_TEAMS = [
   { id: 'team-2', name: 'Hawks', member_count: 4, team_size: 4 },
 ]
 
+const MOCK_PLAYERS = [
+  {
+    id: 'p1',
+    full_name: 'Alice Smith',
+    email: 'alice@test.com',
+    company: 'CIBC',
+    phone: null,
+    title: null,
+    handicap: null,
+    registration_status: 'registered',
+    team_id: 'team-1',
+    team_name: 'Eagles',
+    is_captain: false,
+  },
+]
+
 describe('PlayerListClient', () => {
   beforeEach(() => {
     mockReplace.mockClear()
     mockRefresh.mockClear()
   })
 
-  it('renders player rows from searchPlayersAction', async () => {
+  it('renders player rows from initialPlayers', () => {
     render(
       <PlayerListClient
         tournamentId="tour-1"
         teams={MOCK_TEAMS}
-        initialPlayers={[]}
-        initialTotal={0}
+        initialPlayers={MOCK_PLAYERS}
+        initialTotal={1}
       />
     )
-    await waitFor(() => expect(screen.getByText('Alice Smith')).toBeInTheDocument())
+    expect(screen.getByText('Alice Smith')).toBeInTheDocument()
+  })
+
+  it('shows Registered badge with correct colour class', () => {
+    render(
+      <PlayerListClient
+        tournamentId="tour-1"
+        teams={MOCK_TEAMS}
+        initialPlayers={MOCK_PLAYERS}
+        initialTotal={1}
+      />
+    )
+    const badge = screen.getByText('Registered')
+    expect(badge).toBeInTheDocument()
+    expect(badge.className).toContain('bg-green-100')
   })
 
   it('Unassigned chip updates URL search params', async () => {
@@ -65,24 +95,23 @@ describe('PlayerListClient', () => {
       <PlayerListClient
         tournamentId="tour-1"
         teams={MOCK_TEAMS}
-        initialPlayers={[]}
-        initialTotal={0}
+        initialPlayers={MOCK_PLAYERS}
+        initialTotal={1}
       />
     )
     await userEvent.click(screen.getByRole('button', { name: 'Unassigned' }))
     expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('filter=unassigned'))
   })
 
-  it('shows greyed-out team option when team is full', async () => {
+  it('shows greyed-out team option when team is full', () => {
     render(
       <PlayerListClient
         tournamentId="tour-1"
         teams={MOCK_TEAMS}
-        initialPlayers={[]}
-        initialTotal={0}
+        initialPlayers={MOCK_PLAYERS}
+        initialTotal={1}
       />
     )
-    await waitFor(() => screen.getByText('Alice Smith'))
     // Hawks is full (4/4) — option should be disabled
     const select = screen.getByRole('combobox', { name: /team/i })
     const hawksOption = Array.from(select.querySelectorAll('option')).find(
@@ -98,11 +127,10 @@ describe('PlayerListClient', () => {
       <PlayerListClient
         tournamentId="tour-1"
         teams={MOCK_TEAMS}
-        initialPlayers={[]}
-        initialTotal={0}
+        initialPlayers={MOCK_PLAYERS}
+        initialTotal={1}
       />
     )
-    await waitFor(() => screen.getByText('Alice Smith'))
     await userEvent.click(screen.getByRole('button', { name: /delete/i }))
     expect(screen.getByText(/are you sure/i)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /confirm/i }))

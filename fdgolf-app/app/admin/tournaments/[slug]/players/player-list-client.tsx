@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition, useCallback, useRef } from 'react'
+import { useState, useTransition, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import {
   searchPlayersAction,
@@ -12,7 +12,31 @@ import {
 } from '@/lib/actions/players'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { StatusPill } from '@/components/admin/status-pill'
+// StatusPill is for tournament statuses; registration statuses use a dedicated badge below.
+
+// ─── Registration Status Badge ────────────────────────────────────────────────
+
+const REGISTRATION_STATUS_CONFIG: Record<string, { label: string; classes: string }> = {
+  registered: { label: 'Registered', classes: 'bg-green-100 text-green-800' },
+  invited: { label: 'Invited', classes: 'bg-blue-100 text-blue-700' },
+  withdrawn: { label: 'Withdrawn', classes: 'bg-red-100 text-red-700' },
+}
+
+function RegistrationStatusBadge({ status }: { status: string }) {
+  const config = REGISTRATION_STATUS_CONFIG[status] ?? {
+    label: status,
+    classes: 'bg-gray-100 text-gray-600',
+  }
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${config.classes}`}
+    >
+      {config.label}
+    </span>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface Team {
   id: string
@@ -60,15 +84,6 @@ export function PlayerListClient({ tournamentId, teams, initialPlayers, initialT
     },
     [tournamentId]
   )
-
-  // On mount: if initialPlayers is empty, fetch fresh data so the list is
-  // always populated regardless of whether SSR data was passed in.
-  useEffect(() => {
-    if (initialPlayers.length === 0) {
-      fetchPlayers(currentQuery, activeFilters, currentPage)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   function updateParams(updates: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString())
@@ -192,7 +207,7 @@ export function PlayerListClient({ tournamentId, teams, initialPlayers, initialT
                   </select>
                 </td>
                 <td className="px-4 py-3">
-                  <StatusPill status={p.registration_status} />
+                  <RegistrationStatusBadge status={p.registration_status} />
                 </td>
                 <td className="px-4 py-3 text-right space-x-2">
                   <button

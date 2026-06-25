@@ -188,12 +188,8 @@ export async function deletePlayerAction(
     return { error: 'Player has an active round — end the round before removing' }
   }
 
-  const { error: playerErr } = await db
-    .from('players')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('id', playerId)
-  if (playerErr) return { error: playerErr.message }
-
+  // Withdraw from this tournament only — do NOT touch players.deleted_at,
+  // which is reserved for a future "global delete from system" capability.
   const { error: regErr } = await db
     .from('tournament_registrations')
     .update({ status: 'withdrawn' })
