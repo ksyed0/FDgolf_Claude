@@ -51,7 +51,6 @@ describe('createAccountAction', () => {
         dob: null,
         gender: null,
       },
-      'cibc-2026',
       't1',
       null
     )
@@ -81,7 +80,6 @@ describe('createAccountAction', () => {
         dob: null,
         gender: null,
       },
-      'cibc-2026',
       't1',
       'invite-token-123'
     )
@@ -112,7 +110,6 @@ describe('createAccountAction', () => {
         dob: null,
         gender: null,
       },
-      'cibc-2026',
       't1',
       null
     )

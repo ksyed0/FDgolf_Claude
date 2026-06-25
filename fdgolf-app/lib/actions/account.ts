@@ -18,7 +18,6 @@ export type AccountFormData = {
 
 export async function createAccountAction(
   data: AccountFormData,
-  slug: string,
   tournamentId: string,
   token: string | null
 ): Promise<{ error: string | null }> {
@@ -53,6 +52,10 @@ export async function createAccountAction(
       await svc.auth.admin.deleteUser(userId)
       return { error: updateErr.message }
     }
+    // claimInvitation marks the invitation as claimed AND updates
+    // tournament_registrations.status → 'registered'. The registration row
+    // was created with status 'invited' during CSV import, so no separate
+    // createRegistration call is needed on this path.
     const { error: claimErr } = await claimInvitation(token)
     if (claimErr) {
       await svc.auth.admin.deleteUser(userId)

@@ -54,7 +54,6 @@ export function AccountForm({ tournamentId, slug, prefill }: Props) {
         dob: dob || null,
         gender: gender || null,
       },
-      slug,
       tournamentId,
       prefill?.token ?? null
     )
