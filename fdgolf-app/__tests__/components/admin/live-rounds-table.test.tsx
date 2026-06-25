@@ -51,4 +51,20 @@ describe('LiveRoundsTable', () => {
     render(<LiveRoundsTable rounds={[]} />)
     expect(screen.getByText(/no rounds in progress/i)).toBeInTheDocument()
   })
+
+  it('shows sync issues filter banner when syncFilter=true', () => {
+    render(<LiveRoundsTable rounds={ROUNDS} syncFilter={true} />)
+    expect(screen.getByText(/sync issues only/i)).toBeInTheDocument()
+    expect(screen.getByText(/clear filter/i)).toBeInTheDocument()
+  })
+
+  it('does not show sync filter banner when syncFilter=false', () => {
+    render(<LiveRoundsTable rounds={ROUNDS} syncFilter={false} />)
+    expect(screen.queryByText(/sync issues only/i)).not.toBeInTheDocument()
+  })
+
+  it('shows "No sync issues detected" empty state when syncFilter=true and no rounds', () => {
+    render(<LiveRoundsTable rounds={[]} syncFilter={true} />)
+    expect(screen.getByText(/no sync issues detected/i)).toBeInTheDocument()
+  })
 })

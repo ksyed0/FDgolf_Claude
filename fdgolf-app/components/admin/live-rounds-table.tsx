@@ -13,11 +13,30 @@ export type RoundRow = {
 
 const PACE_TARGET = 12 // AC-0239: 12 min/hole default
 
-export function LiveRoundsTable({ rounds }: { rounds: RoundRow[] }) {
+export function LiveRoundsTable({
+  rounds,
+  syncFilter = false,
+}: {
+  rounds: RoundRow[]
+  syncFilter?: boolean
+}) {
   const router = useRouter()
   return (
     <div className="mt-8">
-      <h2 className="text-lg font-bold mb-3">Live Rounds</h2>
+      <div className="flex items-center gap-3 mb-3">
+        <h2 className="text-lg font-bold">Live Rounds</h2>
+        {syncFilter && (
+          <span className="text-sm text-amber-400 flex items-center gap-1">
+            Sync issues only
+            <a
+              href="/admin/dashboard"
+              className="underline text-slate-400 hover:text-slate-200 ml-1"
+            >
+              Clear filter
+            </a>
+          </span>
+        )}
+      </div>
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-slate-400 border-b border-slate-700">
@@ -55,7 +74,7 @@ export function LiveRoundsTable({ rounds }: { rounds: RoundRow[] }) {
           {rounds.length === 0 && (
             <tr>
               <td colSpan={5} className="py-4 text-center text-slate-500">
-                No rounds in progress
+                {syncFilter ? 'No sync issues detected.' : 'No rounds in progress'}
               </td>
             </tr>
           )}

@@ -5,30 +5,41 @@ import { LiveRoundsTable, type RoundRow } from '@/components/admin/live-rounds-t
 
 export const revalidate = 30 // AC-0236
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>
+}) {
+  const { filter } = await searchParams
   const supabase = await createClient()
   // eslint-disable-next-line react-hooks/purity -- Server Component, Date.now() is safe here
   const now = Date.now()
 
-  const [
-    { count: playersCount },
-    { count: teamsPlaying },
-    { count: syncIssues },
-    { data: liveRoundsRaw },
-  ] = await Promise.all([
-    supabase.from('players').select('*', { count: 'exact', head: true }),
-    supabase.from('rounds').select('*', { count: 'exact', head: true }).eq('status', 'in_progress'),
-    supabase
-      .from('rounds')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'in_progress')
-      .lt('updated_at', new Date(now - 10 * 60 * 1000).toISOString()),
-    supabase
-      .from('rounds')
-      .select('id, team_id, started_at, player_id, players(full_name), hole_scores(status)')
-      .eq('status', 'in_progress')
-      .order('started_at', { ascending: true }),
-  ])
+  const [{ count: playersCount }, { count: teamsPlaying }, { count: syncIssues }] =
+    await Promise.all([
+      supabase.from('players').select('*', { count: 'exact', head: true }).is('deleted_at', null),
+      supabase
+        .from('rounds')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'in_progress'),
+      supabase
+        .from('rounds')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'in_progress')
+        .eq('sync_issue', true),
+    ])
+
+  let roundsQuery = supabase
+    .from('rounds')
+    .select('id, team_id, started_at, player_id, players(full_name), hole_scores(status)')
+    .eq('status', 'in_progress')
+    .order('started_at', { ascending: true })
+
+  if (filter === 'sync_issue') {
+    roundsQuery = roundsQuery.eq('sync_issue', true)
+  }
+
+  const { data: liveRoundsRaw } = await roundsQuery
 
   const rounds: RoundRow[] = (liveRoundsRaw ?? []).map((r) => {
     const holesPlayed = ((r.hole_scores as unknown as { status: string }[]) ?? []).filter(
@@ -55,7 +66,7 @@ export default async function DashboardPage() {
         avgPaceMinutes={0}
         syncIssues={syncIssues ?? 0}
       />
-      <LiveRoundsTable rounds={rounds} />
+      <LiveRoundsTable rounds={rounds} syncFilter={filter === 'sync_issue'} />
     </div>
   )
 }
