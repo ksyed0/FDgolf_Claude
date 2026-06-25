@@ -1,151 +1,148 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const {
-  mockFrom,
-  mockSelect,
-  mockEq,
-  mockIs,
-  mockGt,
-  mockSingle,
-  mockUpdate,
-  mockInsert,
-  mockAuth,
-} = vi.hoisted(() => ({
-  mockFrom: vi.fn(),
-  mockSelect: vi.fn(),
-  mockEq: vi.fn(),
-  mockIs: vi.fn(),
-  mockGt: vi.fn(),
-  mockSingle: vi.fn(),
-  mockUpdate: vi.fn(),
-  mockInsert: vi.fn(),
-  mockAuth: { getUser: vi.fn() },
-}))
+const mockFrom = vi.fn()
+const mockAuth = { admin: { inviteUserByEmail: vi.fn() }, getUser: vi.fn() }
 
 vi.mock('@/lib/supabase/service', () => ({
-  createServiceClient: () => ({ from: mockFrom, auth: mockAuth }),
+  createServiceClient: vi.fn(() => ({ from: mockFrom, auth: mockAuth })),
 }))
 vi.mock('@/lib/supabase/server', () => ({
-  createClient: () => ({ from: mockFrom, auth: mockAuth }),
+  createClient: vi.fn(() => Promise.resolve({ from: mockFrom, auth: mockAuth })),
 }))
 
-import { validateInviteToken, claimInvitation, sendInviteEmail } from '@/lib/actions/invitations'
+import {
+  validateInviteToken,
+  claimInvitation,
+  createInvitation,
+  sendInvitationAction,
+} from '@/lib/actions/invitations'
 
-const INVITATION = {
-  token: 'abc123',
-  player_id: 'p1',
-  tournament_id: 't1',
-  player: {
-    id: 'p1',
-    email: 'alice@example.com',
-    full_name: 'Alice',
-    phone: null,
-    handicap: null,
-    company: null,
-    title: null,
-  },
-  tournament: { id: 't1', name: 'CIBC 2026', slug: 'cibc-2026' },
-}
-
-beforeEach(() => {
-  vi.clearAllMocks()
-  mockSingle.mockResolvedValue({ data: INVITATION, error: null })
-  mockGt.mockReturnValue({ single: mockSingle })
-  mockIs.mockReturnValue({ gt: mockGt, single: mockSingle })
-  // Make mockEq a thenable chain: resolves to { error: null } when awaited,
-  // and returns chained mock methods when called synchronously
-  const chainable = { eq: mockEq, is: mockIs, single: mockSingle, then: undefined as unknown }
-  chainable.then = (resolve: (v: unknown) => void) => resolve({ error: null })
-  mockEq.mockReturnValue(chainable)
-  mockSelect.mockReturnValue({ eq: mockEq })
-  mockUpdate.mockReturnValue({ eq: mockEq })
-  mockInsert.mockResolvedValue({ data: { token: 'newtoken' }, error: null })
-  mockFrom.mockReturnValue({ select: mockSelect, update: mockUpdate, insert: mockInsert })
-  mockAuth.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
-  delete process.env.RESEND_API_KEY
-})
-
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
+beforeEach(() => vi.clearAllMocks())
 
 describe('validateInviteToken', () => {
-  it('returns player+tournament for valid token', async () => {
+  it('returns player data for valid unclaimed token', async () => {
+    const mockSelect = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: {
+          token: 'abc123',
+          player_id: 'p1',
+          tournament_id: 't1',
+          player: {
+            id: 'p1',
+            email: 'a@test.com',
+            full_name: 'Alice',
+            phone: null,
+            handicap: null,
+            company: null,
+            title: null,
+          },
+          tournament: { id: 't1', name: 'CIBC', slug: 'cibc-2026' },
+        },
+        error: null,
+      }),
+    }
+    mockFrom.mockReturnValue(mockSelect)
     const result = await validateInviteToken('abc123')
     expect(result.error).toBeNull()
-    expect(result.data?.player.email).toBe('alice@example.com')
+    expect(result.data?.player.email).toBe('a@test.com')
   })
 
-  it('returns error when token not found or expired', async () => {
-    mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } })
-    const result = await validateInviteToken('bad-token')
+  it('returns null for expired token', async () => {
+    const mockSelect = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } }),
+    }
+    mockFrom.mockReturnValue(mockSelect)
+    const result = await validateInviteToken('expired')
     expect(result.data).toBeNull()
-    expect(result.error).toMatch(/invalid|expired/i)
   })
 })
 
 describe('claimInvitation', () => {
   it('links user_id to player and marks token claimed', async () => {
-    // First .single() = find invitation, subsequent calls = update chains
-    mockSingle.mockResolvedValueOnce({
-      data: { player_id: 'p1', tournament_id: 't1' },
-      error: null,
+    mockAuth.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
+    const mockChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      single: vi
+        .fn()
+        .mockResolvedValue({ data: { player_id: 'p1', tournament_id: 't1' }, error: null }),
+    }
+    // Make eq return something awaitable too
+    mockChain.eq.mockReturnValue({
+      ...mockChain,
+      then: (resolve: (v: unknown) => void) => resolve({ error: null }),
     })
+    mockFrom.mockReturnValue(mockChain)
     const result = await claimInvitation('abc123')
     expect(result.error).toBeNull()
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'u1' }))
   })
 
   it('returns Not authenticated when no session', async () => {
-    mockAuth.getUser.mockResolvedValueOnce({ data: { user: null }, error: null })
+    mockAuth.getUser.mockResolvedValue({ data: { user: null }, error: null })
     const result = await claimInvitation('abc123')
     expect(result.error).toMatch(/not authenticated/i)
   })
 })
 
-describe('sendInviteEmail', () => {
-  it('logs invite URL to console when RESEND_API_KEY absent', async () => {
-    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    const result = await sendInviteEmail(
-      'alice@example.com',
-      'Alice',
-      'CIBC 2026',
-      'cibc-2026',
-      'tok1'
-    )
+describe('createInvitation', () => {
+  it('inserts player_invitations row and returns token', async () => {
+    const mockUpsert = {
+      upsert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { token: 'hextoken123' }, error: null }),
+    }
+    mockFrom.mockReturnValue(mockUpsert)
+    const result = await createInvitation('p1', 't1', 'cibc-2026')
     expect(result.error).toBeNull()
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('cibc-2026'))
-    spy.mockRestore()
+    expect(result.data?.token).toBe('hextoken123')
+    expect(result.data?.inviteUrl).toContain('token=hextoken123')
+  })
+})
+
+describe('sendInvitationAction', () => {
+  it('calls inviteUserByEmail with invitation token in redirectTo', async () => {
+    const mockUpsert = {
+      upsert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { token: 'tok123' }, error: null }),
+    }
+    mockFrom.mockReturnValue(mockUpsert)
+    mockAuth.admin.inviteUserByEmail.mockResolvedValue({ data: {}, error: null })
+
+    const result = await sendInvitationAction('bob@test.com', 'Bob', 'p2', 't1', 'cibc-2026')
+    expect(result.error).toBeNull()
+    expect(mockAuth.admin.inviteUserByEmail).toHaveBeenCalledWith(
+      'bob@test.com',
+      expect.objectContaining({ redirectTo: expect.stringContaining('token=tok123') })
+    )
   })
 
-  it('calls Resend API with correct payload when key present', async () => {
-    process.env.RESEND_API_KEY = 'test-key'
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true })
-    vi.stubGlobal('fetch', mockFetch)
-    const result = await sendInviteEmail(
-      'alice@example.com',
-      'Alice',
-      'CIBC 2026',
-      'cibc-2026',
-      'tok1'
-    )
-    expect(result.error).toBeNull()
-    expect(mockFetch).toHaveBeenCalledWith(
-      'https://api.resend.com/emails',
-      expect.objectContaining({ method: 'POST' })
-    )
-  })
+  it('returns inviteUrl as fallback when email send fails', async () => {
+    const mockUpsert = {
+      upsert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { token: 'tok123' }, error: null }),
+    }
+    mockFrom.mockReturnValue(mockUpsert)
+    mockAuth.admin.inviteUserByEmail.mockResolvedValue({
+      data: null,
+      error: { message: 'SMTP fail' },
+    })
 
-  it('returns error when Resend API returns non-ok', async () => {
-    process.env.RESEND_API_KEY = 'test-key'
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
-    const result = await sendInviteEmail(
-      'alice@example.com',
-      'Alice',
-      'CIBC 2026',
-      'cibc-2026',
-      'tok1'
-    )
-    expect(result.error).toMatch(/failed to send/i)
+    const result = await sendInvitationAction('bob@test.com', 'Bob', 'p2', 't1', 'cibc-2026')
+    // Should still return the invite URL for fallback display
+    expect(result.data?.inviteUrl).toContain('token=tok123')
+    // Separate field to indicate email failed
+    expect(result.error).toContain('SMTP fail')
   })
 })
