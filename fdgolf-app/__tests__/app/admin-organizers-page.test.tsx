@@ -10,7 +10,7 @@ const { mockFrom, mockNotFound } = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({ notFound: mockNotFound }))
 vi.mock('@/lib/supabase/server', () => ({
-  createClient: () => ({ from: mockFrom }),
+  createClient: () => ({ from: mockFrom, rpc: vi.fn().mockResolvedValue({ data: true }) }),
 }))
 vi.mock('@/components/organizer-search', () => ({
   OrganizerSearch: ({ tournamentName }: { tournamentId: string; tournamentName: string }) => (

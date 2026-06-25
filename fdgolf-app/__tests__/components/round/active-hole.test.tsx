@@ -126,6 +126,18 @@ describe('ActiveHole', () => {
     expect(screen.getByText(/hole 3 of 18/i)).toBeInTheDocument()
   })
 
+  it('does NOT show TurnPicker when there is only one team member (solo player)', async () => {
+    mockGeoSuccess()
+    render(<ActiveHole {...BASE_PROPS} teamMembers={[{ playerId: 'p1', name: 'Alice' }]} />)
+    await waitFor(() => screen.getByRole('button', { name: /start shot/i }))
+    fireEvent.click(screen.getByRole('button', { name: /start shot/i }))
+    await waitFor(() => screen.getByRole('button', { name: /in play/i }))
+    fireEvent.click(screen.getByRole('button', { name: /in play/i }))
+    // setShowTurnPicker(true) is guarded by teamMembers.length > 1 — solo skips the picker
+    await waitFor(() => screen.getByRole('button', { name: /start shot/i }))
+    expect(screen.queryByText(/who's away/i)).toBeNull()
+  })
+
   it('shows TurnPicker after a non-sunk shot (US-0042 AC-0164)', async () => {
     mockGeoSuccess()
     mockGetState.mockReturnValue({

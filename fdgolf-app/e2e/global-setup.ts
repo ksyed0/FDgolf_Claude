@@ -27,29 +27,52 @@ export default async function globalSetup() {
   const stateDir = path.resolve(__dirname, '../.playwright')
   if (!fs.existsSync(stateDir)) fs.mkdirSync(stateDir, { recursive: true })
 
+  // After a full-event run the DB is wiped and these users may not exist.
+  // In that case we write empty state files and let the spec's own beforeAll take over.
+  const emptyState = JSON.stringify({ cookies: [], origins: [] })
+
   const browser = await chromium.launch()
   try {
-    // Admin session
+    // Admin session — admin redirects to /admin/tournaments, not /
     const context = await browser.newContext()
     const page = await context.newPage()
-    await page.goto('http://localhost:3001/login')
-    await page.fill('input[name="email"]', email)
-    await page.fill('input[name="password"]', password)
-    await page.getByRole('button', { name: 'Sign in' }).click()
-    await page.waitForURL('http://localhost:3001/', { timeout: 10_000 })
-    await context.storageState({ path: path.resolve(stateDir, 'storageState.json') })
-    await context.close()
+    try {
+      await page.goto('http://localhost:3001/login')
+      await page.fill('input[name="email"]', email)
+      await page.fill('input[name="password"]', password)
+      await page.getByRole('button', { name: 'Sign in' }).click()
+      // Accept any post-login URL (admin lands on /admin/tournaments, player on /)
+      await page.waitForURL(/localhost:3001\/(admin|$|\?)/, { timeout: 10_000 })
+      await context.storageState({ path: path.resolve(stateDir, 'storageState.json') })
+    } catch {
+      console.warn('[global-setup] Admin login failed — writing empty storageState')
+      fs.writeFileSync(path.resolve(stateDir, 'storageState.json'), emptyState)
+    } finally {
+      await context.close()
+    }
 
     // Organizer session (James Wilson — tournament_organizer scoped to Lionhead)
     const orgContext = await browser.newContext()
     const orgPage = await orgContext.newPage()
-    await orgPage.goto('http://localhost:3001/login')
-    await orgPage.fill('input[name="email"]', playerEmail)
-    await orgPage.fill('input[name="password"]', 'GolfTest1!')
-    await orgPage.getByRole('button', { name: 'Sign in' }).click()
-    await orgPage.waitForURL('http://localhost:3001/', { timeout: 10_000 })
-    await orgContext.storageState({ path: path.resolve(stateDir, 'organizerState.json') })
-    await orgContext.close()
+    try {
+      await orgPage.goto('http://localhost:3001/login')
+      await orgPage.fill('input[name="email"]', playerEmail)
+      await orgPage.fill('input[name="password"]', 'GolfTest1!')
+      await orgPage.getByRole('button', { name: 'Sign in' }).click()
+      // waitForURL callback receives a URL object — use .href not .includes directly
+      await orgPage.waitForURL((url) => !url.href.includes('/login'), { timeout: 10_000 })
+      await orgContext.storageState({ path: path.resolve(stateDir, 'organizerState.json') })
+    } catch (err) {
+      console.warn(
+        '[global-setup] Organizer login failed:',
+        (err as Error).message,
+        '| current URL:',
+        orgPage.url()
+      )
+      fs.writeFileSync(path.resolve(stateDir, 'organizerState.json'), emptyState)
+    } finally {
+      await orgContext.close()
+    }
   } finally {
     await browser.close()
   }

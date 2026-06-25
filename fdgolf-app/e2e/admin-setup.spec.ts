@@ -25,10 +25,10 @@ test.describe('Admin setup flow — Granite Ridge Open (US-0009, US-0011, US-001
 
     // Select the seeded Lionhead venue — this triggers course cascade
     await page.selectOption('select[name="venue_id"]', {
-      label: 'Lionhead Golf & Country Club',
+      label: 'Lionhead Golf and Country Club',
     })
 
-    // Wait for courses to load then select Lionhead Links Course
+    // Wait for courses to load then select Legends Course
     await page.waitForFunction(
       () => {
         const sel = document.querySelector('select[name="course_id"]')
@@ -38,7 +38,7 @@ test.describe('Admin setup flow — Granite Ridge Open (US-0009, US-0011, US-001
       { timeout: 5_000 }
     )
     await page.selectOption('select[name="course_id"]', {
-      label: 'Lionhead Links Course',
+      label: 'Legends Course',
     })
 
     await page.fill('input[name="starts_at"]', '2026-12-01T09:00')
@@ -78,7 +78,7 @@ test.describe('Admin setup flow — Granite Ridge Open (US-0009, US-0011, US-001
       page.getByRole('heading', { name: 'Granite Ridge Open 2026', exact: true })
     ).toBeVisible({ timeout: 8_000 })
     // Tournament detail page shows linked course name
-    await expect(page.getByText('Lionhead Links Course')).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText('Legends Course')).toBeVisible({ timeout: 5_000 })
   })
 
   test('Step 5: public leaderboard renders without auth', async ({ browser }) => {

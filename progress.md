@@ -3,6 +3,19 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 18 — 2026-06-21
+
+### What Was Done
+
+- Created `e2e/full-event.spec.ts`: DB reset → admin UI tournament creation → 16 players / 4 teams seeded → 4 Eagles players each play 9 holes via Playwright UI → leaderboard check; 8/8 passing in 2.2 min
+- Added `20260621000001_lionhead_legends_seed.sql`: Lionhead Golf and Country Club venue + Legends Course (18 holes, par 72, GPS coords, tees JSONB), applied and verified
+- Fixed `active-hole.tsx` sunk navigation: removed `allSunk` check that blocked navigation when `active.length === 0` on multi-member teams; player now always routes to hole summary on sunk
+- Fixed `pin-placement-map.tsx` null guard: `!== null` → `!= null` to catch `undefined` tee `lat`/`lng` (prevented Mapbox `Invalid LngLat: NaN` crash on Legends Course holes)
+- Fixed `global-setup.ts`: admin post-login URL regex handles `/admin/tournaments` redirect; wrapped in try/catch for resilience after full-event DB wipe
+- README rewritten: reset/reseed instructions, E2E play simulator usage, direct DB injection via psql, Legends Course scorecard table
+
+---
+
 ## Session 17 — 2026-06-19
 
 ### What Was Done

@@ -172,17 +172,9 @@ export function ActiveHole(props: Props) {
       })
     )
     if (shot.outcome === 'sunk') {
-      // US-0045: auto-advance when all team members have sunk this hole
-      const state = useRoundStore.getState()
-      const currentHoleData = state.localHoles[props.holeNumber] ?? {}
-      const allSunk = props.teamMembers.every((m) =>
-        (currentHoleData[m.playerId] ?? []).some((s) => s.outcome === 'sunk')
-      )
-      if (allSunk) {
-        router.push(`/round/${props.roundId}/hole/${props.holeNumber}/summary`)
-      } else if (props.teamMembers.length > 1) {
-        setShowTurnPicker(true)
-      }
+      // Each player plays on their own device. When this player sinks, always go to
+      // hole summary immediately — teammates track their own rounds separately.
+      router.push(`/round/${props.roundId}/hole/${props.holeNumber}/summary`)
     } else if (shot.outcome !== 'out_of_bounds' && props.teamMembers.length > 1) {
       // OOB: ShotCapture handles the OOB_REHIT phase internally; no turn change.
       // Skip TurnPicker when only one player is in the round (solo / E2E).

@@ -75,7 +75,7 @@ describe('TournamentListClient filter chips', () => {
   it('navigates without status param when All chip is clicked', async () => {
     render(<TournamentListClient tournaments={MOCK_TOURNAMENTS} />)
     await userEvent.click(screen.getByRole('button', { name: 'All' }))
-    expect(mockReplace).toHaveBeenCalledWith('/admin/tournaments?')
+    expect(mockReplace).toHaveBeenCalledWith('/admin/tournaments')
   })
 
   it('renders StatusPill for each tournament', () => {
@@ -92,6 +92,7 @@ describe('TournamentListClient filter chips', () => {
     expect(screen.getByRole('button', { name: 'Registration Open' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Active' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Completed' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cancelled' })).toBeInTheDocument()
   })
 
   it('shows empty state when no tournaments', () => {

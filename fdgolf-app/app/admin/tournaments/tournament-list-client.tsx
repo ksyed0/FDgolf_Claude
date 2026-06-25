@@ -28,6 +28,7 @@ const FILTER_CHIPS: { label: string; value: TournamentStatus | 'all' }[] = [
   { label: 'Registration Open', value: 'registration_open' },
   { label: 'Active', value: 'active' },
   { label: 'Completed', value: 'completed' },
+  { label: 'Cancelled', value: 'cancelled' },
 ]
 
 export function TournamentListClient({ tournaments }: TournamentListClientProps) {
@@ -47,7 +48,8 @@ export function TournamentListClient({ tournaments }: TournamentListClientProps)
     } else {
       params.set('status', value)
     }
-    router.replace(`${pathname}?${params.toString()}`)
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname)
   }
 
   function handleDeleteClick(id: string) {

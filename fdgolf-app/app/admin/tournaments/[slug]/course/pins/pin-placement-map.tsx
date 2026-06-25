@@ -409,7 +409,7 @@ export function PinPlacementMap({ holes, courseId, tournamentVenue, tournamentSl
             {/* Saved tee markers for all tees with coords */}
             {currentHole.tees
               .filter(
-                (t) => t.lat !== null && t.lng !== null && !(mode !== 'pin' && t.colour === mode)
+                (t) => t.lat != null && t.lng != null && !(mode !== 'pin' && t.colour === mode)
               )
               .map((t) => (
                 <Marker key={t.colour} longitude={t.lng!} latitude={t.lat!}>

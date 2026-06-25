@@ -68,13 +68,6 @@ describe('createTournamentAction', () => {
     expect(result.error).toMatch(/name/i)
   })
 
-  it('returns error when venue is missing', async () => {
-    const fd = validFormData()
-    fd.delete('venue')
-    const result = await createTournamentAction({ error: null }, fd)
-    expect(result.error).toMatch(/venue/i)
-  })
-
   it('returns error when starts_at is missing', async () => {
     const fd = validFormData()
     fd.delete('starts_at')
@@ -105,7 +98,7 @@ describe('createTournamentAction', () => {
       expect.objectContaining({
         name: 'Summer Classic',
         slug: 'summer-classic',
-        venue: 'Pine Valley Golf Club',
+        venue_id: null,
         format: 'best_ball',
         start_style: 'shotgun',
         holes_count: 18,

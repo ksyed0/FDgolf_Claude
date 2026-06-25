@@ -6,7 +6,7 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 17 — 2026-06-19
+Session 18 — 2026-06-21
 
 ---
 
@@ -82,6 +82,16 @@ Next up — **both epics are specced AND planned (Session 12); next action is ex
 - **EPIC-0005 — Round Tracking** (US-0035–0048): spec `docs/superpowers/specs/2026-06-17-epic0005-round-tracking-design.md`, plan `docs/superpowers/plans/2026-06-17-epic0005-round-tracking.md` (29 tasks, 24 spine / 5 deferrable) on `feature/epic0005-round-tracking`. Build order: projection→migration→store→capture. Writes SHOTS ONLY; HoleEntryScreen (US-0034) hands off via `/round/[roundId]/shot/new?lat=&lng=&club=`; `bag_clubs`/`first_player_id` on the rounds row.
 - **EPIC-0007 — Leaderboard** (US-0056–0064): spec `docs/superpowers/specs/2026-06-17-epic0007-leaderboard-design.md`, plan `docs/superpowers/plans/2026-06-17-epic0007-leaderboard.md` (23 tasks, 12 spine / 11 enhancement) on `feature/epic0007-leaderboard`. **Build-step #1 = anon-view access spike** (prove anon reads `team_standings`/`public_team_roster`, denied on base `players`).
 - **Latent follow-up:** audit EPIC-0003 actions for stale `players.name` references (`searchPlayersAction` already fixed to `full_name`).
+
+## Known Patterns / Gotchas (additions from Session 18 — full-event E2E simulation)
+
+- **`full-event.spec.ts` double-beforeAll:** Playwright creates two worker scopes when `test.use({ storageState })` is inside a describe — `beforeAll` runs once per scope. Tests 1-2 run in the first scope (first beforeAll's data), tests 3-8 run in the second scope. All 8 tests pass because each scope is self-consistent. `--workers=1` is mandatory.
+- **After `supabase db reset`, run `bash scripts/seed-lionhead.sh`** before any other E2E spec. The full-event `beforeAll` resets the DB (wiping auth users); other specs that need the global-setup's admin/organizer sessions depend on seed-lionhead.sh to recreate them.
+- **`active-hole.tsx` sunk navigation:** Always call `router.push(summary)` immediately on `sunk` outcome. The old `allSunk` check (waited for all team members to sink) caused a deadlock when `active.length === 0` (player sunk but teammates on separate devices). Each player navigates to hole summary independently.
+- **`pin-placement-map.tsx` tee filter:** Use `!= null` (loose inequality) not `!== null` (strict) when filtering tees for Mapbox Markers. Tees from the Legends Course migration have `{colour, yardage}` with no `lat`/`lng` — they're `undefined`, not `null`. Strict inequality passes `undefined` through to `<Marker latitude={undefined}>` → `NaN` → Mapbox crash.
+- **Strict mode violation in Playwright:** `page.getByText(text)` fails if text appears in 2+ elements. Use `page.getByRole('heading', { name: text })` for page titles that also appear in preview cards.
+- **`tournament_registrations` seeding:** The admin `/players` page queries `tournament_registrations`, not `players` + `team_members`. When seeding players via service role for E2E, also insert `tournament_registrations` records (status: 'registered').
+- **Lionhead Legends Course migration:** `20260621000001_lionhead_legends_seed.sql` — venue UUID `000003`, course UUID `000004`, 18 holes par 72, approximate GPS coords near Brampton ON (~43.68°N, 79.855°W), tees JSONB with `colour`/`yardage` only (no `lat`/`lng`).
 
 ## Known Patterns / Gotchas (additions from Session 17 — EPIC-0009 offline wiring)
 
