@@ -106,4 +106,34 @@ describe('ClubListClient', () => {
     await userEvent.click(deleteButtons[0])
     expect(screen.getByText(/are you sure/i)).toBeInTheDocument()
   })
+
+  it('reverts name on updateClubAction error', async () => {
+    const { updateClubAction } = await import('@/lib/actions/clubs')
+    vi.mocked(updateClubAction).mockResolvedValueOnce({ error: 'Update failed' })
+    const { container } = render(<ClubListClient clubs={MOCK_CLUBS} tournamentId="tour-1" />)
+    const nameInputs = container.querySelectorAll('input[aria-label="club name"]')
+    const nameInput = nameInputs[0] as HTMLInputElement
+    await userEvent.clear(nameInput)
+    await userEvent.type(nameInput, 'New Name')
+    fireEvent.blur(nameInput)
+    // Wait for state to revert
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(nameInput.value).toBe('Driver')
+    expect(screen.getByText('Update failed')).toBeInTheDocument()
+  })
+
+  it('reverts loft on updateClubAction error', async () => {
+    const { updateClubAction } = await import('@/lib/actions/clubs')
+    vi.mocked(updateClubAction).mockResolvedValueOnce({ error: 'Loft update failed' })
+    const { container } = render(<ClubListClient clubs={MOCK_CLUBS} tournamentId="tour-1" />)
+    const loftInputs = container.querySelectorAll('input[aria-label="loft"]')
+    const loftInput = loftInputs[0] as HTMLInputElement
+    await userEvent.clear(loftInput)
+    await userEvent.type(loftInput, '10.5')
+    fireEvent.blur(loftInput)
+    // Wait for state to revert
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(loftInput.value).toBe('9.5')
+    expect(screen.getByText('Loft update failed')).toBeInTheDocument()
+  })
 })

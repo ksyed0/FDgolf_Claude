@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useMemo } from 'react'
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -30,10 +30,13 @@ function SortableClubRow({
   club: ClubRow
   tournamentId: string
   onToggle: () => void
-  onNameBlur: (name: string) => void
-  onLoftBlur: (loft: string) => void
+  onNameBlur: (name: string, onSuccess: () => void, onError: () => void) => void
+  onLoftBlur: (loft: string, onSuccess: () => void, onError: () => void) => void
   onDeleteClick: () => void
 }) {
+  const [name, setName] = useState(club.display_name)
+  const [loft, setLoft] = useState(club.default_loft_degrees?.toString() ?? '')
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: club.club_id,
   })
@@ -41,6 +44,34 @@ function SortableClubRow({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  }
+
+  const handleNameBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const newName = e.target.value
+    onNameBlur(
+      newName,
+      () => {
+        // on success, keep the new name
+      },
+      () => {
+        // on error, revert to original
+        setName(club.display_name)
+      }
+    )
+  }
+
+  const handleLoftBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const newLoft = e.target.value
+    onLoftBlur(
+      newLoft,
+      () => {
+        // on success, keep the new loft
+      },
+      () => {
+        // on error, revert to original
+        setLoft(club.default_loft_degrees?.toString() ?? '')
+      }
+    )
   }
 
   return (
@@ -60,15 +91,17 @@ function SortableClubRow({
         ⠿
       </span>
       <Input
-        defaultValue={club.display_name}
-        onBlur={(e) => onNameBlur(e.target.value)}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={handleNameBlur}
         className="flex-1 h-8 text-sm"
         aria-label="club name"
       />
       <Input
-        defaultValue={club.default_loft_degrees?.toString() ?? ''}
+        value={loft}
+        onChange={(e) => setLoft(e.target.value)}
         placeholder="Loft°"
-        onBlur={(e) => onLoftBlur(e.target.value)}
+        onBlur={handleLoftBlur}
         className="w-20 h-8 text-sm"
         aria-label="loft"
         type="number"
@@ -101,6 +134,7 @@ export function ClubListClient({
   const [serverOrder, setServerOrder] = useState(initialClubs)
   const [deleteTarget, setDeleteTarget] = useState<ClubRow | null>(null)
   const [toggleError, setToggleError] = useState<string | null>(null)
+  const [blurError, setBlurError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
   function handleDragEnd(event: DragEndEvent) {
@@ -137,15 +171,41 @@ export function ClubListClient({
     }
   }
 
-  async function handleNameBlur(clubId: string, display_name: string) {
-    await updateClubAction(clubId, { display_name })
-    setClubs((prev) => prev.map((c) => (c.club_id === clubId ? { ...c, display_name } : c)))
+  async function handleNameBlur(
+    clubId: string,
+    newName: string,
+    onSuccess: () => void,
+    onError: () => void
+  ) {
+    setBlurError(null)
+    const result = await updateClubAction(clubId, { display_name: newName })
+    if (result.error) {
+      setBlurError(result.error)
+      onError()
+      return
+    }
+    setClubs((prev) =>
+      prev.map((c) => (c.club_id === clubId ? { ...c, display_name: newName } : c))
+    )
+    onSuccess()
   }
 
-  async function handleLoftBlur(clubId: string, loftStr: string) {
+  async function handleLoftBlur(
+    clubId: string,
+    loftStr: string,
+    onSuccess: () => void,
+    onError: () => void
+  ) {
+    setBlurError(null)
     const default_loft_degrees = loftStr ? parseFloat(loftStr) : null
-    await updateClubAction(clubId, { default_loft_degrees })
+    const result = await updateClubAction(clubId, { default_loft_degrees })
+    if (result.error) {
+      setBlurError(result.error)
+      onError()
+      return
+    }
     setClubs((prev) => prev.map((c) => (c.club_id === clubId ? { ...c, default_loft_degrees } : c)))
+    onSuccess()
   }
 
   async function handleDeleteConfirm() {
@@ -165,6 +225,11 @@ export function ClubListClient({
           {toggleError}
         </p>
       )}
+      {blurError && (
+        <p role="alert" className="text-sm text-red-600">
+          {blurError}
+        </p>
+      )}
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={clubs.map((c) => c.club_id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
@@ -174,8 +239,12 @@ export function ClubListClient({
                 club={club}
                 tournamentId={tournamentId}
                 onToggle={() => handleToggle(club.club_id, club.is_active)}
-                onNameBlur={(name) => handleNameBlur(club.club_id, name)}
-                onLoftBlur={(loft) => handleLoftBlur(club.club_id, loft)}
+                onNameBlur={(name, onSuccess, onError) =>
+                  handleNameBlur(club.club_id, name, onSuccess, onError)
+                }
+                onLoftBlur={(loft, onSuccess, onError) =>
+                  handleLoftBlur(club.club_id, loft, onSuccess, onError)
+                }
                 onDeleteClick={() => setDeleteTarget(club)}
               />
             ))}
