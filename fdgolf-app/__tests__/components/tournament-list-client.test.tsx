@@ -8,8 +8,16 @@ const mockRouterRefresh = vi.hoisted(() => vi.fn())
 vi.mock('@/lib/actions/tournaments', () => ({
   deleteTournamentAction: mockDeleteAction,
 }))
+const mockSearchParams = vi.hoisted(() => ({
+  get: vi.fn().mockReturnValue(null),
+  toString: vi.fn().mockReturnValue(''),
+  delete: vi.fn(),
+}))
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ refresh: mockRouterRefresh }),
+  useRouter: () => ({ refresh: mockRouterRefresh, replace: vi.fn() }),
+  usePathname: () => '/admin/tournaments',
+  useSearchParams: () => mockSearchParams,
 }))
 
 import { TournamentListClient } from '@/app/admin/tournaments/tournament-list-client'
@@ -41,7 +49,8 @@ describe('TournamentListClient', () => {
     render(<TournamentListClient tournaments={[DRAFT_TOURNAMENT]} />)
     expect(screen.getByText('Spring Open')).toBeInTheDocument()
     expect(screen.getByText(/Granite Ridge GC/)).toBeInTheDocument()
-    expect(screen.getByText(/draft/i)).toBeInTheDocument()
+    // status pill (span) plus filter chips (buttons) both contain "Draft"
+    expect(screen.getAllByText(/draft/i).length).toBeGreaterThan(0)
   })
 
   it('renders Edit link pointing to /edit', () => {
@@ -96,7 +105,7 @@ describe('TournamentListClient', () => {
     render(<TournamentListClient tournaments={[DRAFT_TOURNAMENT]} />)
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
     expect(screen.getByText(/cannot be undone/i)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(screen.queryByText(/cannot be undone/i)).not.toBeInTheDocument()
   })
 
