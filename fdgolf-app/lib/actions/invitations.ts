@@ -116,6 +116,7 @@ export async function sendInvitationAction(
   })
 
   if (emailErr) {
+    console.log(`[DEV] Invite URL for ${email}: ${inviteUrl}`)
     // Invitation row is persisted — return URL for captain to share manually
     return { data: { inviteUrl }, error: emailErr.message }
   }
