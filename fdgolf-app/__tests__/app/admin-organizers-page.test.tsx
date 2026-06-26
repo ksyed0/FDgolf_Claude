@@ -50,7 +50,9 @@ describe('TournamentOrganizersPage', () => {
       }
     })
 
-    const page = await TournamentOrganizersPage({ params: { slug: 'spring-open' } })
+    const page = await TournamentOrganizersPage({
+      params: Promise.resolve({ slug: 'spring-open' }),
+    })
     render(page)
 
     expect(screen.getByRole('heading', { name: /Organizers — Spring Open/i })).toBeInTheDocument()
@@ -68,9 +70,9 @@ describe('TournamentOrganizersPage', () => {
       }),
     }))
 
-    await expect(TournamentOrganizersPage({ params: { slug: 'nonexistent' } })).rejects.toThrow(
-      'NEXT_NOT_FOUND'
-    )
+    await expect(
+      TournamentOrganizersPage({ params: Promise.resolve({ slug: 'nonexistent' }) })
+    ).rejects.toThrow('NEXT_NOT_FOUND')
 
     expect(mockNotFound).toHaveBeenCalledOnce()
   })
@@ -91,7 +93,9 @@ describe('TournamentOrganizersPage', () => {
       return { select: vi.fn().mockReturnThis(), eq: eqMock }
     })
 
-    const page = await TournamentOrganizersPage({ params: { slug: 'spring-open' } })
+    const page = await TournamentOrganizersPage({
+      params: Promise.resolve({ slug: 'spring-open' }),
+    })
     render(page)
 
     expect(screen.getByText('No organizers assigned yet.')).toBeInTheDocument()
