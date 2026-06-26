@@ -5,18 +5,14 @@ import { describe, it, expect, vi } from 'vitest'
 const mockPush = vi.fn()
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mockPush }) }))
 vi.mock('@/lib/actions/teams', () => ({
-  createTeam: vi
-    .fn()
-    .mockResolvedValue({
-      data: { id: 'team-1', name: 'Eagles', join_code: 'ABC123' },
-      error: null,
-    }),
-  joinTeamByCode: vi
-    .fn()
-    .mockResolvedValue({
-      data: { id: 'team-1', name: 'Eagles', join_code: 'ABC123' },
-      error: null,
-    }),
+  createTeam: vi.fn().mockResolvedValue({
+    data: { id: 'team-1', name: 'Eagles', join_code: 'ABC123' },
+    error: null,
+  }),
+  joinTeamByCode: vi.fn().mockResolvedValue({
+    data: { id: 'team-1', name: 'Eagles', join_code: 'ABC123' },
+    error: null,
+  }),
 }))
 
 import { TeamForm } from '@/app/register/[slug]/team/team-form'

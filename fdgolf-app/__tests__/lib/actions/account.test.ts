@@ -67,12 +67,10 @@ describe('createAccountAction', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       is: vi.fn().mockReturnThis(),
-      single: vi
-        .fn()
-        .mockResolvedValue({
-          data: { player_id: 'p-victim', players: { email: 'victim@example.com' } },
-          error: null,
-        }),
+      single: vi.fn().mockResolvedValue({
+        data: { player_id: 'p-victim', players: { email: 'victim@example.com' } },
+        error: null,
+      }),
     }
     mockFrom.mockReturnValue(mockChain)
 
@@ -113,12 +111,10 @@ describe('createAccountAction', () => {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
           is: vi.fn().mockReturnThis(),
-          single: vi
-            .fn()
-            .mockResolvedValue({
-              data: { player_id: 'p2', players: { email: 'bob@test.com' } },
-              error: null,
-            }),
+          single: vi.fn().mockResolvedValue({
+            data: { player_id: 'p2', players: { email: 'bob@test.com' } },
+            error: null,
+          }),
         }
       }
       return mockUpdate
