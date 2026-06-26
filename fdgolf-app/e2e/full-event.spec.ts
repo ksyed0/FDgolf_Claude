@@ -16,7 +16,7 @@
  * Trace + screenshots are enabled inside the spec via test.use().
  */
 
-import { test, expect, chromium } from '@playwright/test'
+import { test, expect, chromium, type Page, type BrowserContext } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
 import { execSync } from 'child_process'
 import * as dotenv from 'dotenv'
@@ -312,12 +312,7 @@ test.describe('Full event simulation — 16 players, 4 teams, Legends Course', (
 
   // ── Helper: play one player through 9 holes ─────────────────────────────────
 
-  async function play9Holes(
-    page: Parameters<Parameters<typeof test>[1]>[0],
-    context: Parameters<Parameters<typeof test>[1]>[0]['context'],
-    email: string,
-    playerKey: string
-  ) {
+  async function play9Holes(page: Page, context: BrowserContext, email: string, playerKey: string) {
     const roundId = roundIds[email]
     if (!roundId) throw new Error(`No roundId for ${email}`)
     const script = SCRIPTS[playerKey]
