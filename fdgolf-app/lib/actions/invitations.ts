@@ -102,7 +102,7 @@ export async function createInvitation(
 export async function sendInvitationAction(
   email: string,
   fullName: string,
-  playerId: string,
+  playerId: string | null,
   tournamentId: string,
   slug: string
 ): Promise<{ data: { inviteUrl: string } | null; error: string | null }> {
@@ -146,7 +146,7 @@ export async function sendInvitationAction(
     }
   }
 
-  const invResult = await createInvitation(resolvedPlayerId, tournamentId, slug)
+  const invResult = await createInvitation(resolvedPlayerId!, tournamentId, slug)
   if (invResult.error || !invResult.data) return { data: null, error: invResult.error }
 
   const { token, inviteUrl } = invResult.data
