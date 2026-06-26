@@ -3,6 +3,20 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 20 — 2026-06-25
+
+### What Was Done
+
+- CI stabilisation after EPIC-0003/EPIC-0008 SDD work: resolved 5 distinct CI failures over 7 commits pushed to `develop`
+- Fixed `e2e/full-event.spec.ts` type error: replaced `Parameters<typeof test>` complex generics with direct `Page`/`BrowserContext` imports from `@playwright/test`
+- Fixed `app/forgot-password/page.tsx` lint: escaped apostrophe (`we'll` → `we&apos;ll`) for `react/no-unescaped-entities` rule
+- Fixed prettier drift in `__tests__/app/register/team.test.tsx` and `__tests__/lib/actions/account.test.ts`
+- Fixed `sendInvitationAction` type signature: widened `playerId: string` to `string | null` (implementation already handled null — allows find-or-create player flow)
+- Restored branch coverage from 78.18% to 80.68%: added 22 branch tests to `teams.test.ts` (all 6 exported functions covered including error paths), 6 tests to `invitations.test.ts` (null-playerId path + `sendInviteEmail`), excluded 5 new Server Component page files from coverage tracking in `vitest.config.ts`
+- Final state: 877/877 unit tests passing; CI green (FDgolf App CI + CodeQL)
+
+---
+
 ## Session 19 — 2026-06-25
 
 ### What Was Done

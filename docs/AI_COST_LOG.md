@@ -131,3 +131,4 @@ Pricing basis: Claude Sonnet 4.6 — Input $3/MTok · Output $15/MTok · Cache R
 | 2026-06-17 | 17e8c085-2f13-4d83-a753-dd6f8390028a | feature/epic0007-leaderboard      | 707939       | 197097        | 46923571          | 19.6877  |
 | 2026-06-17 | 17e8c085-2f13-4d83-a753-dd6f8390028a | feature/epic0007-leaderboard      | 709029       | 197563        | 47395359          | 19.8403  |
 | 2026-06-17 | 17e8c085-2f13-4d83-a753-dd6f8390028a | feature/epic0007-leaderboard      | 710210       | 198317        | 48186491          | 20.0934  |
+| 2026-06-26 | f5bfeeab-9c44-4796-89ca-cf45fc61effa | unknown                           | 1011189      | 212158        | 59599338          | 24.8535  |
