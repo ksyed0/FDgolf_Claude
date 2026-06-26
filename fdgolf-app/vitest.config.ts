@@ -45,6 +45,11 @@ export default defineConfig({
         'app/admin/layout.tsx', // Server Component layout
         'app/admin/dashboard/page.tsx', // Server Component, integration-tested
         'app/admin/scores/[roundId]/page.tsx', // Server Component, integration-tested
+        'app/register/[slug]/account/page.tsx', // Server Component, integration-tested
+        'app/register/[slug]/team/page.tsx', // Server Component, integration-tested
+        'app/register/[slug]/captain/page.tsx', // Server Component, integration-tested
+        'app/forgot-password/page.tsx', // Server Component, integration-tested
+        'app/reset-password/page.tsx', // Server Component, integration-tested
         '**/*.config.*',
         '**/node_modules/**',
         '**/.next/**',
