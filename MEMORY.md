@@ -6,20 +6,22 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 20 — 2026-06-25
+Session 21 — 2026-06-29
 
 ---
 
 ## Repo State
 
-- **Branch:** `develop` (current working branch; worktree: `epic-0005-remaining`)
+- **Branch:** `develop` (still checked out in worktree `epic-0005-remaining`, untouched per Session 21 user decision; current session worked on `claude/suspicious-galileo-c385b2`)
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `74e8189` (CI green: 877/877 tests, 80.68% branch coverage)
-- **Pending PRs:** none — EPIC-0003+EPIC-0008 work is on `develop` directly. Next feature work should use a proper `feature/` branch and PR workflow.
+- **Develop tip:** `91bba7f` (PR #40 merged — Node.js 24 runners; CI status from Session 20: 877/877 tests, 80.68% branch coverage)
+- **Pending PRs:**
+  - **#63 OPEN** (Session 21 deliverable) — `[fix] unblock local supabase dev + preserve Session 16 plans`. Carries config.toml deprecation fixes, `tournament_clubs` backfill bug fix, and 2 preserved plan docs.
+  - **#57 stale** (recommended close) — `chore/session-14-close` is 71 commits behind, has zero CI runs, and all 3 of its docs commits were superseded by later work shipping to develop.
 - **Stories done:** EPIC-0001 through EPIC-0009 (US-0077/0078/0079 Done), EPIC-0003 refactor (route-per-step), EPIC-0008 admin ops. EPIC-0010 (Race Day Ops / Security 2FA) is Phase 2 / v1.1 scope.
-- **Dependabot:** 0 open alerts. #7 (postcss) + #17 (js-yaml) dismissed `tolerable_risk` — build-time only, no upstream patch available.
+- **Dependabot:** **1 open moderate alert** (#18) surfaced on default branch during Session 21 push — needs triage. Earlier #7 (postcss) + #17 (js-yaml) remain dismissed as `tolerable_risk`.
 
 ---
 
@@ -82,6 +84,16 @@ Next up — **both epics are specced AND planned (Session 12); next action is ex
 - **EPIC-0005 — Round Tracking** (US-0035–0048): spec `docs/superpowers/specs/2026-06-17-epic0005-round-tracking-design.md`, plan `docs/superpowers/plans/2026-06-17-epic0005-round-tracking.md` (29 tasks, 24 spine / 5 deferrable) on `feature/epic0005-round-tracking`. Build order: projection→migration→store→capture. Writes SHOTS ONLY; HoleEntryScreen (US-0034) hands off via `/round/[roundId]/shot/new?lat=&lng=&club=`; `bag_clubs`/`first_player_id` on the rounds row.
 - **EPIC-0007 — Leaderboard** (US-0056–0064): spec `docs/superpowers/specs/2026-06-17-epic0007-leaderboard-design.md`, plan `docs/superpowers/plans/2026-06-17-epic0007-leaderboard.md` (23 tasks, 12 spine / 11 enhancement) on `feature/epic0007-leaderboard`. **Build-step #1 = anon-view access spike** (prove anon reads `team_standings`/`public_team_roster`, denied on base `players`).
 - **Latent follow-up:** audit EPIC-0003 actions for stale `players.name` references (`searchPlayersAction` already fixed to `full_name`).
+
+## Known Patterns / Gotchas (additions from Session 21 — supabase reinstall + repo cleanup)
+
+- **`tournament_clubs` has composite PK, not `id`:** `(tournament_id, club_id)` is the primary key. Migration `20260625000003_epic0008_tournament_clubs_display_order.sql` originally tried `WHERE tc.id = sub.id` in its backfill UPDATE — parses as a column reference that doesn't exist, so the whole `supabase start` aborts. Fix uses `WHERE tc.tournament_id = sub.tournament_id AND tc.club_id = sub.club_id`. Anytime you UPDATE...FROM `tournament_clubs`, join on the composite key.
+- **Supabase CLI v2.108.0 config.toml breaking changes:** `[inbucket]` is now `[local_smtp]` (same fields). `[db.extensions]` is gone — enable extensions via SQL migrations only (`CREATE EXTENSION IF NOT EXISTS <name>`). Verify against a fresh `supabase init` output before authoring config: `mkdir -p /tmp/sb && cd /tmp/sb && npx supabase init --force` then diff.
+- **CI doesn't run end-to-end `supabase start`:** Unit tests mock the Supabase client, so a broken migration (like #003 above) can sit on develop indefinitely without anyone noticing until someone wipes their local stack. Consider adding a `supabase start` smoke step to CI if reliability of fresh installs matters.
+- **Multiple supabase projects coexist on one OrbStack daemon:** Each `project_id` in `config.toml` gets its own container namespace (`supabase_<service>_<id>`) and its own host port mapping. The FDgolf_CodeMie project's stack ran on 54341–54347 while ours uses 54321–54327 — no collision because the configs are internally consistent. Never assume defaults; check `docker ps --format '{{.Names}}: {{.Ports}}'` before claiming a conflict.
+- **`: gone` upstream marker ≠ unmerged:** Local branches showing `[origin/<branch>: gone]` typically had a squash-merged PR that deleted the remote head. The local branch keeps the original commit objects (different SHA than the squash on develop), so `git branch --merged develop` won't list them. Use `gh pr list --search "head:<branch>"` to find the merged PR before assuming the branch has unique work.
+- **Untracked files in a stale worktree can be illusory:** When a worktree's HEAD is far behind origin, files added to develop *after* that HEAD show as `??` in `git status` even though identical content exists on origin/develop. Always `diff <(git show origin/develop:path) worktree/path` before treating local-only-looking files as unique work.
+- **`gh pr merge --auto --squash --delete-branch` is the canonical merge:** Queues if checks are still running, executes when green, deletes the remote branch, and triggers local tracking-ref pruning on the next fetch. Matches this repo's PR history convention.
 
 ## Known Patterns / Gotchas (additions from Session 20 — CI stabilisation)
 

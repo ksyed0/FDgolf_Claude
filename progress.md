@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 21 — 2026-06-29
+
+### What Was Done
+
+- Repo housekeeping: pruned 4 stale agent worktrees + 18 merged local branches + 10 merged remote branches; merged PR #40 (Node.js 24 runners); recommended close for PR #57 (71 commits stale, no CI ever ran, all 3 docs commits superseded by later work on `develop`)
+- Local Supabase unblocked on CLI v2.108.0: renamed deprecated `[inbucket]` → `[local_smtp]` and removed `[db.extensions]` from `config.toml` (pg_cron is already enabled via `20260625000004_epic0008_pg_cron.sql`); fixed a real migration bug in `20260625000003_epic0008_tournament_clubs_display_order.sql` that referenced a nonexistent `id` column — corrected to use the composite PK `(tournament_id, club_id)` in the backfill UPDATE
+- Preserved 2 Session 16 superpowers plans (`2026-06-18-bug0022-epic0005-wiring.md`, `2026-06-18-epic0008-admin-ops.md`) that drove PR #55 / #56 but were never committed; opened PR #63 carrying the plans + supabase fixes; verified fresh `supabase start` runs clean (28 migrations, seed loaded, `tournament_clubs.display_order` backfilled, `pg_cron` installed); both this project's stack and the unrelated `FDgolf_CodeMie` stack coexist healthily on OrbStack
+
+---
+
 ## Session 20 — 2026-06-25
 
 ### What Was Done
