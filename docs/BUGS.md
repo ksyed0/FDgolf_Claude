@@ -735,3 +735,83 @@ Fix: feed real data into the active-hole/summary routes — lift captured GPS fr
 `<HoleMap>`, load prior shots for the trail, query team holes-completed for the pill, render `<TurnPicker>`,
 wire `tapMode`/`onMapTap` for GPS-denied entry, fetch team standing, and route to `/complete` after the
 18th final hole. Track as the EPIC-0005 integration follow-up (candidate for a dedicated story).
+
+---
+
+BUG-0023: Server-rendered pages hit `permission denied for table <name>` — Supabase Data API GRANTs missing post-2026-05-30
+Severity: Critical
+Related Story: (cross-cutting — affects every page that reads public-schema tables via the Data API)
+Related Task: (cross-cutting — no single owner)
+Status: Verified
+Fix Branch: fix/grant-data-api-access
+Lesson Encoded: No
+
+Supabase CLI's `api.auto_expose_new_tables` default flipped from `true` to `false` on 2026-05-30 to
+match the new cloud Supabase default. Tables created by migrations after that date no longer
+auto-grant SELECT/INSERT/UPDATE/DELETE to the Data API roles (`anon`, `authenticated`,
+`service_role`), so PostgREST returns `permission denied for table <name>` BEFORE row-level RLS
+evaluation even runs.
+
+Symptom: every server-rendered page in the app (admin tournaments list, dashboard, leaderboard,
+TV display, player management, etc.) fails to load data and renders the empty-state UI. Local
+E2E surfaced this as 35+ failing specs. CI did NOT catch it because the `fdgolf-app-ci.yml`
+workflow runs Vitest unit tests + build only — never a fresh `supabase start` against Playwright.
+The bug had been on develop for ~a month before discovery.
+
+Verified fix (PR #65, Session 22): migration `20260630000001_grant_data_api_access.sql` adds
+`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon, authenticated,
+service_role` + the equivalent for sequences/functions, plus `ALTER DEFAULT PRIVILEGES FOR ROLE
+postgres IN SCHEMA public GRANT ...` so future migration-created objects auto-grant.
+**Important:** the `FOR ROLE postgres` qualifier is mandatory — without it, ALTER DEFAULT
+PRIVILEGES only applies to objects created by the CURRENT role at ALTER time, which silently
+fails to cover anything migrations create later. After applying: fresh `supabase start` runs
+clean, E2E goes from 35+ failing to 49/50 passing, RLS policies on each table still govern
+row-level access as before.
+
+---
+
+BUG-0024: searchPlayersAction silently returns 0 rows — PostgREST embed via missing FK
+Severity: High
+Related Story: US-0068 (Player Management Hub)
+Related Task: (EPIC-0008 Task 2)
+Status: Verified
+Fix Branch: fix/full-event-tournament-registrations
+Lesson Encoded: No
+
+`searchPlayersAction` in `lib/actions/players.ts` embedded the team_member relation directly off
+`tournament_registrations`:
+
+    .from('tournament_registrations')
+    .select(`
+      player:players!inner(...),
+      status,
+      team_member:team_members(team_id, is_captain, teams(name))   ← no FK path
+    `)
+
+There is no foreign key between `tournament_registrations` and `team_members` — both reference
+`players(id)` independently. PostgREST fails to compile the embed and returns:
+
+    Could not find a relationship between 'tournament_registrations' and 'team_members'
+    in the schema cache.
+
+The action's `if (error) return {data: [], total: 0, error: error.message}` swallowed the failure,
+and the page rendered "0 registrations" identically to a legitimate empty result. Effect: the
+admin Player Management Hub displayed zero players for every tournament that had registrations.
+
+Unit tests did NOT catch it: `__tests__/lib/actions/players.test.ts` mocks the Supabase client
+chain (returns canned data) — PostgREST schema cache resolution is never exercised. CI E2E gap
+is the same as BUG-0023. The bug had been on develop since EPIC-0008 (Session 19) shipped.
+
+Verified fix (PR #67, Session 22): embed `team_members` THROUGH `players` (which has FKs to both)
+and constrain `teams.tournament_id` to scope multi-tournament players to the right team:
+
+    .select(`
+      player:players!inner(..., team_members(team_id, is_captain, teams!inner(name, tournament_id))),
+      status
+    `)
+    .eq('tournament_id', tournamentId)
+    .eq('player.team_members.teams.tournament_id', tournamentId)
+
+After fix: E2E goes from 49/50 → 50/50 (full-event spec's "Admin: all 16 players visible" passes).
+Pattern lesson — when two tables share a common entity but have no direct FK, embed via that
+common entity and filter the inner relation as needed.
