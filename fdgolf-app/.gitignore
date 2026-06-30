@@ -37,6 +37,10 @@ next-env.d.ts
 
 # playwright
 /.playwright/
+# Playwright config writes to ./playwright-report and ./test-results at the package root,
+# NOT under e2e/. Keep both path variants gitignored so neither location ever gets tracked.
+/playwright-report/
+/test-results/
 /e2e/playwright-report/
 /e2e/test-results/
 .env.test
