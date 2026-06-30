@@ -12,7 +12,7 @@ test.describe('Score editor (US-0022)', () => {
 
   test('TC-SCR-01: score editor renders shots grouped by hole', async ({ page }) => {
     if (!roundId) {
-      test.skip(true, 'No completed rounds found — run npm run simulate:lionhead first')
+      test.skip(true, 'No completed rounds found — run npm run simulate:round first')
       return
     }
 
@@ -29,7 +29,7 @@ test.describe('Score editor (US-0022)', () => {
 
   test('TC-SCR-02: clicking Edit on a shot shows inline edit form', async ({ page }) => {
     if (!roundId) {
-      test.skip(true, 'No completed rounds found — run npm run simulate:lionhead first')
+      test.skip(true, 'No completed rounds found — run npm run simulate:round first')
       return
     }
 
@@ -48,7 +48,7 @@ test.describe('Score editor (US-0022)', () => {
 
   test('TC-SCR-03: cancel returns to read-only view', async ({ page }) => {
     if (!roundId) {
-      test.skip(true, 'No completed rounds found — run npm run simulate:lionhead first')
+      test.skip(true, 'No completed rounds found — run npm run simulate:round first')
       return
     }
 
