@@ -102,16 +102,20 @@ export async function searchPlayersAction(
   if (!isAdmin) return { data: [], total: 0, error: 'Unauthorized' }
 
   const db = createServiceClient()
+  // team_members has no direct FK to tournament_registrations — embed via players
+  // (which has FKs to both). Filter team_members.teams.tournament_id to scope to
+  // this tournament so a player in multiple tournaments returns the right team.
   let q = db
     .from('tournament_registrations')
     .select(
-      `player:players!inner(id, full_name, email, phone, company, title, handicap, deleted_at),
-       status,
-       team_member:team_members(team_id, is_captain, teams(name))`,
+      `player:players!inner(id, full_name, email, phone, company, title, handicap, deleted_at,
+                            team_members(team_id, is_captain, teams!inner(name, tournament_id))),
+       status`,
       { count: 'exact' }
     )
     .eq('tournament_id', tournamentId)
     .is('players.deleted_at', null)
+    .eq('player.team_members.teams.tournament_id', tournamentId)
 
   if (query.trim()) {
     const q2 = query.trim()
@@ -130,14 +134,15 @@ export async function searchPlayersAction(
   if (error) return { data: [], total: 0, error: error.message }
 
   const rows: PlayerSearchRow[] = (data ?? []).map((r) => {
-    const p = r.player as unknown as PlayerSearchRow & { deleted_at: string | null }
-    const tm = (
-      r.team_member as unknown as Array<{
+    const p = r.player as unknown as PlayerSearchRow & {
+      deleted_at: string | null
+      team_members: Array<{
         team_id: string
         is_captain: boolean
         teams: { name: string } | null
       }> | null
-    )?.[0]
+    }
+    const tm = p.team_members?.[0]
     return {
       id: p.id,
       full_name: p.full_name,
