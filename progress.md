@@ -3,6 +3,16 @@
 > Append-only. Updated by Conductor after every phase.
 > See `docs/AGENT_PLAN.md` for orchestration framework.
 
+## Session 22 — 2026-06-30
+
+### What Was Done
+
+- Closed PR #57 (stale chore/session-14-close) + PR #39 (stale develop→main release PR, EPIC-0006 title 89 commits behind, mergeable=DIRTY, CodeQL fail). Plan: open a fresh release PR after stabilization, not rebase 15-day-old stale PRs.
+- Shipped 4 stabilization PRs to develop: #64 (EPIC-0003 design doc cherry-picked + js-yaml CVE-2026-53550 patched via `overrides` block in root package.json — closes Dependabot #18), #65 (real release-blocker: `20260630000001_grant_data_api_access.sql` GRANTs SELECT/INSERT/UPDATE/DELETE to anon/authenticated/service_role on all public tables — Supabase CLI's `auto_expose_new_tables` default flipped to `false` on 2026-05-30 and every server-rendered page was hitting `permission denied for table tournaments`), #66 (rename local supabase `project_id` fdgolf → FDgolf_Claude to match repo name and FDgolf_CodeMie sibling convention), #67 (PostgREST embed bug fix in `searchPlayersAction` — `team_members` had no FK to `tournament_registrations`; embedded through `players` with `teams.tournament_id` filter to scope multi-tournament players)
+- E2E suite achieved **53/53 passing for the first time** (was 49/50 after unblocking, 35+ failing before): `bash scripts/seed-lionhead.sh` + `npm run simulate:round` + two-pass run (`--grep-invert "Full event simulation"` then `npm run e2e:full-event`). The 3 score-editor specs that were conditionally skipping with "No completed rounds found" now actually run because simulate:round populates rounds with shots. Dismissed CodeQL alerts #1 (slug.ts ReDoS — no nested quantifiers, false positive) and #2 (pins.ts SSRF — lat/lng are TypeScript `number`, false positive). Develop tip is now `b458fdb`, clean, ready for the actual release PR to main.
+
+---
+
 ## Session 21 — 2026-06-29
 
 ### What Was Done
