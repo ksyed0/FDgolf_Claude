@@ -6,22 +6,21 @@ Cross-session context for Claude Code. Updated at session close by Conductor.
 
 ## Last Updated
 
-Session 21 — 2026-06-29
+Session 22 — 2026-06-30
 
 ---
 
 ## Repo State
 
-- **Branch:** `develop` (still checked out in worktree `epic-0005-remaining`, untouched per Session 21 user decision; current session worked on `claude/suspicious-galileo-c385b2`)
+- **Branch:** `develop` (checked out in main worktree `/Users/Kamal_Syed/Projects/FDgolf_Claude`)
 - **Main branch:** `main`
 - **Local path:** `/Users/Kamal_Syed/Projects/FDgolf_Claude`
 - **GitHub remote:** `https://github.com/ksyed0/FDgolf_Claude`
-- **Develop tip:** `91bba7f` (PR #40 merged — Node.js 24 runners; CI status from Session 20: 877/877 tests, 80.68% branch coverage)
-- **Pending PRs:**
-  - **#63 OPEN** (Session 21 deliverable) — `[fix] unblock local supabase dev + preserve Session 16 plans`. Carries config.toml deprecation fixes, `tournament_clubs` backfill bug fix, and 2 preserved plan docs.
-  - **#57 stale** (recommended close) — `chore/session-14-close` is 71 commits behind, has zero CI runs, and all 3 of its docs commits were superseded by later work shipping to develop.
+- **Develop tip:** `b458fdb` — 5 stabilization PRs landed today (#63 supabase unblock, #64 design doc + js-yaml CVE, #65 GRANT migration, #66 project_id rename, #67 searchPlayersAction PostgREST embed fix). 877/877 unit tests pass; **E2E 53/53 pass for the first time** when seeded with `seed-lionhead.sh` + `simulate:round`.
+- **Pending PRs:** zero. Next action: open the actual `develop → main` release PR (94 commits ahead). PR #39 (stale EPIC-0006-titled release PR) and PR #57 (stale session-14-close) were both closed.
 - **Stories done:** EPIC-0001 through EPIC-0009 (US-0077/0078/0079 Done), EPIC-0003 refactor (route-per-step), EPIC-0008 admin ops. EPIC-0010 (Race Day Ops / Security 2FA) is Phase 2 / v1.1 scope.
-- **Dependabot:** **1 open moderate alert** (#18) surfaced on default branch during Session 21 push — needs triage. Earlier #7 (postcss) + #17 (js-yaml) remain dismissed as `tolerable_risk`.
+- **Dependabot:** **0 open alerts.** #18 (js-yaml CVE-2026-53550) patched via `overrides` block in root package.json (closes Session 22). #7 (postcss) and #17 (js-yaml older alert) remain dismissed as `tolerable_risk`.
+- **CodeQL:** false positives #1 (slug.ts polynomial-redos) and #2 (pins.ts request-forgery) dismissed with justification this session. Real-but-low-priority findings remain open: #83/#102 (invitations.ts log injection, DEV-only), #84 (csv-import.ts remote property injection, admin-gated).
 
 ---
 
@@ -84,6 +83,16 @@ Next up — **both epics are specced AND planned (Session 12); next action is ex
 - **EPIC-0005 — Round Tracking** (US-0035–0048): spec `docs/superpowers/specs/2026-06-17-epic0005-round-tracking-design.md`, plan `docs/superpowers/plans/2026-06-17-epic0005-round-tracking.md` (29 tasks, 24 spine / 5 deferrable) on `feature/epic0005-round-tracking`. Build order: projection→migration→store→capture. Writes SHOTS ONLY; HoleEntryScreen (US-0034) hands off via `/round/[roundId]/shot/new?lat=&lng=&club=`; `bag_clubs`/`first_player_id` on the rounds row.
 - **EPIC-0007 — Leaderboard** (US-0056–0064): spec `docs/superpowers/specs/2026-06-17-epic0007-leaderboard-design.md`, plan `docs/superpowers/plans/2026-06-17-epic0007-leaderboard.md` (23 tasks, 12 spine / 11 enhancement) on `feature/epic0007-leaderboard`. **Build-step #1 = anon-view access spike** (prove anon reads `team_standings`/`public_team_roster`, denied on base `players`).
 - **Latent follow-up:** audit EPIC-0003 actions for stale `players.name` references (`searchPlayersAction` already fixed to `full_name`).
+
+## Known Patterns / Gotchas (additions from Session 22 — GRANT migration + E2E unblock + PostgREST embed bug)
+
+- **Supabase Data API GRANTs are now explicit (post-2026-05-30 default flip).** New tables created by migrations no longer auto-grant SELECT/INSERT/UPDATE/DELETE to anon/authenticated/service_role. PostgREST returns `permission denied for table <name>` before RLS evaluates. Migration `20260630000001_grant_data_api_access.sql` adds the GRANTs + `ALTER DEFAULT PRIVILEGES FOR ROLE postgres` so future migration-created objects auto-grant. **Don't forget the `FOR ROLE postgres` qualifier** — without it, ALTER DEFAULT PRIVILEGES only applies to objects created by the CURRENT role at ALTER time, which silently fails to cover migration-created objects.
+- **PostgREST embeds require an FK between the source and target table.** `tournament_registrations` and `team_members` both reference `players(id)` but have no direct FK between them — embedding `team_members` directly off `tournament_registrations` failed with "Could not find a relationship... in the schema cache" and returned `{data: [], error: <message>}`. The action's early-return on error silently rendered "0 registrations" identical to a legitimate empty result. **Fix pattern:** when two tables share a common entity but lack a direct FK, embed via that common entity (`players(..., team_members(..., teams(name)))`), then filter the inner relation as needed (`.eq('player.team_members.teams.tournament_id', tournamentId)`).
+- **Local supabase project_id is `FDgolf_Claude` (renamed from `fdgolf` in PR #66).** Container names: `supabase_<svc>_FDgolf_Claude`. Coexists with sibling project `supabase_<svc>_FDgolf_CodeMie` on the same OrbStack daemon (different `project_id`s namespace cleanly). When using local SQL tooling, target `docker exec supabase_db_FDgolf_Claude psql -U postgres ...` — host doesn't have psql installed; a shim at `/tmp/shim/psql` was useful for ad-hoc commands during this session.
+- **The full local E2E run takes 3 setup commands.** (1) `bash scripts/seed-lionhead.sh` — admin + 16 players + 4 teams + tournament. Requires `.env.local` with supabase keys (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY) and a `psql` binary (or shim). (2) `npm run simulate:round` — populates 16 completed rounds with shots, unblocks the 3 score-editor specs that conditionally skip on missing completed rounds. (3) Two-pass run: `npx playwright test --config e2e/playwright.config.ts --grep-invert="Full event simulation"` first (45 tests use the lionhead seed), then `npm run e2e:full-event` (8 tests, has its own beforeAll that resets the DB). Running a single `playwright test` mid-suite hits the full-event reset and the rest of the suite fails. **The `simulate:lionhead` script name in `score-editor.spec.ts` skip messages is stale — actual script is `simulate:round`.**
+- **CI does not run E2E.** `fdgolf-app-ci.yml` runs Vitest unit tests + build only. Unit tests mock the Supabase client chain (no schema resolution, no GRANTs evaluated), which is why both the GRANT regression and the PostgREST embed bug shipped silently. Adding even a 5-spec E2E smoke step to CI would have caught both within minutes of their respective merges. Worth a dedicated follow-up.
+- **CodeQL dismissal API quirks.** The `dismissed_reason` enum is `"false positive"` (with space), `"won't fix"`, or `"used in tests"` — NOT the snake_case `false_positive`. `dismissed_comment` is capped at 280 chars. Both via `gh api -X PATCH repos/<owner>/<repo>/code-scanning/alerts/<n>`.
+- **`gh pr merge --auto` repeatedly fails with `fatal: 'develop' is already used by worktree` when develop is held by another worktree** (e.g. the main checkout). The server-side enable-auto-merge step still succeeds — the error is on the post-action local checkout that gh tries as a tidy-up. Trust `gh pr view` for the final state, ignore the command's exit code on this specific message. Pattern for releases: the auto-merge fires the instant CI flips green, deletes the remote branch (sometimes), and you can prune the local tracking refs after the merge with `git fetch --prune origin`.
 
 ## Known Patterns / Gotchas (additions from Session 21 — supabase reinstall + repo cleanup)
 
